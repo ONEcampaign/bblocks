@@ -103,7 +103,7 @@ class WorldBankData(ImportData):
 
         return self
 
-    def update(self, **kwargs) -> ImportData:
+    def update(self) -> ImportData:
         if self.indicators is None:
             raise RuntimeError("No indicators loaded")
 
@@ -115,15 +115,23 @@ class WorldBankData(ImportData):
 
         return self
 
-    def get_data(self, **kwargs) -> pd.DataFrame:
+    def get_data(self, indicators: Optional | str | list = "all") -> pd.DataFrame:
         if self.data is not None:
             return self.data
 
         df = pd.DataFrame()
 
-        for indicator in self.indicators.values():
+        if isinstance(indicators, list):
+            indicators = {
+                values for k, values in self.indicators.items() if k in indicators
+            }
+        elif indicators == "all":
+            indicators = self.indicators.values()
+        elif isinstance(indicators, str):
+            indicators = {indicators: self.indicators[indicators]}
+
+        for indicator in indicators:
             df = pd.concat([df, indicator[0]], ignore_index=True)
 
         self.data = df
         return self.data
-
