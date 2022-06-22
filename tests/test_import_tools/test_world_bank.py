@@ -11,7 +11,8 @@ def test_invalid_sheet():
     """ """
     with pytest.raises(ValueError) as exception_info:
         read_pink_sheet("")
-        assert exception_info.match("invalid sheet name. Please specify 'Monthly Indices' or 'Monthly Prices'")
+        assert exception_info.match("invalid sheet name. "
+                                    "Please specify 'Monthly Indices' or 'Monthly Prices'")
 
 def test_valid():
     """ """
