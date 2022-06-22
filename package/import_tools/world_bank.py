@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+import os
 from typing import Optional
 
-import wbgapi as wb
 import pandas as pd
+import wbgapi as wb
 
-
-from package.import_tools.common import ImportData
-import os
 from package.config import PATHS
+from package.import_tools.common import ImportData
 
 
 def _get_wb_data(
