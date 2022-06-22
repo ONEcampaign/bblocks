@@ -113,7 +113,7 @@ class WorldBankData(ImportData):
                 f"{PATHS.imported_data}/{file_name}", index=False
             )
 
-        _ = pd.read_csv(f"{PATHS.imported_data}/{file_name}")
+        _ = pd.read_csv(f"{PATHS.imported_data}/{file_name}", parse_dates=["date"])
 
         __params["file_name"] = file_name
 
@@ -131,7 +131,7 @@ class WorldBankData(ImportData):
             The same object to allow chaining
 
         """
-        if self.indicators is None:
+        if len(self.indicators) == 0:
             raise RuntimeError("No indicators loaded")
 
         for indicator_code, (_, args) in self.indicators.items():
@@ -154,19 +154,19 @@ class WorldBankData(ImportData):
             A Pandas DataFrame with the data for the indicators requested.
 
         """
-        if self.data is not None:
-            return self.data
 
         df = pd.DataFrame()
 
+        if indicators != "all" and isinstance(indicators, str):
+            indicators = [indicators]
+
         if isinstance(indicators, list):
-            indicators = {
-                values for k, values in self.indicators.items() if k in indicators
-            }
+            indicators = [
+                self.indicators[_] for _ in indicators if _ in list(self.indicators)
+            ]
+
         elif indicators == "all":
             indicators = self.indicators.values()
-        elif isinstance(indicators, str):
-            indicators = {indicators: self.indicators[indicators]}
 
         for indicator in indicators:
             df = pd.concat([df, indicator[0]], ignore_index=True)
