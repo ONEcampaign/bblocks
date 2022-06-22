@@ -38,6 +38,17 @@ def test_load_indicator():
     # Check that the ending year in the data is indeed the end_year parameter
     assert wb_obj.indicators["NY.GDP.MKTP.CD"][0].date.dt.year.max() == 2018
 
+    # Check that both start and end date have to be provided
+
+    with pytest.raises(ValueError) as error:
+        wb_obj.load_indicator(
+            indicator_code="NY.GDP.MKTP.CD",
+            indicator_name="GDP",
+            start_year=2015,
+            end_year=2018,
+            most_recent_only=False,
+        )
+    assert 'both' in str(error.value)
 
 def test_update():
     import os
