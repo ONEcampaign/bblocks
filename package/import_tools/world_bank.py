@@ -65,7 +65,7 @@ def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
 class WorldBankPinkSheet:
     """An object to help download data from World Bank Pink sheets
 
-    Args:
+    Parameters:
         sheet (str): name of the sheet in the Pink Sheet ['Monthly Prices', 'Monthly Indices']
     """
 
