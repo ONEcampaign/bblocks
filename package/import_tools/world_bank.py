@@ -2,14 +2,14 @@
 
 import pandas as pd
 import numpy as np
-from package.import_tools.common import ImportData
 from package.config import PATHS
 import os
 from dataclasses import dataclass
 import warnings
 
 def read_pink_sheet(sheet: str):
-    """ """
+    """read pink sheet data from web"""
+
     url = ("https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-"
            "0350012021/related/CMO-Historical-Data-Monthly.xlsx")
     if sheet not in ['Monthly Indices', 'Monthly Prices']:
@@ -20,7 +20,7 @@ def read_pink_sheet(sheet: str):
 
 
 def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
-    """ """
+    """clean, format, standardize pink sheet data"""
 
     if sheet == 'Monthly Prices':
         df.columns = df.iloc[3]
@@ -124,15 +124,19 @@ class WorldBankPinkSheet:
         if len(self.data) == 0:
             raise ValueError('No data available for current parameters')
         if indicators is not None:
+            #if indicator is a string, add it to a list
             if isinstance(indicators, str):
                 indicators = [indicators]
-            #check that indicators are in data, raise warning if not
+
+            #check that there is at least 1 valid indicator, otherwise raise error
+            if sum([i in self.data.columns for i in indicators]) == 0:
+                raise ValueError('No valid indicators selected')
+
+            #check for valid indicators, raise warning if indicator is not found
             for indicator in indicators:
                 if indicator not in self.data.columns:
-                    warnings.warn(f'{indicator} not found in data')
+                    warnings.warn(f'{indicator} not found')
                     indicators.remove(indicator)
-            if len(indicators) == 0:
-                raise ValueError('No valid indicators selected')
 
             self.data = self.data[['period']+ indicators].reset_index(drop=True)
 

@@ -56,6 +56,11 @@ def test_get_data():
         pk_obj_1.get_data(indicators = '')
         assert error.match('No valid indicators selected')
 
+    #test warning
+    with pytest.warns(UserWarning) as record:
+        pk_obj_1.get_data(indicators = ['Crude oil, Brent', 'Oil'])
+        assert len(record)>0
+        assert record[0].message.args[0] == 'Oil not found'
 
 def test_file_name():
     """test that file name is generated correctly"""
