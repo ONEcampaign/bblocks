@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import os
+import warnings
+from dataclasses import dataclass
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 import wbgapi as wb
-import numpy as np
 
 from package.config import PATHS
 from package.import_tools.common import ImportData
-
-from dataclasses import dataclass
-import warnings
 
 
 def _get_wb_data(
@@ -177,18 +176,20 @@ class WorldBankData(ImportData):
 
         self.data = df
         return self.data
-      
-  
 
 
-def read_pink_sheet(sheet: str):
+def _read_pink_sheet(sheet: str):
     """read pink sheet data from web"""
 
-    url = ("https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-"
-           "0350012021/related/CMO-Historical-Data-Monthly.xlsx")
-    if sheet not in ['Monthly Indices', 'Monthly Prices']:
-        raise ValueError("invalid sheet name. "
-                         "Please specify 'Monthly Indices' or 'Monthly Prices'")
+    url = (
+        "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-"
+        "0350012021/related/CMO-Historical-Data-Monthly.xlsx"
+    )
+    if sheet not in ["Monthly Indices", "Monthly Prices"]:
+        raise ValueError(
+            "invalid sheet name. "
+            "Please specify 'Monthly Indices' or 'Monthly Prices'"
+        )
     else:
         return pd.read_excel(url, sheet_name=sheet)
 
@@ -196,17 +197,17 @@ def read_pink_sheet(sheet: str):
 def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
     """clean, format, standardize pink sheet data"""
 
-    if sheet == 'Monthly Prices':
+    if sheet == "Monthly Prices":
         df.columns = df.iloc[3]
-        return (df
-                .rename(columns={np.nan: "period"})
-                .iloc[6:]
-                .assign(period = lambda d: pd.to_datetime(d.period, format="%YM%m"))
-                .replace("..", np.nan)
-                .reset_index(drop=True)
-                )
+        return (
+            df.rename(columns={np.nan: "period"})
+            .iloc[6:]
+            .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
+            .replace("..", np.nan)
+            .reset_index(drop=True)
+        )
 
-    elif sheet == 'Monthly Indices':
+    elif sheet == "Monthly Indices":
         df = df.iloc[9:].replace("..", np.nan).reset_index(drop=True)
         df.columns = [
             "period",
@@ -231,8 +232,10 @@ def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
         return df
 
     else:
-        raise ValueError("invalid sheet name. "
-                         "Please specify 'Monthly Indices' or 'Monthly Prices'")
+        raise ValueError(
+            "invalid sheet name. "
+            "Please specify 'Monthly Indices' or 'Monthly Prices'"
+        )
 
 
 @dataclass
@@ -245,75 +248,78 @@ class WorldBankPinkSheet:
 
     sheet: str
     data: pd.DataFrame = None
+    update_data: bool = False
 
-    def __post_init__(self):
-        self.update()
-
-    @property
-    def file_name(self):
-        return f'World Bank Pink Sheet - {self.sheet}.csv'
-
-    def update(self):
-        """Updates the underlying data
-        """
-        (read_pink_sheet(self.sheet)
-         .pipe(_clean_pink_sheet, self.sheet)
-         .to_csv(f"{PATHS.imported_data}/{self.file_name}", index=False)
-         )
-
-        self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
-
-    def get_data(self,
-                 start_date: str = None,
-                 end_date:str = None,
-                 indicators: str | list = None,
-                 update_data = False):
-        """Get data as a Pandas DataFrame
-
-        Args:
-            start_date (str)
-            end_date (str)
-            indicators (str | list)
-            update_data (bool): Set to True to update the underlying data
-
-        Returns:
-            pd.DataFrame: Pandas dataframe with the requested data
-        """
-        if update_data:
+    def __post_init__(self) -> None:
+        if self.update_data:
             self.update()
-        elif not os.path.exists(f"{PATHS.imported_data}/{self.file_name}"):
+        if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}"):
             self.update()
         else:
             self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
 
-        if start_date is not None:
-            self.data = self.data[self.data['period']>=start_date]
-        if end_date is not None:
-            self.data = self.data[self.data['period']<=end_date]
+    @property
+    def file_name(self) -> str:
+        """Returns the name of the stored file"""
+        return f"World Bank Pink Sheet - {self.sheet}.csv"
+
+    def update(self) -> None:
+        """Updates the underlying data"""
+        (
+            _read_pink_sheet(self.sheet)
+            .pipe(_clean_pink_sheet, self.sheet)
+            .to_csv(f"{PATHS.imported_data}/{self.file_name}", index=False)
+        )
+
+        self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+    def get_data(
+        self,
+        *,
+        start_date: str = None,
+        end_date: str = None,
+        indicators: str | list = None
+    ):
+        """Get data as a Pandas DataFrame
+
+        Args:
+            start_date : start date of the data to be returned (inclusive).
+            end_date : end date of the data to be returned (inclusive).
+            indicators : one or more indicators to be returned.
+
+
+        Returns:
+            pd.DataFrame: Pandas dataframe with the requested data
+        """
+
+        self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
 
         if (start_date is not None) & (end_date is not None):
             if start_date > end_date:
-                raise ValueError('start date cannot be earlier than end date')
+                raise ValueError("start date cannot be earlier than end date")
+
+        if start_date is not None:
+            self.data = self.data[self.data["period"] >= start_date]
+        if end_date is not None:
+            self.data = self.data[self.data["period"] <= end_date]
 
         if len(self.data) == 0:
-            raise ValueError('No data available for current parameters')
+            raise ValueError("No data available for current parameters")
         if indicators is not None:
-            #if indicator is a string, add it to a list
+            # if indicator is a string, add it to a list
             if isinstance(indicators, str):
                 indicators = [indicators]
 
-            #check that there is at least 1 valid indicator, otherwise raise error
+            # check that there is at least 1 valid indicator, otherwise raise error
             if sum([i in self.data.columns for i in indicators]) == 0:
-                raise ValueError('No valid indicators selected')
+                raise ValueError("No valid indicators selected")
 
-            #check for valid indicators, raise warning if indicator is not found
+            # check for valid indicators, raise warning if indicator is not found
             for indicator in indicators:
                 if indicator not in self.data.columns:
-                    warnings.warn(f'{indicator} not found')
+                    warnings.warn(f"{indicator} not found")
                     indicators.remove(indicator)
 
-            self.data = self.data[['period']+ indicators].reset_index(drop=True)
+            self.data = self.data[["period"] + indicators].reset_index(drop=True)
 
         return self.data
-
-
