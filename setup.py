@@ -10,23 +10,21 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=7.0', ]
+requirements = ['pandas', 'wbgapi', 'pytest', 'numpy', 'country_converter', 'openpyxl']
 
 test_requirements = ['pytest>=3', ]
 
 setup(
     author="Jorge Rivera, Luca Picci",
     author_email='data@one.org',
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.10'
     ],
     description="A collection of tools for common tasks in the development and international affairs field.",
     entry_points={
@@ -43,7 +41,7 @@ setup(
     packages=find_packages(include=['bblocks', 'bblocks.*']),
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/jm-rivera/bblocks',
+    url='https://github.com/ONEcampaign/bblocks',
     version='0.0.1',
     zip_safe=False,
 )
