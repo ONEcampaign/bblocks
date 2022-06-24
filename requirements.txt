@@ -1,2 +1,4 @@
 pandas
 wbgapi
+country_converter
+openpyxl
