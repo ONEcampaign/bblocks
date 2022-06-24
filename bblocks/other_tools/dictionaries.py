@@ -1,10 +1,11 @@
-from bblocks.other_tools.common import Dict
-from country_converter import convert
+import os
+
 import pandas as pd
+from country_converter import convert
 
 from bblocks.config import PATHS
-import os
 from bblocks.import_tools.world_bank import WorldBankData
+from bblocks.other_tools.common import Dict
 
 
 def __download_income_levels():

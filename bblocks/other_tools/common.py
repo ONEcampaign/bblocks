@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
+
 from country_converter import convert
+
 
 @dataclass(repr=False)
 class Dict(dict):

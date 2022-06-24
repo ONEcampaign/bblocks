@@ -1,8 +1,10 @@
 """ """
-import pandas as pd
-import requests
 import io
 from zipfile import ZipFile
+
+import pandas as pd
+import requests
+
 
 def read_zipped_csv(url: str, path: str) -> pd.DataFrame:
     """Reads a CSV from a zipped file on the web
