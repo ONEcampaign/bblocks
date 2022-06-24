@@ -23,6 +23,7 @@ class Dict(dict):
         }
         self.clear()
         self.update(_)
+        return self
 
     def reverse(self) -> dict:
         _ = {value: key for key, value in self.items()}
