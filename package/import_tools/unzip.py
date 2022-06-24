@@ -7,16 +7,12 @@ from zipfile import ZipFile
 def read_zipped_csv(url: str, path: str) -> pd.DataFrame:
     """Reads a CSV from a zipped file on the web
 
-    Parameters
-    ----------
-    url: str
-         url link to the zipped file
-    path: str
-          path to the csv in the folder
-    Returns
-    -------
-    pd.DataFrame
-        pandas dataframe object
+    Args:
+        url (str): url link to the zipped file
+        path (str): path to the csv in the folder
+
+    Returns:
+        pd.DataFrame
     """
 
     #request url and unzip file
