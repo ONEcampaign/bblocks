@@ -1,6 +1,0 @@
-pandas
-wbgapi
-pytest
-numpy
-country_converter
-openpyxl
