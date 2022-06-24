@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/jm-rivera/bblocks
+    $ git clone git://github.com/ONEcampaign/bblocks
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OJL https://github.com/jm-rivera/bblocks/tarball/master
+    $ curl -OJL https://github.com/ONEcampaign/bblocks/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/jm-rivera/bblocks
-.. _tarball: https://github.com/jm-rivera/bblocks/tarball/master
+.. _Github repo: https://github.com/ONEcampaign/bblocks
+.. _tarball: https://github.com/ONEcampaign/bblocks/tarball/master
