@@ -1,7 +1,7 @@
 """tests for unzip.py"""
 import pandas as pd
 import pytest
-from package.import_tools.unzip import read_zipped_csv
+from bblocks.import_tools.unzip import read_zipped_csv
 
 VALID_ZIP_URL = 'https://apimgmtstzgjpfeq2u763lag.blob.core.windows.net/content/MediaLibrary/bdds/SDG.zip'
 VALID_URL = 'https://apiportal.uis.unesco.org/bdds'

@@ -1,5 +1,5 @@
-from package.config import PATHS
-from package.other_tools.dictionaries import update_dictionaries
+from bblocks.config import PATHS
+from bblocks.other_tools.dictionaries import update_dictionaries
 import os
 
 

@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 import wbgapi as wb
 
-from package.config import PATHS
-from package.import_tools.common import ImportData
+from bblocks.config import PATHS
+from bblocks.import_tools.common import ImportData
 
 
 def _get_wb_data(

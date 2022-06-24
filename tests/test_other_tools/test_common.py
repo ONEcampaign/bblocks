@@ -1,4 +1,4 @@
-from package.other_tools.dictionaries import Dict
+from bblocks.other_tools.dictionaries import Dict
 
 TEST_DICT = {"France": "FRA", "Germany": "DEU", "Italy": "ITA", "Guatemala": "GTM"}
 

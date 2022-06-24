@@ -3,8 +3,8 @@ import os.path
 import pandas as pd
 import pytest
 
-from package.config import PATHS
-from package.import_tools.world_bank import WorldBankPinkSheet, WorldBankData
+from bblocks.config import PATHS
+from bblocks.import_tools.world_bank import WorldBankPinkSheet, WorldBankData
 
 
 def test_world_bank_data_load_indicator():
