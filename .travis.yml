@@ -2,9 +2,7 @@
 
 language: python
 python:
-  - 3.8
-  - 3.7
-  - 3.6
+  - "3.10"
 
 # Command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: pip install -U tox-travis
@@ -25,4 +23,4 @@ deploy:
   on:
     tags: true
     repo: jm-rivera/bblocks
-    python: 3.8
+    python: "3.10"
