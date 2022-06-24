@@ -7,29 +7,40 @@ import os
 from package.import_tools.world_bank import WorldBankData
 
 
-@dataclass
-class Dict:
+@dataclass(repr=False)
+class Dict(dict):
     dictionary: dict = field(default_factory=dict)
+
     """A wrapper that adds functionality to a standard dictionary"""
 
+    def __post_init__(self):
+        self.update(self.dictionary)
+
     def change_keys(self, from_: str = None, to: str = "ISO3") -> dict:
-        self.dictionary = {
+        _ = {
             convert(names=key, src=from_, to=to, not_found=None): value
             for key, value in self.dictionary.items()
         }
-        return self.dictionary
+        self.clear()
+        self.update(_)
 
     def reverse(self) -> dict:
-        self.dictionary = {value: key for key, value in self.dictionary.items()}
-        return self.dictionary
+        _ = {value: key for key, value in self.items()}
+        self.clear()
+        self.update(_)
+        return self
 
     def set_keys_type(self, type_: type) -> dict:
-        self.dictionary = {type_(key): value for key, value in self.dictionary.items()}
-        return self.dictionary
+        _ = {type_(key): value for key, value in self.dictionary.items()}
+        self.clear()
+        self.update(_)
+        return self
 
     def set_values_type(self, type_: type) -> dict:
-        self.dictionary = {key: type_(value) for key, value in self.dictionary.items()}
-        return self.dictionary
+        _ = {key: type_(value) for key, value in self.dictionary.items()}
+        self.clear()
+        self.update(_)
+        return self
 
 
 def __download_income_levels():
@@ -154,3 +165,6 @@ population_density = Dict(
 )
 
 population = Dict(__wb.get_data("SP.POP.TOTL").set_index("iso_code")["value"].to_dict())
+
+df = pd.DataFrame({"iso_code": ["FRA", "DEU", "ITA"]})
+df["population"] = df.iso_code.map(population)
