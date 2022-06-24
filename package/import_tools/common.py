@@ -10,6 +10,7 @@ import pandas as pd
 class ImportData(ABC):
     indicators: dict = field(default_factory=dict)
     data: pd.DataFrame = None
+    update_data: bool = False
 
     @abstractmethod
     def load_indicator(self, **kwargs) -> ImportData:
