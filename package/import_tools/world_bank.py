@@ -65,6 +65,8 @@ class WorldBankData(ImportData):
     Then, call the load_indicator method to load an indicator. This can be done multiple times.
     If the data for an indicator has never been downloaded, it will be downloaded.
     If it has been downloaded, it will be loaded from disk.
+    If `update_data` is set to True when creating the object, the data will be updated
+    from the World Bank for each indicator.
     You can force an update by calling `update` if you want to refresh the data stored on disk.
     You can get a dataframe of the data by calling `get_data`."""
 
@@ -108,7 +110,7 @@ class WorldBankData(ImportData):
         }
 
         # get the indicator data if it's not saved on disk.
-        if not os.path.exists(f"{PATHS.imported_data}/{file_name}"):
+        if not os.path.exists(f"{PATHS.imported_data}/{file_name}") or self.update_data:
             _get_wb_data(**__params).to_csv(
                 f"{PATHS.imported_data}/{file_name}", index=False
             )

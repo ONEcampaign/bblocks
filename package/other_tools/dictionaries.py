@@ -1,47 +1,10 @@
-from dataclasses import dataclass, field
+from package.other_tools.common import Dict
 from country_converter import convert
 import pandas as pd
 
 from package.config import PATHS
 import os
 from package.import_tools.world_bank import WorldBankData
-
-
-@dataclass(repr=False)
-class Dict(dict):
-    dictionary: dict = field(default_factory=dict)
-
-    """A wrapper that adds functionality to a standard dictionary"""
-
-    def __post_init__(self):
-        self.update(self.dictionary)
-
-    def change_keys(self, from_: str = None, to: str = "ISO3") -> dict:
-        _ = {
-            convert(names=key, src=from_, to=to, not_found=None): value
-            for key, value in self.dictionary.items()
-        }
-        self.clear()
-        self.update(_)
-        return self
-
-    def reverse(self) -> dict:
-        _ = {value: key for key, value in self.items()}
-        self.clear()
-        self.update(_)
-        return self
-
-    def set_keys_type(self, type_: type) -> dict:
-        _ = {type_(key): value for key, value in self.dictionary.items()}
-        self.clear()
-        self.update(_)
-        return self
-
-    def set_values_type(self, type_: type) -> dict:
-        _ = {key: type_(value) for key, value in self.dictionary.items()}
-        self.clear()
-        self.update(_)
-        return self
 
 
 def __download_income_levels():
@@ -85,7 +48,7 @@ def update_dictionaries() -> None:
     __download_income_levels()
 
 
-g20: Dict = Dict(
+g20_countries: Dict = Dict(
     {
         x: convert(x, src="ISO3", to="name_short", not_found=None)
         for x in [
@@ -108,7 +71,6 @@ g20: Dict = Dict(
             "TUR",
             "GBR",
             "USA",
-            "EU",
         ]
     }
 )
@@ -166,6 +128,3 @@ population_density = Dict(
 )
 
 population = Dict(__wb.get_data("SP.POP.TOTL").set_index("iso_code")["value"].to_dict())
-
-df = pd.DataFrame({"iso_code": ["FRA", "DEU", "ITA"]})
-df["population"] = df.iso_code.map(population)
