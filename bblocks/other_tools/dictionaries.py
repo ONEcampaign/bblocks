@@ -111,21 +111,12 @@ eu27 = Dict(
     }
 )
 
-g7 = Dict(
-    {
-        x: convert(x, src="ISO3", to="name_short")
-        for x in ["FRA", "DEU", "ITA", "GBR", "USA", "JPN", "CAN"]
-    }
-)
+g7 = Dict({x: convert(x, src="ISO3", to="name_short") for x in ["FRA", "DEU", "ITA", "GBR", "USA", "JPN", "CAN"]})
 
 income_levels = Dict(__get_income_levels())
 
-life_expectancy = Dict(
-    __wb.get_data("SP.DYN.LE00.IN").set_index("iso_code")["value"].to_dict()
-)
+life_expectancy = Dict(__wb.get_data("SP.DYN.LE00.IN").set_index("iso_code")["value"].to_dict())
 
-population_density = Dict(
-    __wb.get_data("EN.POP.DNST").set_index("iso_code")["value"].to_dict()
-)
+population_density = Dict(__wb.get_data("EN.POP.DNST").set_index("iso_code")["value"].to_dict())
 
 population = Dict(__wb.get_data("SP.POP.TOTL").set_index("iso_code")["value"].to_dict())

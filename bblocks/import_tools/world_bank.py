@@ -46,6 +46,7 @@ def _get_wb_data(
         .rename(
             columns={
                 "economy": "iso_code",
+                "index": "iso_code",
                 series: "value",
                 "time": "date",
                 f"{series}:T": "date",
