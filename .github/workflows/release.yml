@@ -52,10 +52,10 @@ jobs:
           pip install poetry
           pip install -r requirements.txt
 
-      - name: build documentation
-        run: |
-          poetry install -E doc
-          poetry run mkdocs build
+      #- name: build documentation
+      #  run: |
+      #    poetry install -E doc
+      #    poetry run mkdocs build
 
       - name: publish documentation
         uses: peaceiris/actions-gh-pages@v3
