@@ -2,9 +2,9 @@
 [tool.poetry]
 name = "bblocks"
 version = "0.0.1"
-homepage = "https://github.com/ONEcampaign/bblocks"
-description = "A package with tools to help with getting and analysing data."
-authors = ["ONEcampaign <data@one.org>"]
+homepage = "https://github.com/ONECampaign/bblocks"
+description = "A package with tools to download and analyse international development data."
+authors = ["The ONE Campaign <data@one.org>"]
 readme = "README.md"
 license =  "MIT"
 classifiers=[
@@ -13,10 +13,7 @@ classifiers=[
     'License :: OSI Approved :: MIT License',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
 ]
 packages = [
     { include = "bblocks" },
@@ -24,7 +21,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.2,<4.0"
+python = ">=3.10,<4.0"
+
 
 black  = { version = "^21.5b2", optional = true}
 isort  = { version = "^5.8.0", optional = true}
@@ -46,6 +44,7 @@ mkdocs-autorefs = {version = "^0.2.1", optional = true}
 pre-commit = {version = "^2.12.0", optional = true}
 toml = {version = "^0.10.2", optional = true}
 bump2version = {version = "^1.0.1", optional = true}
+pandas = "^1.4.3"
 
 [tool.poetry.extras]
 test = [
@@ -55,10 +54,11 @@ test = [
     "mypy",
     "flake8",
     "flake8-docstrings",
-    "pytest-cov"
+    "pytest-cov",
+    "pandas"
     ]
 
-dev = ["tox", "pre-commit", "virtualenv", "pip", "twine", "toml", "bump2version"]
+dev = ["tox", "pre-commit", "virtualenv", "pip", "twine", "toml", "bump2version", "pandas"]
 
 doc = [
     "mkdocs",
@@ -66,13 +66,17 @@ doc = [
     "mkdocs-material",
     "mkdocstrings",
     "mkdocs-material-extension",
-    "mkdocs-autorefs"
+    "mkdocs-autorefs",
+    "pandas"
     ]
+
+[tool.poetry.scripts]
+bblocks = 'bblocks.cli:main'
 
 [tool.black]
 line-length = 120
 skip-string-normalization = true
-target-version = ['py36', 'py37', 'py38']
+target-version = ['py310']
 include = '\.pyi?$'
 exclude = '''
 /(

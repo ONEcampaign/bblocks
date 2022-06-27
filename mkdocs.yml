@@ -1,7 +1,7 @@
 site_name: bblocks
-site_url: https://ONEcampaign.github.io/bblocks
-repo_url: https://github.com/ONEcampaign/bblocks
-repo_name: ONEcampaign/bblocks
+site_url: https://ONECampaign.github.io/bblocks
+repo_url: https://github.com/ONECampaign/bblocks
+repo_name: ONECampaign/bblocks
 #strict: true
 nav:
   - Home: index.md
@@ -63,7 +63,7 @@ extra:
       link: https://github.com/waynerv/cookiecutter-pypackage
       name: Facebook
     - icon: fontawesome/brands/github
-      link: https://github.com/ONEcampaign/bblocks
+      link: https://github.com/ONECampaign/bblocks
       name: Github
     - icon: material/email
       link: "mailto:data@one.org"
