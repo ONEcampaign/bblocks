@@ -46,6 +46,7 @@ def _get_wb_data(
         .rename(
             columns={
                 "economy": "iso_code",
+                "index": "iso_code",
                 series: "value",
                 "time": "date",
                 f"{series}:T": "date",
@@ -280,7 +281,7 @@ class WorldBankPinkSheet:
         *,
         start_date: str = None,
         end_date: str = None,
-        indicators: str | list = None
+        indicators: str | list = None,
     ):
         """Get data as a Pandas DataFrame
 
