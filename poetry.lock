@@ -760,10 +760,15 @@ python-versions = ">=3.7"
 docs = ["sphinx", "jaraco.packaging (>=9)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy (>=0.9.1)"]
 
+[extras]
+dev = ["twine", "pandas"]
+doc = ["pandas"]
+test = ["pandas"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "509713f01e764eb1ff1f597b740504b6b74327c7f3dfe79a66aa2b6d071f56c8"
+content-hash = "c2f254ab6637852f2b5a632c5782d1fe571c5897d47aff99187b44e3fa85353b"
 
 [metadata.files]
 black = [

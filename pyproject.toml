@@ -1,16 +1,30 @@
 [tool.poetry]
 name = "bblocks"
-version = "0.1.0"
-description = "Tools to download and analyse international development data"
+version = "0.0.5"
+homepage = "https://github.com/ONECampaign/bblocks"
+description = "A package with tools to download and analyse international development data."
 authors = ["The ONE Campaign <data@one.org>"]
+readme = "README.md"
 license = "MIT"
+classifiers=[
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+]
+packages = [
+    { include = "bblocks" },
+    { include = "tests", format = "sdist" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-wbgapi = "^1.1.2"
-pandas = "^1.4.3"
-numpy = "^1.23.0"
-country-converter = "^0.7.4"
+wbgapi = "^1.1"
+pandas = "^1.4"
+numpy = "^1.23"
+country-converter = "^0.7"
 openpyxl = "^3.0.10"
 click = "^8.1.3"
 twine = "^4.0.1"
@@ -27,6 +41,56 @@ tox = "^3.25.0"
 coverage = "^6.4.1"
 twine = "^4.0.1"
 mkdocs = "^1.3.0"
+wbgapi = "^1.1"
+pandas = "^1.4"
+numpy = "^1.23"
+country-converter = "^0.7"
+openpyxl = "^3.0.10"
+click = "^8.1.3"
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.poetry.extras]
+test = [
+    "pytest",
+    "black",
+    "isort",
+    "mypy",
+    "flake8",
+    "flake8-docstrings",
+    "pytest-cov",
+    "pandas"
+]
+
+dev = ["tox", "pre-commit", "virtualenv", "pip", "twine", "toml", "bump2version", "pandas"]
+
+doc = [
+    "mkdocs",
+    "mkdocs-include-markdown-plugin",
+    "mkdocs-material",
+    "mkdocstrings",
+    "mkdocs-material-extension",
+    "mkdocs-autorefs",
+    "pandas"
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

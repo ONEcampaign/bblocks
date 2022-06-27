@@ -1,22 +1,4 @@
 repos:
-  - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.9
-    hooks:
-      - id: forbid-crlf
-      - id: remove-crlf
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-merge-conflict
-      - id: check-yaml
-        args: [ --unsafe ]
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.8.0
-    hooks:
-      - id: isort
-        args: [ "--filter-files" ]
   - repo: https://github.com/ambv/black
     rev: 21.5b1
     hooks:

@@ -11,16 +11,9 @@ nav:
   - Contributing: contributing.md
   - Changelog: changelog.md
 theme:
-  name: material
+  name: mkdocs
   language: en
   features:
     - navigation.indexes
     - navigation.instant
     - navigation.tabs.sticky
-plugins:
-  - include-markdown
-  - search:
-      lang: en
-  - mkdocstrings:
-      watch:
-        - bblocks
