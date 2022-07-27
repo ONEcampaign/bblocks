@@ -1,4 +1,6 @@
-from bblocks.cleaning_tools.common import clean_number
+import pandas as pd
+
+from bblocks.cleaning_tools.common import clean_number, clean_numeric_series
 
 
 def test_clean_number() -> None:
@@ -17,3 +19,26 @@ def test_clean_number() -> None:
     assert clean_number(n3, to=int) == 5_000_000
     assert clean_number(n5) == 45.50
     assert clean_number(n5, to=int) == 46
+
+
+def test_clean_numeric_series() -> None:
+    from numpy import nan
+
+    # test a dataframe
+    df = pd.DataFrame(
+        {"a": ['1', '$2.5', '3,000.43'], "b": ['456,234.1', '$5,000,000',  'strong',]}
+    )
+
+    # test df with a single column as string
+    assert [1.0, 2.5, 3000.43] == clean_numeric_series(df, series_columns="a")[
+        "a"
+    ].to_list()
+
+    # test df with two columns
+    assert [456234.1, 5000000.0] == clean_numeric_series(
+        df, series_columns=["a", "b"]
+    )["b"].to_list()[:2]
+
+    # test a series
+    s = pd.Series(['1', '$2.5', '3,000.43'])
+    assert [1, 2, 3000] == clean_numeric_series(s, to=int).to_list()
