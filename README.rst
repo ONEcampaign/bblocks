@@ -1,5 +1,5 @@
-bblocks
-=======
+The bblocks package
+===================
 
 |pypi| |python| |Build Status| |codecov|
 
