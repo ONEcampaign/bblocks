@@ -1,5 +1,5 @@
-bblocks' modules
-===================
+bblocks
+=======
 
 .. toctree::
    :maxdepth: 4
