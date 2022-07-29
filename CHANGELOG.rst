@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[0.2.0] - 2022
+--------------
+
+-  Added a new feature: ``period_avg()``, which calculates the average of a
+   time series/DataFrame for a given period.
+
+
 [0.1.3] - 2022-07-29
 --------------
 
