@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bblocks.cleaning_tools.common import clean_number, clean_numeric_series
+from bblocks.cleaning_tools.clean import clean_number, clean_numeric_series
 
 
 def test_clean_number() -> None:
@@ -22,7 +22,6 @@ def test_clean_number() -> None:
 
 
 def test_clean_numeric_series() -> None:
-    from numpy import nan
 
     # test a dataframe
     df = pd.DataFrame(
