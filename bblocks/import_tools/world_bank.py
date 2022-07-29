@@ -153,8 +153,8 @@ class WorldBankData(ImportData):
         Get the data as a Pandas DataFrame
         Args:
             indicators: By default, all indicators are returned in a single DataFrame.
-                If a list of indicators is passed, only those indicators will be returned.
-                A single indicator can be passed as a string as well.
+            If a list of indicators is passed, only those indicators will be returned.
+            A single indicator can be passed as a string as well.
 
         Returns:
             A Pandas DataFrame with the data for the indicators requested.
