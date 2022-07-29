@@ -25,7 +25,14 @@ def test_clean_numeric_series() -> None:
 
     # test a dataframe
     df = pd.DataFrame(
-        {"a": ['1', '$2.5', '3,000.43'], "b": ['456,234.1', '$5,000,000',  'strong',]}
+        {
+            "a": ["1", "$2.5", "3,000.43"],
+            "b": [
+                "456,234.1",
+                "$5,000,000",
+                "strong",
+            ],
+        }
     )
 
     # test df with a single column as string
@@ -34,10 +41,10 @@ def test_clean_numeric_series() -> None:
     ].to_list()
 
     # test df with two columns
-    assert [456234.1, 5000000.0] == clean_numeric_series(
-        df, series_columns=["a", "b"]
-    )["b"].to_list()[:2]
+    assert [456234.1, 5000000.0] == clean_numeric_series(df, series_columns=["a", "b"])[
+        "b"
+    ].to_list()[:2]
 
     # test a series
-    s = pd.Series(['1', '$2.5', '3,000.43'])
+    s = pd.Series(["1", "$2.5", "3,000.43"])
     assert [1, 2, 3000] == clean_numeric_series(s, to=int).to_list()
