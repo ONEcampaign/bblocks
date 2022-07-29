@@ -1,7 +1,8 @@
 The bblocks package
 ===================
 
-|pypi| |python| |Build Status| |codecov|
+|pypi| |python| |Documentation| |codecov|
+
 
 **bblocks** is a python package with tools to download and analyse
 development data. These tools are meant to be the *building blocks* of
@@ -12,7 +13,7 @@ are very likely to change. We welcome feedback, feature requests, and
 collaboration. We hope that this will be a valuable resource for
 organisations working with sustainable development data.
 
--  Documentation: https://ONECampaign.github.io/bblocks
+-  Documentation: https://bblocks.readthedocs.io/
 -  GitHub: https://github.com/ONECampaign/bblocks
 -  PyPI: https://pypi.org/project/bblocks/
 -  Free software: MIT
@@ -46,7 +47,8 @@ Please feel free to reach out via GitHub or at data at one.org
    :target: https://pypi.org/project/bblocks/
 .. |python| image:: https://img.shields.io/pypi/pyversions/bblocks.svg
    :target: https://pypi.org/project/bblocks/
-.. |Build Status| image:: https://github.com/ONECampaign/bblocks/actions/workflows/dev.yml/badge.svg
-   :target: https://github.com/ONECampaign/bblocks/actions/workflows/dev.yml
 .. |codecov| image:: https://codecov.io/gh/ONECampaign/bblocks/branch/main/graph/badge.svg?token=YN8S1719NH
    :target: https://codecov.io/gh/ONECampaign/bblocks
+.. |Documentation| image:: https://readthedocs.org/projects/bblocks/badge/?version=latest
+   :target: https://bblocks.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status

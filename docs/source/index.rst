@@ -10,6 +10,7 @@ Welcome to bblocks's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   readme
    bblocks
 
 
