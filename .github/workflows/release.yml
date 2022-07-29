@@ -33,14 +33,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      #- name: Get Changelog Entry
-      #  id: changelog_reader
-      #  uses: mindsers/changelog-reader-action@v2
-      #  with:
-      #    validation_depth: 10
-      #    version: ${{ steps.tag_name.outputs.current_version }}
-      #    path: ./CHANGELOG.md
-
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-versions }}
@@ -54,7 +46,9 @@ jobs:
       #- name: build documentation
       #  run: |
       #    poetry install -E doc
-      #    poetry run mkdocs build
+      #    cd docs
+      #    poetry run make clean
+      #    poetry run make html
 
       - name: publish documentation
         uses: peaceiris/actions-gh-pages@v3
