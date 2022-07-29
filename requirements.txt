@@ -1,6 +1,16 @@
-pandas
-wbgapi
-pytest
-numpy
-country_converter
-openpyxl
+certifi==2022.6.15; python_version >= "3.7" and python_version < "4"
+charset-normalizer==2.1.0; python_version >= "3.7" and python_version < "4" and python_full_version >= "3.6.0"
+country-converter==0.7.4
+et-xmlfile==1.1.0; python_version >= "3.6"
+idna==3.3; python_version >= "3.7" and python_version < "4"
+numpy==1.23.1; python_version >= "3.8"
+openpyxl==3.0.10; python_version >= "3.6"
+pandas==1.4.3; python_version >= "3.8"
+python-dateutil==2.8.2; python_version >= "3.8" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.8"
+pytz==2022.1; python_version >= "3.8"
+pyyaml==6.0; python_version >= "3.6"
+requests==2.28.1; python_version >= "3.7" and python_version < "4"
+six==1.16.0; python_version >= "3.8" and python_full_version < "3.0.0" or python_full_version >= "3.3.0" and python_version >= "3.8"
+tabulate==0.8.10; python_version >= "3.0" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.0"
+urllib3==1.26.11; python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4" or python_full_version >= "3.6.0" and python_version < "4" and python_version >= "3.7"
+wbgapi==1.0.12; python_version >= "3.0"
