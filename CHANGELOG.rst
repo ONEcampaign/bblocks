@@ -6,6 +6,8 @@ Changelog
 
 -  Added a new feature: ``period_avg()``, which calculates the average of a
    time series/DataFrame for a given period.
+- Added a new module: ``imf``, which contains functions and objects to extract IMF
+  data (SDR holdings and allocations).
 
 
 [0.1.3] - 2022-07-29
