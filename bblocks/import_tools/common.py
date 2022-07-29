@@ -33,7 +33,10 @@ def append_new_data(
 ) -> pd.DataFrame:
     """Append new data to an existing dataframe"""
     # Read file
-    saved = pd.read_csv(existing_data_path, parse_dates=parse_dates)
+    try:
+        saved = pd.read_csv(existing_data_path, parse_dates=parse_dates)
+    except FileNotFoundError:
+        saved = pd.DataFrame()
 
     # Append new data
     data = pd.concat([saved, new_data], ignore_index=True)
