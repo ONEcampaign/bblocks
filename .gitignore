@@ -67,9 +67,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
-docs/_build/
-
 # PyBuilder
 target/
 
@@ -100,9 +97,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 
@@ -110,5 +104,4 @@ ENV/
 .vscode/
 .idea/
 
-# mkdocs build dir
-site/
+

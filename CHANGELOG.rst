@@ -1,29 +1,27 @@
 Changelog
 =========
 
-[0.1.3] - 2022
+[0.1.3] - 2022-07-29
 --------------
 
 -  Added a new feature: ``clean_number()`` which cleans a string and
    returns a float or int.
 -  Added a new feature: ``clean_numeric_series()`` which cleans the
    numbers in a pd.Series (or list of series)
+-  improved documentation
 
-.. _section-1:
 
 [0.0.3] - 2022-06-27
 --------------------
 
 -  First release on PyPI.
 
-.. _section-2:
 
 [0.0.2] - 2022-06-27
 --------------------
 
 -  Preparation for first release
 
-.. _section-3:
 
 [0.0.1] - 2022-06-27
 --------------------
