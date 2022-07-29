@@ -834,7 +834,7 @@ testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", 
 
 [[package]]
 name = "wbgapi"
-version = "1.1.2"
+version = "1.0.12"
 description = "wbgapi provides a comprehensive interface to the World Bank's data and metadata APIs"
 category = "main"
 optional = false
@@ -873,7 +873,7 @@ test = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "01f43c2afce5da1dd6f636fee5d01c7d561e001773856c989b74432d173e3e1a"
+content-hash = "24b567532ff5b8f7311e378c9afec1d1e6de0174920907503edb21f06255ef84"
 
 [metadata.files]
 alabaster = [
@@ -1317,10 +1317,7 @@ twine = [
 ]
 urllib3 = []
 virtualenv = []
-wbgapi = [
-    {file = "wbgapi-1.1.2-py3-none-any.whl", hash = "sha256:77f4807db012bb8e44708c3f003a467171e38647972ad76ec4b5a4981ff3d59b"},
-    {file = "wbgapi-1.1.2.tar.gz", hash = "sha256:f297bf7e903b8be6a6b31d596a7e290f55dd25000dc08bb50f0043efa6ec91da"},
-]
+wbgapi = []
 webencodings = [
     {file = "webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78"},
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},

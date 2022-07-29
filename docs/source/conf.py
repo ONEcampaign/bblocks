@@ -8,7 +8,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../../bblocks/'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 project = 'bblocks'
 copyright = '2022, The ONE Campaign'
