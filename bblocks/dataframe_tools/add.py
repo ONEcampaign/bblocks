@@ -1,0 +1,66 @@
+import pandas as pd
+from bblocks.cleaning_tools.clean import convert_id
+from bblocks.dataframe_tools.common import get_population_df
+
+
+def add_population_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None,
+    date_column: str | None,
+    target_column: str = "population",
+    update_population_data: bool = False,
+) -> pd.DataFrame:
+    """Add population column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DAC code, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DAC" must be passed.
+        date_column: Optionally, a date column can be specified. If so, the population
+            for that year will be used. If it's missing, it will be missing in the returned
+            column as well. If the data isn't specified, the most population data from
+            the world bank is used.
+        target_column: the column where the population data will be stored.
+        update_population_data: whether to update the underlying data or not.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing the population data.
+    """
+
+    if id_type is None:
+        id_type = "regex"
+
+    if id_column not in df.columns:
+        raise ValueError(f"id_column '{id_column}' not in dataframe columns")
+
+    if date_column is not None and date_column not in df.columns:
+        raise ValueError(f"date_column '{date_column}' not in dataframe columns")
+
+    pop_df = get_population_df(
+        most_recent_only=True if date_column is None else False,
+        update_population_data=update_population_data,
+    )
+
+    # create id and year columns
+    df["id_"] = convert_id(df[id_column], id_type)
+
+    if date_column is not None:
+        try:
+            df["year"] = pd.to_datetime(
+                df[date_column], infer_datetime_format=True
+            ).dt.year
+
+        except ValueError:
+            raise ValueError(
+                f"could not parse date format in '{date_column}'."
+                f"To fix, convert column to datetime"
+            )
+
+    on_ = ["id_", "year"] if date_column is None else ["id_"]
+
+    df[target_column] = df.merge(pop_df, on=on_, how="left").population
+
+    return df
