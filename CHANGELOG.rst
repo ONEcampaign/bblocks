@@ -6,7 +6,7 @@ Changelog
 
 -  Added a new feature: ``period_avg()``, which calculates the average of a
    time series/DataFrame for a given period.
-
+-  Added a new feature: ``get_dsa()``, which extracts DSA data from the IMF.
 
 [0.1.3] - 2022-07-29
 --------------
