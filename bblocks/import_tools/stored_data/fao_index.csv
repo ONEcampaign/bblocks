@@ -1,4 +1,4 @@
-date,Food Price Index,Meat,Dairy,Cereals,Oils,Sugar
+date,food_price_index,Meat,Dairy,Cereals,Oils,Sugar
 1990-01-01,64.1,73.4,53.5,64.1,44.59,87.9
 1990-02-01,64.5,76.0,52.2,62.2,44.5,90.7
 1990-03-01,63.8,77.8,41.4,61.3,45.75,95.1

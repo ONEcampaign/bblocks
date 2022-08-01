@@ -37,11 +37,13 @@ def __clean_fao_food_price_index(df: pd.DataFrame) -> pd.DataFrame:
         .dropna(subset="date")
         .reset_index(drop=True)
         .loc[:, lambda d: ~d.columns.str.contains("Unnamed")]
+        .rename(columns={"Food Price Index": "food_price_index"})
     )
 
 
-def get_fao_index(local_path: str = f'{PATHS.imported_data}/fao_index.csv',
-                  update: bool = False) -> pd.DataFrame:
+def get_fao_index(
+    local_path: str = f"{PATHS.imported_data}/fao_index.csv", update: bool = False
+) -> pd.DataFrame:
     """Get FAO food price index
 
     Args:
