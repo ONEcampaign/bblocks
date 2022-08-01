@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bblocks.cleaning_tools.clean import clean_number, clean_numeric_series
+from bblocks.cleaning_tools.clean import clean_number, clean_numeric_series, convert_id
 
 
 def test_clean_number() -> None:
@@ -48,3 +48,7 @@ def test_clean_numeric_series() -> None:
     # test a series
     s = pd.Series(["1", "$2.5", "3,000.43"])
     assert [1, 2, 3000] == clean_numeric_series(s, to=int).to_list()
+
+
+def test_convert_id():
+    assert False
