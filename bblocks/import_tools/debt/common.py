@@ -8,16 +8,19 @@ import requests
 from bblocks.config import PATHS
 from numpy import nan
 
+URL: str = "https://www.imf.org/external/Pubs/ft/dsa/dsalist.pdf"
+
 
 def __download_dsa_pdf(url: str, local_path: str) -> None:
     """Downloads dsa pdf to the file"""
 
-    try:
-        response = requests.get(url)
-        with open(local_path, "wb") as f:
-            f.write(response.content)
-    except ConnectionError:
+    response = requests.get(url)
+
+    if response.status_code != 200:
         raise ConnectionError("Could not download PDF")
+
+    with open(local_path, "wb") as f:
+        f.write(response.content)
 
 
 def __pdf_to_df(local_path: str) -> pd.DataFrame:
@@ -56,7 +59,9 @@ def __clean_dsa(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def get_dsa(update=False) -> pd.DataFrame:
+def get_dsa(
+    update=False, local_path: str = f"{PATHS.imported_data}/dsa_list.pdf"
+) -> pd.DataFrame:
     """Extract DSA data from the
 
     Extract the most recent Debt Sustainability Assessment (DSA) data
@@ -64,6 +69,7 @@ def get_dsa(update=False) -> pd.DataFrame:
     URL = https://www.imf.org/external/Pubs/ft/dsa/DSAlist.pdf
 
     Args:
+        local_path: where the downloaded PDF will be stored
         update (bool): if True, updates the data from the IMF website. Otherwise
             it loads the data from the local file. If a local file does not exist,
             the data will be extracted from the website.
@@ -72,10 +78,7 @@ def get_dsa(update=False) -> pd.DataFrame:
         pandas dataframe with country, latest publication date, and risk of debt distress
     """
 
-    url = "https://www.imf.org/external/Pubs/ft/dsa/dsalist.pdf"
-    local_path = f"{PATHS.imported_data}/dsa_list.pdf"
-
     if not os.path.exists(local_path) or update:
-        __download_dsa_pdf(url, local_path)
+        __download_dsa_pdf(URL, local_path)
 
     return __pdf_to_df(local_path).pipe(__clean_dsa)
