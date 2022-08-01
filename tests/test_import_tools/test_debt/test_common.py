@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from numpy import nan
 import os
 from bblocks.config import PATHS
@@ -18,4 +19,12 @@ def test_get_dsa():
     time = os.path.getmtime(file_name)
 
     df = common.get_dsa(update=True)
+
     assert os.path.getmtime(file_name) > time
+
+    common.__dict__["URL"]: str = "https://www.imf.org/external/Pubs/ft/dsa/df"
+
+    with pytest.raises(ConnectionError):
+        df = common.get_dsa(update=True)
+
+
