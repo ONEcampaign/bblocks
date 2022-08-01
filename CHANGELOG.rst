@@ -6,6 +6,8 @@ Changelog
 
 -  Added a new feature: ``period_avg()``, which calculates the average of a
    time series/DataFrame for a given period.
+-  Added a new module: ``imf``, which contains functions and objects to extract IMF
+   data (SDR holdings and allocations).
 -  Added a new feature: ``get_dsa()``, which extracts DSA data from the IMF.
 -  Added a new feature: ``change_from_date()``, which calculates the nominal
    or percentage change for a column (by a grouper) from/to a given date.
@@ -14,6 +16,7 @@ Changelog
 -  Added a new feature: ``WFPData``, class, which is used to download
    *headline* and *food* inflation data, plus *people with insufficient
    food consumption* data, from WFP.
+
 
 [0.1.3] - 2022-07-29
 --------------
