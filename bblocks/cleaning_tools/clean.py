@@ -1,8 +1,11 @@
 from typing import Type, Optional
+import country_converter as coco
 
 import pandas as pd
 from numpy import nan
 import re
+
+from bblocks.other_tools import dictionaries
 
 
 def clean_number(number: str, to: Type = float) -> float | int:
@@ -31,9 +34,9 @@ def clean_number(number: str, to: Type = float) -> float | int:
 
 
 def clean_numeric_series(
-        data: pd.Series | pd.DataFrame,
-        series_columns: Optional[str | list] = None,
-        to: Type = float,
+    data: pd.Series | pd.DataFrame,
+    series_columns: Optional[str | list] = None,
+    to: Type = float,
 ) -> pd.DataFrame | pd.Series:
     """Clean a numeric column in a Pandas DataFrame or a Pandas Series which is
     meant to be numeric. When selecting to=int, the default python round behaviour
@@ -62,3 +65,18 @@ def clean_numeric_series(
 
     if isinstance(data, pd.Series):
         return data.apply(clean_number, to=to)
+
+
+def convert_id(
+    series: pd.Series,
+    from_type: str = "regex",
+    to_type: str = "ISO3",
+    not_found: str | None = None,
+) -> pd.Series:
+
+    """Takes a Pandas' series with country IDs and converts them into the desired type"""
+
+    if from_type == "DAC":
+        return series.map(dictionaries.dac_codes).fillna("DAC")
+    else:
+        return coco.convert(series, src=from_type, to=to_type, not_found=not_found)
