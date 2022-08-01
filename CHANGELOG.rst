@@ -6,6 +6,13 @@ Changelog
 
 -  Added a new feature: ``period_avg()``, which calculates the average of a
    time series/DataFrame for a given period.
+-  Added a new feature: ``change_from_date()``, which calculates the nominal
+   or percentage change for a column (by a grouper) from/to a given date.
+-  Added a new feature: ``append_new_data()``, to read a previously-saved
+   DataFrame and append new data to it (removing duplicates by date).
+-  Added a new feature: ``WFPData``, class, which is used to download
+   *headline* and *food* inflation data, plus *people with insufficient
+   food consumption* data, from WFP.
 
 
 [0.1.3] - 2022-07-29
