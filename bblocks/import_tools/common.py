@@ -108,3 +108,19 @@ def get_dsa(update=False) -> pd.DataFrame:
         __download_dsa_pdf(url, local_path)
 
     return __pdf_to_df(local_path).pipe(__clean_dsa)
+
+def append_new_data(
+    new_data: pd.DataFrame, existing_data_path: str, parse_dates: list[str] | None
+) -> pd.DataFrame:
+    """Append new data to an existing dataframe"""
+    # Read file
+    try:
+        saved = pd.read_csv(existing_data_path, parse_dates=parse_dates)
+    except FileNotFoundError:
+        saved = pd.DataFrame()
+
+    # Append new data
+    data = pd.concat([saved, new_data], ignore_index=True)
+
+    return data.drop_duplicates(keep="last").reset_index(drop=True)
+

@@ -1,9 +1,8 @@
-from bblocks.analysis_tools.get import period_avg
+from bblocks.analysis_tools.get import period_avg, change_from_date
 import pandas as pd
 
 
 def test_period_avg():
-
     # Create a sample dataframe with a datetime column and multiple numeric columns
     test_data = pd.DataFrame(
         {
@@ -34,7 +33,7 @@ def test_period_avg():
     assert result.value.sum() == 3.5
     assert result.value2.sum() == 11.5
     assert result1_1.value.sum() == 3.5
-    assert not 'value2' in result1_1.columns
+    assert "value2" not in result1_1.columns
 
     test_data2 = test_data.assign(date=pd.to_datetime(test_data.date).dt.year)
 
@@ -47,3 +46,46 @@ def test_period_avg():
 
     assert result2.value.sum() == 5
     assert result2.value2.sum() == 13
+
+
+def test_change_from_date():
+    # Create a sample dataframe with a datetime column and multiple numeric columns
+    test_data = pd.DataFrame(
+        {
+            "date": ["2018-01-01", "2021-01-01", "2018-01-01", "2021-01-01"],
+            "value": [1, 3, 1, 7],
+            "value2": [2, 4, 4, 2],
+            "country": ["A", "A", "B", "B"],
+        }
+    ).astype({"date": "datetime64[ns]"})
+
+    # Calculate the change in value from 2020-01-01 to 2021-01-01
+    result = change_from_date(
+        test_data,
+        date_column="date",
+        start_date="2018-01-01",
+        end_date="2021-01-01",
+        value_columns=["value", "value2"],
+    )
+
+    assert result.value.to_list() == [2.0, 6.0]
+    assert result.value2.to_list() == [2.0, -2.0]
+
+    test_data2 = pd.DataFrame(
+        {
+            "date": [2018, 2021, 2018, 2021],
+            "value": [1, 3, 1, 7],
+            "value2": [2, 4, 4, 2],
+            "country": ["A", "A", "B", "B"],
+        }
+    )
+    result2 = change_from_date(
+        test_data,
+        date_column="date",
+        start_date="2018-01-01",
+        end_date="2021-01-01",
+        value_columns=["value", "value2"],
+    )
+
+    assert result2.value.to_list() == [2.0, 6.0]
+    assert result2.value2.to_list() == [2.0, -2.0]
