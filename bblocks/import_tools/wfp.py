@@ -1,9 +1,9 @@
+import json
 from dataclasses import dataclass
 from typing import KeysView
 
 import pandas as pd
 import requests
-import json
 
 from bblocks import config
 from bblocks.import_tools.common import append_new_data, ImportData
@@ -39,29 +39,32 @@ def _read_wfp_country_codes() -> dict:
 
 
 def _get_inflation(country_iso: str) -> None:
+    """Get inflation data from VAM for a single country based on iso code"""
     url = f"https://api.vam.wfp.org/dataviz/api/GetCsv?idx=71,116&iso3={country_iso}"
+
     try:
-        df = (
-            pd.read_csv(
-                url,
-                usecols=[0, 1, 2],
-                skipfooter=2,
-                engine="python",
-                parse_dates=["Time"],
-            )
-            .rename(
-                columns={
-                    "Time": "date",
-                    "Value (percent)": "value",
-                    "Indicator": "indicator",
-                }
-            )
-            .assign(iso_code=country_iso)
-            .sort_values(by=["indicator", "date"])
+        df = pd.read_csv(
+            url,
+            usecols=[0, 1, 2],
+            skipfooter=2,
+            engine="python",
+            parse_dates=["Time"],
         )
     except ConnectionError:
         print(f"Data not available for {country_iso}")
         return
+
+    df = (
+        df.rename(
+            columns={
+                "Time": "date",
+                "Value (percent)": "value",
+                "Indicator": "indicator",
+            }
+        )
+        .assign(iso_code=country_iso)
+        .sort_values(by=["indicator", "date"])
+    )
 
     df.to_csv(
         f"{config.PATHS.imported_data}/wfp_raw/{country_iso}_inflation.csv", index=False
@@ -114,7 +117,6 @@ def _get_insufficient_food(code: int, iso: str) -> None:
 
 
 def _read_files(iso_code: str, file_name: str) -> pd.DataFrame:
-
     try:
         return pd.read_csv(
             config.PATHS.imported_data + rf"/wfp_raw/{iso_code}_{file_name}.csv",
@@ -166,20 +168,25 @@ _AVAILABLE_INDICATORS: dict = {
     "insufficient_food": _read_insufficient_food,
 }
 
-
 _CODES: dict = _read_wfp_country_codes()
 
 
 @dataclass
 class WFPData(ImportData):
+    """Class to download and read WFP inflation and insufficient food data"""
+
     @property
     def available_indicators(self) -> KeysView:
+        """View the available indicators from WFP"""
         return _AVAILABLE_INDICATORS.keys()
 
     def load_indicator(self, indicator: str, **kwargs) -> None:
+        """Load an indicator into the WFPData object"""
         self.indicators[indicator] = _AVAILABLE_INDICATORS[indicator](_CODES)
 
     def update(self, **kwargs) -> None:
+        """Update the data for all the indicators currently loaded"""
+
         for indicator in self.indicators:
             if indicator == "inflation":
                 _ = [_get_inflation(iso) for iso in _CODES]
@@ -190,6 +197,15 @@ class WFPData(ImportData):
         self,
         indicators: str | list = "all",
     ) -> pd.DataFrame:
+        """
+        Get the data for the given indicators as a Pandas DataFrame
+
+        Args:
+            indicators: 'all', or one or more indicators.
+
+        Returns:
+            pd.DataFrame: A dataframe (long) with the selected indicators
+        """
 
         df = pd.DataFrame()
 
