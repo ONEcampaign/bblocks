@@ -1,12 +1,12 @@
-import requests
-import pandas as pd
-import camelot
-import country_converter as coco
 import logging
 import os
-from numpy import nan
 
+import camelot
+import country_converter as coco
+import pandas as pd
+import requests
 from bblocks.config import PATHS
+from numpy import nan
 
 
 def __download_dsa_pdf(url: str, local_path: str) -> None:
@@ -37,21 +37,23 @@ def __pdf_to_df(local_path: str) -> pd.DataFrame:
 def __clean_dsa(df: pd.DataFrame) -> pd.DataFrame:
     """Clean dsa dataframe"""
 
-    logging.getLogger("country_converter").setLevel(logging.ERROR)  # silence country_converter
+    logging.getLogger("country_converter").setLevel(
+        logging.ERROR
+    )  # silence country_converter
 
-    columns = {0: "country",
-               1: "latest_publication",
-               2: "risk_of_debt_distress"}
+    columns = {0: "country", 1: "latest_publication", 2: "risk_of_debt_distress"}
 
-    return (df
-            .filter(columns.keys())
-            .rename(columns=columns)
-            .assign(country=lambda d: coco.convert(d.country, to="name_short", not_found=nan))
-            .dropna(subset=["country"])
-            .replace({"…": nan, "": nan})
-            .assign(latest_publication=lambda d: pd.to_datetime(d.latest_publication))
-            .reset_index(drop=True)
-            )
+    return (
+        df.filter(columns.keys())
+        .rename(columns=columns)
+        .assign(
+            country=lambda d: coco.convert(d.country, to="name_short", not_found=nan)
+        )
+        .dropna(subset=["country"])
+        .replace({"…": nan, "": nan})
+        .assign(latest_publication=lambda d: pd.to_datetime(d.latest_publication))
+        .reset_index(drop=True)
+    )
 
 
 def get_dsa(update=False) -> pd.DataFrame:
@@ -71,10 +73,9 @@ def get_dsa(update=False) -> pd.DataFrame:
     """
 
     url = "https://www.imf.org/external/Pubs/ft/dsa/dsalist.pdf"
-    local_path = f'{PATHS.imported_data}/dsa_list.pdf'
+    local_path = f"{PATHS.imported_data}/dsa_list.pdf"
 
     if not os.path.exists(local_path) or update:
         __download_dsa_pdf(url, local_path)
 
     return __pdf_to_df(local_path).pipe(__clean_dsa)
-

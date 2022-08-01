@@ -26,6 +26,8 @@ country-converter = "^0.7"
 openpyxl = "^3.0.10"
 wbgapi = "1.0.12"
 requests = "^2.28.1"
+camelot-py = "^0.10.1"
+opencv-python = "^4.6.0"
 
 
 [tool.poetry.dev-dependencies]
