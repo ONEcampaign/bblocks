@@ -25,6 +25,7 @@ numpy = "^1.23"
 country-converter = "^0.7"
 openpyxl = "^3.0.10"
 wbgapi = "1.0.12"
+requests = "^2.28.1"
 
 
 [tool.poetry.dev-dependencies]
