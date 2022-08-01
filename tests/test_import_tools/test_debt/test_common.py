@@ -1,10 +1,9 @@
 import pandas as pd
-import pytest
 from numpy import nan
 import os
 from bblocks.config import PATHS
 
-from bblocks.import_tools import common
+from bblocks.import_tools.debt import common
 
 
 def test_get_dsa():
