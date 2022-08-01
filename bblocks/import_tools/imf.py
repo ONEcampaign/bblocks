@@ -123,7 +123,7 @@ class SDR(ImportData):
     want to refresh the data stored on disk.
     You can get a dataframe of the data by calling `get_data`.
 
-    The data comprises of `member` (including countries, prescribed holders e.g. central banks,
+    The data consists of `member` (including countries, prescribed holders e.g. central banks,
     and other holders - "General Resource Account"), `indicator` (holdings or allocations), `date`
     (the date of the SDR announcement), and `value`.
     """
@@ -145,7 +145,7 @@ class SDR(ImportData):
         }
         print("Successfully loaded SDR data")
 
-    def load_indicator(self, indicator: Optional | str = None) -> ImportData:
+    def load_indicator(self, indicator: Optional[str] = None) -> ImportData:
         """Load SDR data. Optionally specify the indicator to load (holdings or allocations).
 
         Args:
