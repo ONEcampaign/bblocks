@@ -16,6 +16,8 @@ Changelog
 -  Added a new feature: ``WFPData``, class, which is used to download
    *headline* and *food* inflation data, plus *people with insufficient
    food consumption* data, from WFP.
+-  Added a new feature: ``get_fao_index()``, which downloads the FAO food
+   index data.  
 
 
 [0.1.3] - 2022-07-29
