@@ -182,16 +182,24 @@ class WFPData(ImportData):
 
     def load_indicator(self, indicator: str, **kwargs) -> None:
         """Load an indicator into the WFPData object"""
-        self.indicators[indicator] = _AVAILABLE_INDICATORS[indicator](_CODES)
+        try:
+            self.indicators[indicator] = _AVAILABLE_INDICATORS[indicator](_CODES)
+        except KeyError:
+            raise ValueError(f"Indicator {indicator} not available")
 
     def update(self, **kwargs) -> None:
         """Update the data for all the indicators currently loaded"""
+
+        if len(self.indicators) == 0:
+            raise RuntimeError("No indicators loaded. Load indicators before updating")
 
         for indicator in self.indicators:
             if indicator == "inflation":
                 _ = [_get_inflation(iso) for iso in _CODES]
             elif indicator == "insufficient_food":
                 _ = [_get_insufficient_food(code, iso) for iso, code in _CODES.items()]
+
+        print("Data correctly updated. Run `load_indicator` to load the new data")
 
     def get_data(
         self,
@@ -216,6 +224,8 @@ class WFPData(ImportData):
             indicators = [
                 self.indicators[_] for _ in indicators if _ in list(self.indicators)
             ]
+            if len(indicators) == 0:
+                raise ValueError("The requested indicator has not been loaded")
 
         elif indicators == "all":
             indicators = self.indicators.values()
