@@ -33,11 +33,10 @@ def __clean_fao_food_price_index(df: pd.DataFrame) -> pd.DataFrame:
     """Clean index dataframe"""
 
     return (
-        df.rename(columns={"Date": "date"})
+        df.rename(columns={"Date": "date", "Food Price Index": "food_price_index"})
         .dropna(subset="date")
         .reset_index(drop=True)
         .loc[:, lambda d: ~d.columns.str.contains("Unnamed")]
-        .rename(columns={"Food Price Index": "food_price_index"})
     )
 
 
