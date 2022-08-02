@@ -16,6 +16,15 @@ Changelog
 -  Added a new feature: ``WFPData``, class, which is used to download
    *headline* and *food* inflation data, plus *people with insufficient
    food consumption* data, from WFP.
+-  Added a new feature: ``convert_id()``, which converts a Pandas Series containing
+   country IDs (like names or ISO3 codes) to another format (like ISO3 codes).
+-  Added a new feature: ``dac_codes``, which is a dictionary with DAC codes for DAC donor countries.
+   A future version will add recipient codes.
+-  Added a new feature: ``get_population_id()``, which returns a Pandas DataFrame with population data
+   for all countries with available World Bank Data. A future version will add the option to choose a
+   source for this data.
+-  Added a new feature: ``add_population_column()``, which adds a new column containing population data to
+   a DataFrame.
 
 
 [0.1.3] - 2022-07-29

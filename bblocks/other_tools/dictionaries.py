@@ -49,6 +49,13 @@ def update_dictionaries() -> None:
     __download_income_levels()
 
 
+def __get_dac_codes() -> dict:
+    """Return dac codes dictionary"""
+    file = PATHS.imported_data + r"/oecd_codes.csv"
+
+    return pd.read_csv(file, na_values=None, index_col="code")["iso_code"].to_dict()
+
+
 g20_countries: Dict = Dict(
     {
         x: convert(x, src="ISO3", to="name_short", not_found=None)
@@ -111,12 +118,23 @@ eu27 = Dict(
     }
 )
 
-g7 = Dict({x: convert(x, src="ISO3", to="name_short") for x in ["FRA", "DEU", "ITA", "GBR", "USA", "JPN", "CAN"]})
+g7 = Dict(
+    {
+        x: convert(x, src="ISO3", to="name_short")
+        for x in ["FRA", "DEU", "ITA", "GBR", "USA", "JPN", "CAN"]
+    }
+)
 
 income_levels = Dict(__get_income_levels())
 
-life_expectancy = Dict(__wb.get_data("SP.DYN.LE00.IN").set_index("iso_code")["value"].to_dict())
+life_expectancy = Dict(
+    __wb.get_data("SP.DYN.LE00.IN").set_index("iso_code")["value"].to_dict()
+)
 
-population_density = Dict(__wb.get_data("EN.POP.DNST").set_index("iso_code")["value"].to_dict())
+population_density = Dict(
+    __wb.get_data("EN.POP.DNST").set_index("iso_code")["value"].to_dict()
+)
 
 population = Dict(__wb.get_data("SP.POP.TOTL").set_index("iso_code")["value"].to_dict())
+
+dac_codes = Dict(__get_dac_codes())
