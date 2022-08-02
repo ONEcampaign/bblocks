@@ -3,12 +3,13 @@ import pytest
 from bblocks.dataframe_tools.add import (
     add_population_column,
     __validate_add_column_params,
+    add_short_names_column,
+    add_iso_codes_column,
 )
 import pandas as pd
 
 
 def test___validate_column_params():
-
     # Create a sample df
     df = pd.DataFrame(
         {
@@ -104,7 +105,6 @@ def test___validate_column_params():
 
 
 def test_add_population_column():
-
     # Create a sample df
     df = pd.DataFrame(
         {
@@ -135,3 +135,49 @@ def test_add_population_column():
 
     assert pop_date[0] < pop_no_date[0]
     assert pop_date[1] > pop_no_date[1]
+
+
+def test_add_short_names_column():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "formal_name": [
+                "Federal Republic of Germany",
+                "United States of America",
+                "Republic of " "Guatemala",
+            ],
+            "col_1": [2000, 2020, 2012],
+            "col_2": [100, 120, 230],
+        }
+    )
+
+    df_test = add_short_names_column(
+        df=df.copy(deep=True),
+        id_column="formal_name",
+        target_column="short_name",
+    )
+
+    assert df_test.short_name.to_list() == ["Germany", "United States", "Guatemala"]
+
+
+def test_add_iso_codes_column():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "formal_name": [
+                "Federal Republic of Germany",
+                "United States of America",
+                "Republic of " "Guatemala",
+            ],
+            "col_1": [2000, 2020, 2012],
+            "col_2": [100, 120, 230],
+        }
+    )
+
+    df_test = add_iso_codes_column(
+        df=df.copy(deep=True),
+        id_column="formal_name",
+        target_column="iso_code",
+    )
+
+    assert df_test.iso_code.to_list() == ["DEU", "USA", "GTM"]

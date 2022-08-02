@@ -95,3 +95,61 @@ def add_population_column(
     df[target_column] = df_.merge(pop_df, on=on_, how="left").population
 
     return df
+
+
+def add_short_names_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    target_column: str = "short_name",
+) -> pd.DataFrame:
+    """Add short names column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DAC code, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DAC" must be passed.
+        target_column: the column where the short names  will be stored.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing short names.
+    """
+
+    if id_column not in df.columns:
+        raise ValueError(f"id_column '{id_column}' not in dataframe columns")
+
+    df[target_column] = convert_id(
+        df[id_column], from_type=id_type, to_type="short_name"
+    )
+
+    return df
+
+
+def add_iso_codes_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    target_column: str = "iso_code",
+) -> pd.DataFrame:
+    """Add ISO3 column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DAC code, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DAC" must be passed.
+        target_column: the column where the iso codes  will be stored.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing ISO3 codes.
+    """
+
+    if id_column not in df.columns:
+        raise ValueError(f"id_column '{id_column}' not in dataframe columns")
+
+    df[target_column] = convert_id(df[id_column], from_type=id_type, to_type="ISO3")
+
+    return df
