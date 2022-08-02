@@ -25,6 +25,9 @@ Changelog
    source for this data.
 -  Added a new feature: ``add_population_column()``, which adds a new column containing population data to
    a DataFrame.
+-  Added a new feature: ``add_short_names_column()``, which adds a new column containing short country names to
+   a DataFrame.
+
 
 
 [0.1.3] - 2022-07-29
