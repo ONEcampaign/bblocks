@@ -27,6 +27,8 @@ Changelog
    a DataFrame.
 -  Added a new feature: ``add_short_names_column()``, which adds a new column containing short country names to
    a DataFrame.
+-  Added a new feature: ``add_iso_codes_column()``, which adds a new column containing ISO3 codes to
+   a DataFrame.
 
 
 
