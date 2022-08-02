@@ -26,18 +26,28 @@ def __validate_add_column_params(
     df["id_"] = convert_id(df[id_column], id_type)
 
     if date_column is not None:
-        try:
-            df["year"] = pd.to_datetime(
-                df[date_column], infer_datetime_format=True
-            ).dt.year
 
-        except ValueError:
-            raise ValueError(
-                f"could not parse date format in '{date_column}'."
-                f"To fix, convert column to datetime"
-            )
+        if pd.api.types.is_numeric_dtype(df[date_column]):
+            try:
+                df["year"] = pd.to_datetime(df[date_column], format="%Y").dt.year
+            except ValueError:
+                raise ValueError(
+                    f"could not parse date format in '{date_column}'."
+                    f"To fix, convert column to datetime"
+                )
+        else:
+            try:
+                df["year"] = pd.to_datetime(
+                    df[date_column], infer_datetime_format=True
+                ).dt.year
 
-    on_ = ["id_", "year"] if date_column is None else ["id_"]
+            except ValueError:
+                raise ValueError(
+                    f"could not parse date format in '{date_column}'."
+                    f"To fix, convert column to datetime"
+                )
+
+    on_ = ["id_", "year"] if date_column is not None else ["id_"]
 
     return df, on_
 
@@ -45,8 +55,8 @@ def __validate_add_column_params(
 def add_population_column(
     df: pd.DataFrame,
     id_column: str,
-    id_type: str | None,
-    date_column: str | None,
+    id_type: str | None = None,
+    date_column: str | None = None,
     target_column: str = "population",
     update_population_data: bool = False,
 ) -> pd.DataFrame:
@@ -80,7 +90,7 @@ def add_population_column(
     pop_df = get_population_df(
         most_recent_only=True if date_column is None else False,
         update_population_data=update_population_data,
-    )
+    ).rename(columns={"iso_code": "id_"})
 
     df[target_column] = df_.merge(pop_df, on=on_, how="left").population
 
