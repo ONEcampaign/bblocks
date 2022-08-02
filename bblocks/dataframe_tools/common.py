@@ -2,18 +2,29 @@ import pandas as pd
 from bblocks.import_tools.world_bank import WorldBankData
 
 
-def get_population_df(*, most_recent_only, update_population_data) -> pd.DataFrame:
-    """Get a population DataFrame"""
-
+def __get_wb_ind(
+    ind_code: str, ind_name: str, update: bool, mrnev: bool
+) -> pd.DataFrame:
+    """Get a simplified DataFrame for a World Bank indicator"""
     return (
-        WorldBankData(update_data=update_population_data)
+        WorldBankData(update_data=update)
         .load_indicator(
-            "SP.POP.TOTL",
-            indicator_name="population",
-            most_recent_only=most_recent_only,
+            ind_code,
+            most_recent_only=mrnev,
         )
         .get_data()
         .assign(year=lambda d: d.date.dt.year)
         .filter(["year", "iso_code", "value"], axis=1)
-        .rename(columns={"value": "population"})
+        .rename(columns={"value": ind_name})
+    )
+
+
+def get_population_df(*, most_recent_only, update_population_data) -> pd.DataFrame:
+    """Get a population DataFrame"""
+
+    return __get_wb_ind(
+        ind_code="SP.POP.TOTL",
+        ind_name="population",
+        update=update_population_data,
+        mrnev=most_recent_only,
     )
