@@ -68,4 +68,13 @@ def test_convert_id():
 
     s_iso3_dac = convert_id(series=s_iso3, from_type="ISO3", to_type="DAC")
 
-    assert s_iso3_dac.to_list() == [4,12,302]
+    assert s_iso3_dac.to_list() == [4, 12, 302]
+
+    assert (
+        convert_id(series=s_iso3, from_type="ISO3", to_type="ISO3").to_list()
+        == s_iso3.to_list()
+    )
+
+    s_iso3_names = convert_id(series=s_iso3, from_type="ISO3", to_type="short_name")
+
+    assert s_iso3_names.to_list() == ['France', 'United Kingdom', 'United States']
