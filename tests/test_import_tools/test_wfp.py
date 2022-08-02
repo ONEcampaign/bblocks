@@ -4,12 +4,12 @@ from typing import KeysView
 import pytest
 
 from bblocks.config import PATHS
-from bblocks.import_tools.wfp import WFPData, _get_country_codes, _get_inflation
+from bblocks.import_tools import wfp
 
 
 def test__get_inflation():
 
-    assert _get_inflation('nonsense') is None
+    assert wfp._get_inflation('nonsense') is None
 
     os.remove(PATHS.imported_data + r"/wfp_raw/nonsense_inflation.csv")
 
@@ -19,21 +19,21 @@ def test__get_country_codes():
 
     time = os.path.getmtime(file_name)
 
-    _get_country_codes()
+    wfp._get_country_codes()
 
     # Check that the underlying file has been modified
     assert os.path.getmtime(file_name) > time
 
 
 def test_available_indicators():
-    test_obj = WFPData()
+    test_obj = wfp.WFPData()
 
     assert isinstance(test_obj.available_indicators, KeysView)
     assert len(test_obj.available_indicators) > 0
 
 
 def test_load_indicator():
-    test_obj = WFPData()
+    test_obj = wfp.WFPData()
 
     test_obj.load_indicator("inflation")
 
@@ -48,7 +48,9 @@ def test_load_indicator():
 
 
 def test_update_inflation():
-    test_obj = WFPData()
+    test_obj = wfp.WFPData()
+
+    wfp.__dict__['_CODES']= {'AFG': 1, 'ALB': 3, 'DZA': 4, 'AND': 7, 'AGO': 8}
 
     # Check that it raises an error if no indicators have been loaded
     with pytest.raises(RuntimeError) as error:
@@ -71,7 +73,9 @@ def test_update_inflation():
 
 
 def test_update_insufficient():
-    test_obj = WFPData()
+    test_obj = wfp.WFPData()
+
+    wfp.__dict__['_CODES']= {'AFG': 1, 'ALB': 3, 'DZA': 4, 'AND': 7, 'AGO': 8}
 
     # Load indicator
     test_obj.load_indicator("insufficient_food")
@@ -88,7 +92,7 @@ def test_update_insufficient():
 
 
 def test_get_data():
-    test_obj = WFPData()
+    test_obj = wfp.WFPData()
 
     assert len(test_obj.get_data()) == 0
 
