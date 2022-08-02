@@ -76,7 +76,35 @@ def convert_id(
 
     """Takes a Pandas' series with country IDs and converts them into the desired type"""
 
+    import logging
+
+    logger = logging.getLogger("country_converter")
+    logger.setLevel(logging.ERROR)
+
+    # save the original index
+    idx = series.index
+
+    # if from and to are the same, return without changing anything
+    if from_type == to_type:
+        return series
+
     if from_type == "DAC":
-        return series.map(dictionaries.dac_codes).fillna("DAC")
+        s_ = series.map(dictionaries.dac_codes).fillna(series)
+
+        return pd.Series(
+            coco.convert(s_, src="ISO3", to=to_type, not_found=not_found), index=idx
+        )
+
+    if to_type == "DAC" and from_type != "DAC":
+        s_ = pd.Series(
+            coco.convert(series, src=from_type, to="ISO3", not_found=not_found),
+            index=idx,
+        )
+
+        return s_.map(dictionaries.dac_codes.reverse()).fillna(s_)
+
     else:
-        return coco.convert(series, src=from_type, to=to_type, not_found=not_found)
+        return pd.Series(
+            coco.convert(series, src=from_type, to=to_type, not_found=not_found),
+            index=idx,
+        )
