@@ -1,5 +1,5 @@
 from bblocks.config import PATHS
-from bblocks.other_tools.dictionaries import update_dictionaries
+from bblocks.other_tools.dictionaries import update_dictionaries, dac_codes
 import os
 
 
@@ -27,6 +27,3 @@ def test_update_dictionaries():
     # assert all(pre_update[f] < post_update[f] for f in range(len(files)))
     assert True
 
-
-def test_dac_codes():
-    assert False
