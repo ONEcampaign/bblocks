@@ -1,6 +1,45 @@
 import pandas as pd
+
 from bblocks.cleaning_tools.clean import convert_id
 from bblocks.dataframe_tools.common import get_population_df
+
+
+def __validate_add_column_params(
+    *,
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None,
+    date_column: str | None,
+) -> tuple:
+    """Validate parameters to use in an *add column* function type"""
+
+    if id_type is None:
+        id_type = "regex"
+
+    if id_column not in df.columns:
+        raise ValueError(f"id_column '{id_column}' not in dataframe columns")
+
+    if date_column is not None and date_column not in df.columns:
+        raise ValueError(f"date_column '{date_column}' not in dataframe columns")
+
+    # create id and year columns
+    df["id_"] = convert_id(df[id_column], id_type)
+
+    if date_column is not None:
+        try:
+            df["year"] = pd.to_datetime(
+                df[date_column], infer_datetime_format=True
+            ).dt.year
+
+        except ValueError:
+            raise ValueError(
+                f"could not parse date format in '{date_column}'."
+                f"To fix, convert column to datetime"
+            )
+
+    on_ = ["id_", "year"] if date_column is None else ["id_"]
+
+    return df, on_
 
 
 def add_population_column(
@@ -30,37 +69,19 @@ def add_population_column(
         DataFrame: the original DataFrame with a new column containing the population data.
     """
 
-    if id_type is None:
-        id_type = "regex"
-
-    if id_column not in df.columns:
-        raise ValueError(f"id_column '{id_column}' not in dataframe columns")
-
-    if date_column is not None and date_column not in df.columns:
-        raise ValueError(f"date_column '{date_column}' not in dataframe columns")
+    # validate parameters
+    df_, on_ = __validate_add_column_params(
+        df=df.copy(deep=True),
+        id_column=id_column,
+        id_type=id_type,
+        date_column=date_column,
+    )
 
     pop_df = get_population_df(
         most_recent_only=True if date_column is None else False,
         update_population_data=update_population_data,
     )
 
-    # create id and year columns
-    df["id_"] = convert_id(df[id_column], id_type)
-
-    if date_column is not None:
-        try:
-            df["year"] = pd.to_datetime(
-                df[date_column], infer_datetime_format=True
-            ).dt.year
-
-        except ValueError:
-            raise ValueError(
-                f"could not parse date format in '{date_column}'."
-                f"To fix, convert column to datetime"
-            )
-
-    on_ = ["id_", "year"] if date_column is None else ["id_"]
-
-    df[target_column] = df.merge(pop_df, on=on_, how="left").population
+    df[target_column] = df_.merge(pop_df, on=on_, how="left").population
 
     return df
