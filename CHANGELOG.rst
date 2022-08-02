@@ -16,6 +16,8 @@ Changelog
 -  Added a new feature: ``WFPData``, class, which is used to download
    *headline* and *food* inflation data, plus *people with insufficient
    food consumption* data, from WFP.
+-  Added a new feature: ``get_fao_index()``, which downloads the FAO food
+   index data.
 -  Added a new feature: ``convert_id()``, which converts a Pandas Series containing
    country IDs (like names or ISO3 codes) to another format (like ISO3 codes).
 -  Added a new feature: ``dac_codes``, which is a dictionary with DAC codes for DAC donor countries.
@@ -29,7 +31,6 @@ Changelog
    a DataFrame.
 -  Added a new feature: ``add_iso_codes_column()``, which adds a new column containing ISO3 codes to
    a DataFrame.
-
 
 
 [0.1.3] - 2022-07-29
