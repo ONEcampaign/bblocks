@@ -51,4 +51,21 @@ def test_clean_numeric_series() -> None:
 
 
 def test_convert_id():
-    assert False
+    s_dac = pd.Series([3, 4, 12, 9999], index=["i1", "i2", "i3", "m1"])
+    s_iso3 = pd.Series(["FRA", "GBR", "USA"], index=["i1", "hi", "i3"])
+
+    s_dac_iso3 = convert_id(
+        series=s_dac, from_type="DAC", to_type="ISO3", not_found=None
+    )
+
+    assert s_dac_iso3.to_list() == ["DNK", "FRA", "GBR", "9999"]
+
+    s_dac_iso2_nf = convert_id(
+        series=s_dac, from_type="DAC", to_type="ISO2", not_found="not_found"
+    )
+
+    assert s_dac_iso2_nf.to_list() == ["DK", "FR", "GB", "not_found"]
+
+    s_iso3_dac = convert_id(series=s_iso3, from_type="ISO3", to_type="DAC")
+
+    assert s_iso3_dac.to_list() == [4,12,302]
