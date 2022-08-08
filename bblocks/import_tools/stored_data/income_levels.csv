@@ -22,7 +22,7 @@ BHR,High income
 BHS,High income
 BIH,Upper middle income
 BLR,Upper middle income
-BLZ,Lower middle income
+BLZ,Upper middle income
 BMU,High income
 BOL,Lower middle income
 BRA,Upper middle income
@@ -107,7 +107,7 @@ KNA,High income
 KOR,High income
 KWT,High income
 LAO,Lower middle income
-LBN,Upper middle income
+LBN,Lower middle income
 LBR,Low income
 LBY,Upper middle income
 LCA,Upper middle income
@@ -150,10 +150,10 @@ NRU,High income
 NZL,High income
 OMN,High income
 PAK,Lower middle income
-PAN,Upper middle income
+PAN,High income
 PER,Upper middle income
 PHL,Lower middle income
-PLW,High income
+PLW,Upper middle income
 PNG,Lower middle income
 POL,High income
 PRI,High income
@@ -163,7 +163,7 @@ PRY,Upper middle income
 PSE,Lower middle income
 PYF,High income
 QAT,High income
-ROU,Upper middle income
+ROU,High income
 RUS,Upper middle income
 RWA,Low income
 SAU,High income
@@ -214,5 +214,5 @@ WSM,Lower middle income
 XKX,Upper middle income
 YEM,Low income
 ZAF,Upper middle income
-ZMB,Lower middle income
+ZMB,Low income
 ZWE,Lower middle income

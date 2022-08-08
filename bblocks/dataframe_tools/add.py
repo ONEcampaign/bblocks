@@ -8,6 +8,7 @@ from bblocks.dataframe_tools.common import (
     get_poverty_ratio_df,
     get_population_density_df,
 )
+from bblocks.other_tools.dictionaries import income_levels, __download_income_levels
 
 
 def __validate_add_column_params(
@@ -241,6 +242,45 @@ def add_population_density_column(
     ).rename(columns={"iso_code": "id_"})
 
     df[target_column] = df_.merge(pov_df, on=on_, how="left").population_density
+
+    return df
+
+
+def add_income_level_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    target_column: str = "income_level",
+    update_income_level_data: bool = False,
+) -> pd.DataFrame:
+    """Add an income levels column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DACcode, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DACcode" must be passed.
+        target_column: the column where the income level data will be stored.
+        update_income_level_data: whether to update the underlying data or not.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing the income level data.
+    """
+
+    # validate parameters
+    df_, on_ = __validate_add_column_params(
+        df=df.copy(deep=True),
+        id_column=id_column,
+        id_type=id_type,
+        date_column=None,
+    )
+
+    if update_income_level_data:
+        __download_income_levels()
+        print("Downloaded income levels data")
+
+    df[target_column] = df_["id_"].map(income_levels)
 
     return df
 
