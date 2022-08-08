@@ -9,6 +9,7 @@ from bblocks.dataframe_tools.add import (
     add_population_density_column,
     add_population_share_column,
     add_median_observation,
+    add_income_level_column,
 )
 import pandas as pd
 
@@ -396,7 +397,34 @@ def test_add_median_observation():
     )
 
     assert (
-            resultw2.loc[resultw2.iso_code == "France", "value (median_observation)"].sum()
-            / 3
-            == 5.0
+        resultw2.loc[resultw2.iso_code == "France", "value (median_observation)"].sum()
+        / 3
+        == 5.0
+    )
+
+
+def test_add_income_level_column():
+    df = pd.DataFrame(
+        {
+            "country_name": ["Sierra Leone", "France", "Guatemala"],
+            "date": [2003, 1989, 2014],
+            "value": [1, 2, 3],
+        }
+    )
+
+    df_test = add_income_level_column(
+        df=df,
+        id_column="country_name",
+    )
+
+    assert df_test.income_level.to_list() == [
+        "Low income",
+        "High income",
+        "Upper middle income",
+    ]
+
+    df_test2 = add_income_level_column(
+        df=df,
+        id_column="country_name",
+        update_income_level_data=True,
     )

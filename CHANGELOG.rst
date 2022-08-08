@@ -41,6 +41,7 @@ Changelog
    values into a new column which shows those values as a share of population.
 -  Added a new feature: ``add_median_observation()`` to add the median observation for a given group, either as a
    new column or appended to the end of the dataframe.
+-  Added a new feature: ``add_income_level_column()`` to add the World Bank income level for countries as a new column.
 
 
 [0.1.3] - 2022-07-29
