@@ -1,11 +1,9 @@
+import re
 from typing import Type, Optional
-import country_converter as coco
 
+import country_converter as coco
 import pandas as pd
 from numpy import nan
-import re
-
-from bblocks.other_tools import dictionaries
 
 
 def clean_number(number: str, to: Type = float) -> float | int:
@@ -72,39 +70,72 @@ def convert_id(
     from_type: str = "regex",
     to_type: str = "ISO3",
     not_found: str | None = None,
+    *,
+    additional_mapping: dict = None,
 ) -> pd.Series:
+    """Takes a Pandas' series with country IDs and converts them into the desired type.
 
-    """Takes a Pandas' series with country IDs and converts them into the desired type"""
-
-    import logging
-
-    logger = logging.getLogger("country_converter")
-    logger.setLevel(logging.ERROR)
-
-    # save the original index
-    idx = series.index
+    Args:
+        series: the Pandas series to convert
+        from_type: the classification type according to which the series is encoded.
+            Available types come from the country_converter package
+            (https://github.com/konstantinstadler/country_converter#classification-schemes)
+            For example: ISO3, ISO2, name_short, DACcode, etc.
+        to_type: the target classification type. Same options as from_type
+        not_found: what to do if the value is not found. Can pass a string or None.
+            If None, the original value is passed through.
+        additional_mapping: Optionally, a dictionary with additional mappings can be used.
+            The keys are the values to be converted and the values are the converted values.
+            The keys follow the same datatype as the original values. The values must follow
+            the same datatype as the target type.
+    """
 
     # if from and to are the same, return without changing anything
     if from_type == to_type:
         return series
 
-    if from_type == "DAC":
-        s_ = series.map(dictionaries.dac_codes).fillna(series)
+    # Create convert object
+    cc = coco.CountryConverter()
 
-        return pd.Series(
-            coco.convert(s_, src="ISO3", to=to_type, not_found=not_found), index=idx
-        )
+    # save the original index
+    idx = series.index
 
-    if to_type == "DAC" and from_type != "DAC":
-        s_ = pd.Series(
-            coco.convert(series, src=from_type, to="ISO3", not_found=not_found),
-            index=idx,
-        )
+    # Get the unique values for mapping. This is done in order to significantly improve
+    # the performance of country_converter with very long datasets.
+    s_unique = series.unique()
 
-        return s_.map(dictionaries.dac_codes.reverse()).fillna(s_)
+    # Create a correspondence dictionary
+    raw_mapping = cc.get_correspondence_dict(
+        classA=from_type, classB=to_type, replace_numeric=False
+    )
 
+    # If the keys are numeric, transform to integers. Otherwise, just unpack value lists
+    if pd.api.types.is_numeric_dtype(series):
+        mapping = {int(k): v[0] for k, v in raw_mapping.items()}
     else:
-        return pd.Series(
-            coco.convert(series, src=from_type, to=to_type, not_found=not_found),
-            index=idx,
-        )
+        mapping = {k: v[0] for k, v in raw_mapping.items()}
+
+    # If values are integers, convert to integer types. Done with pd.to_numeric to avoid
+    # errors with missing data
+    if pd.api.types.is_numeric_dtype(pd.Series(mapping.values())):
+        mapping = {
+            k: pd.to_numeric(v, errors="coerce", downcast="integer")
+            for k, v in mapping.items()
+        }
+
+    # In country_converter, ISO2 and ISO3 accept regular expressions. In order to remove
+    # This removes the regular expression characters in favor of the first match.
+    if to_type.lower() in ["iso2", "iso3"]:
+        mapping = {
+            k: re.sub(r"\W+", "", v.split("|")[0]).upper() for k, v in mapping.items()
+        }
+
+    # Create a list of missing values from the passed list with respect to the target
+    _ = [k for k in s_unique if k not in mapping]
+    missing = pd.Series(_, index=_, dtype=series.dtype)
+
+    # If additional_mapping is passed, add to the mapping
+    if additional_mapping is not None:
+        mapping = mapping | additional_mapping
+
+    return series.map(mapping).fillna(series if not_found is None else not_found)
