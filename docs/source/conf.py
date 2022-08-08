@@ -10,10 +10,12 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../../'))
 
+__version__ = '0.1.3'
+
 project = 'bblocks'
 copyright = '2022, The ONE Campaign'
 author = 'The ONE Campaign'
-release = '0.1.2'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
