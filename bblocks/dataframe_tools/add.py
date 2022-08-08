@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pandas as pd
 
 from bblocks.cleaning_tools.clean import convert_id
@@ -299,3 +301,62 @@ def add_iso_codes_column(
     df[target_column] = convert_id(df[id_column], from_type=id_type, to_type="ISO3")
 
     return df
+
+
+def add_median_observation(
+    df: pd.DataFrame,
+    group_by: str | list = None,
+    value_columns: str | list[str] = "value",
+    append: bool = True,
+    group_name: Optional[str] = None,
+) -> pd.DataFrame:
+    """Add median observation column to a dataframe
+
+    Args:
+
+        df: the dataframe to which the column will be added
+        group_by: the column(s) by which to group the data to calculate the median.
+        value_columns: the column(s) containing the values to be used for the median.
+        append: if True, the median observation will be appended to the dataframe. If
+            False, the median observation will be stored in a new column.
+        group_name: the name of the group to be used in the id_column or as the name of
+        the column containing the median observations.
+
+    Returns:
+        DataFrame: the original dataframe with added rows for the median (if append is True)
+            or a new column containing the median observations (if append is False).
+    """
+    df_ = df.copy(deep=True)
+
+    if isinstance(value_columns, str):
+        value_columns = [value_columns]
+
+    for c in value_columns:
+        if c not in df_.columns:
+            raise ValueError(f"value_column '{c}' not in dataframe columns")
+
+    if group_by is not None:
+        if isinstance(group_by, str):
+            group_by = [group_by]
+
+        for c in group_by:
+            if c not in df.columns:
+                raise ValueError(f"group_by column '{c}' not in dataframe columns")
+
+    if group_by is None:
+        group_by = [c for c in df_.columns if c not in value_columns]
+
+    if group_name is None:
+        group_name = "median_observation"
+
+    median = df_.groupby(group_by)[value_columns].median()
+
+    if append:
+        _ = median.reset_index()
+        _ = pd.concat([df_, _], ignore_index=True)
+        _.iloc[len(df_) :] = _.iloc[len(df_) :].fillna(group_name)
+        return _
+
+    return df_.merge(
+        median.reset_index(), on=group_by, how="left", suffixes=("", f" ({group_name})")
+    )

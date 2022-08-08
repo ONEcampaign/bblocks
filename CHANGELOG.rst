@@ -39,6 +39,8 @@ Changelog
    a DataFrame, using World Bank data.
 -  Added a new feature: ``add_population_share_column()``, which adds a new column transforming a column with numeric
    values into a new column which shows those values as a share of population.
+-  Added a new feature: ``add_median_observation()`` to add the median observation for a given group, either as a
+   new column or appended to the end of the dataframe.
 
 
 [0.1.3] - 2022-07-29
