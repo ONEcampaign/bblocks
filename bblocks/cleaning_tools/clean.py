@@ -65,6 +65,29 @@ def clean_numeric_series(
         return data.apply(clean_number, to=to)
 
 
+def to_date_column(series: pd.Series, date_format: Optional[str] = None) -> pd.Series:
+    """Converts a Pandas series into a date series.
+    The series must contain integers or strings that can be converted into
+    datetime objects"""
+
+    if pd.api.types.is_datetime64_any_dtype(series):
+        return series
+
+    if pd.api.types.is_numeric_dtype(series):
+        try:
+            return pd.to_datetime(series, format="%Y")
+
+        except ValueError:
+            raise ValueError(
+                f"could not parse date format in. "
+                f"To fix, convert column to datetime"
+            )
+    if date_format is None:
+        return pd.to_datetime(series, infer_datetime_format=True)
+    else:
+        return pd.to_datetime(series, format=date_format)
+
+
 def convert_id(
     series: pd.Series,
     from_type: str = "regex",

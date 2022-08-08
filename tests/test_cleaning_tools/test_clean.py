@@ -1,10 +1,14 @@
 import pandas as pd
 
-from bblocks.cleaning_tools.clean import clean_number, clean_numeric_series, convert_id
+from bblocks.cleaning_tools.clean import (
+    clean_number,
+    clean_numeric_series,
+    convert_id,
+    to_date_column,
+)
 
 
 def test_clean_number() -> None:
-
     # Test several types of inputs
     n1 = "1.2"
     n2 = "1,000.23"
@@ -22,7 +26,6 @@ def test_clean_number() -> None:
 
 
 def test_clean_numeric_series() -> None:
-
     # test a dataframe
     df = pd.DataFrame(
         {
@@ -77,4 +80,55 @@ def test_convert_id():
 
     s_iso3_names = convert_id(series=s_iso3, from_type="ISO3", to_type="name_short")
 
-    assert s_iso3_names.to_list() == ['France', 'United Kingdom', 'United States']
+    assert s_iso3_names.to_list() == ["France", "United Kingdom", "United States"]
+
+
+def test_to_date_column():
+    # Create a sample dataframe with a date column
+
+    df = pd.DataFrame(
+        {
+            "date": [
+                "2020-01-01",
+                "2020-01-02",
+                "2021-01-03",
+                "2021-01-04",
+                "2022-01-05",
+            ],
+            "date2": [
+                2020,
+                2020,
+                2021,
+                2021,
+                2022,
+            ],
+            "date3": [
+                "12/01/2020",
+                "12/02/2020",
+                "18/03/2021",
+                "24/04/2021",
+                "03/05/2022",
+            ],
+        }
+    )
+
+    # Infer format of a string
+    result1 = to_date_column(df.date)
+    assert result1.dtype == "datetime64[ns]"
+    assert result1.dt.year.to_list() == [2020, 2020, 2021, 2021, 2022]
+
+    # infer format of an integer
+    result2 = to_date_column(df.date2)
+    assert result2.dtype == "datetime64[ns]"
+    assert result2.dt.year.to_list() == [2020, 2020, 2021, 2021, 2022]
+
+    # Infer format of a different string
+    result3 = to_date_column(df.date3)
+
+    assert result3.dtype == "datetime64[ns]"
+    assert result3.dt.year.to_list() == [2020, 2020, 2021, 2021, 2022]
+
+    # Specify format
+    result4 = to_date_column(df.date3, date_format="%d/%m/%Y")
+    assert result4.dtype == "datetime64[ns]"
+    assert result4.dt.day.to_list() == [12, 12, 18, 24, 3]
