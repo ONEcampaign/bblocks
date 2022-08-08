@@ -5,6 +5,7 @@ from bblocks.dataframe_tools.add import (
     __validate_add_column_params,
     add_short_names_column,
     add_iso_codes_column,
+    add_poverty_ratio_column,
 )
 import pandas as pd
 
@@ -181,3 +182,39 @@ def test_add_iso_codes_column():
     )
 
     assert df_test.iso_code.to_list() == ["DEU", "USA", "GTM"]
+
+
+def test_add_poverty_ratio_column():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "country_name": ["Sierra Leone", "Sierra Leone", "Guatemala"],
+            "date": [2003, 1989, 2014],
+        }
+    )
+
+    df_test = add_poverty_ratio_column(
+        df=df.copy(deep=True),
+        id_column="country_name",
+    )
+
+    assert df_test.columns.to_list() == [
+        "country_name",
+        "date",
+        "poverty_ratio",
+    ]
+
+    sle = df_test.loc[df_test.country_name == "Sierra Leone", "poverty_ratio"].to_list()
+    assert sle[0] == sle[1]
+
+    df_test_date = add_poverty_ratio_column(
+        df=df.copy(deep=True),
+        id_column="country_name",
+        date_column="date",
+    )
+
+    pov_date = df_test_date.poverty_ratio.to_list()[0:2]
+    pov_no_date = df_test.poverty_ratio.to_list()[0:2]
+
+    assert pov_date[0] > pov_no_date[0]
+    assert pov_date[1] > pov_no_date[1]
