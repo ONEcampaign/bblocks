@@ -128,34 +128,10 @@ def convert_id(
     s_unique = series.unique()
 
     # Create a correspondence dictionary
-    raw_mapping = cc.get_correspondence_dict(
-        classA=from_type, classB=to_type, replace_numeric=False
-    )
-
-    # If the keys are numeric, transform to integers. Otherwise, just unpack value lists
-    if pd.api.types.is_numeric_dtype(series):
-        mapping = {int(k): v[0] for k, v in raw_mapping.items()}
-    else:
-        mapping = {k: v[0] for k, v in raw_mapping.items()}
-
-    # If values are integers, convert to integer types. Done with pd.to_numeric to avoid
-    # errors with missing data
-    if pd.api.types.is_numeric_dtype(pd.Series(mapping.values())):
-        mapping = {
-            k: pd.to_numeric(v, errors="coerce", downcast="integer")
-            for k, v in mapping.items()
-        }
-
-    # In country_converter, ISO2 and ISO3 accept regular expressions. In order to remove
-    # This removes the regular expression characters in favor of the first match.
-    if to_type.lower() in ["iso2", "iso3"]:
-        mapping = {
-            k: re.sub(r"\W+", "", v.split("|")[0]).upper() for k, v in mapping.items()
-        }
-
-    # Create a list of missing values from the passed list with respect to the target
-    _ = [k for k in s_unique if k not in mapping]
-    missing = pd.Series(_, index=_, dtype=series.dtype)
+    mapping = pd.Series(
+        cc.convert(names=s_unique, src=from_type, to=to_type, not_found=nan),
+        index=s_unique,
+    ).to_dict()
 
     # If additional_mapping is passed, add to the mapping
     if additional_mapping is not None:
