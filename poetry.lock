@@ -340,7 +340,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "keyring"
-version = "23.8.1"
+version = "23.8.2"
 description = "Store and access your passwords safely."
 category = "dev"
 optional = false
