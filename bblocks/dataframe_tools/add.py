@@ -101,6 +101,59 @@ def add_population_column(
     return df
 
 
+def add_population_share_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    date_column: str | None = None,
+    value_column: str = "value",
+    target_column: str = "population_share",
+    update_population_data: bool = False,
+) -> pd.DataFrame:
+    """Add population share column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DACcode, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DACcode" must be passed.
+        date_column: Optionally, a date column can be specified. If so, the population
+            for that year will be used. If it's missing, it will be missing in the returned
+            column as well. If the data isn't specified, the most recent population data from
+            the world bank is used.
+        value_column: the column containing the value to be used in the calculation.
+        target_column: the column where the population data will be stored.
+        update_population_data: whether to update the underlying data or not.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing value as share of
+        population.
+    """
+
+    # validate parameters
+    df_, on_ = __validate_add_column_params(
+        df=df.copy(deep=True),
+        id_column=id_column,
+        id_type=id_type,
+        date_column=date_column,
+    )
+
+    if value_column not in df_.columns:
+        raise ValueError(f"value_column '{value_column}' not in dataframe columns")
+
+    pop_df = get_population_df(
+        most_recent_only=True if date_column is None else False,
+        update_population_data=update_population_data,
+    ).rename(columns={"iso_code": "id_"})
+
+    df[target_column] = round(
+        100 * df_.value / df_.merge(pop_df, on=on_, how="left").population, 3
+    )
+
+    return df
+
+
 def add_poverty_ratio_column(
     df: pd.DataFrame,
     id_column: str,

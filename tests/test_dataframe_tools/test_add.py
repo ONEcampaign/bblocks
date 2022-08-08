@@ -7,6 +7,7 @@ from bblocks.dataframe_tools.add import (
     add_iso_codes_column,
     add_poverty_ratio_column,
     add_population_density_column,
+    add_population_share_column,
 )
 import pandas as pd
 
@@ -255,3 +256,41 @@ def test_add_population_density_column():
 
     assert pop_date[0] < pop_no_date[0]
     assert pop_date[1] < pop_no_date[1]
+
+
+def test_add_population_share_column():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "iso_code": ["Germany", "Germany", "Guatemala"],
+            "date": [2020, 2000, 2012],
+            "value": [5 * 1e6, 10 * 1e6, 2 * 1e6],
+        }
+    )
+
+    df_test = add_population_share_column(
+        df=df.copy(deep=True),
+        id_column="iso_code",
+    )
+
+    assert df_test.columns.to_list() == [
+        "iso_code",
+        "date",
+        "value",
+        "population_share",
+    ]
+
+    ger = df_test.loc[df_test.iso_code == "Germany", "population_share"].to_list()
+    assert 2*round(ger[0]) == round(ger[1])
+
+    df_test_date = add_population_share_column(
+        df=df.copy(deep=True),
+        id_column="iso_code",
+        date_column="date",
+    )
+
+    pop_date = df_test_date.population_share.to_list()[0:2]
+    pop_no_date = df_test.population_share.to_list()[0:2]
+
+    assert pop_date[0] < pop_no_date[0]
+    assert pop_date[1] > pop_no_date[1]

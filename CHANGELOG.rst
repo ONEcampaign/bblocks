@@ -37,6 +37,8 @@ Changelog
    a DataFrame, using World Bank data. Note that yearly population data is missing for many countries in many years.
 -  Added a new feature: ``add_population_density()`` which adds a new column containing the population density to
    a DataFrame, using World Bank data.
+-  Added a new feature: ``add_population_share_column()``, which adds a new column transforming a column with numeric
+   values into a new column which shows those values as a share of population.
 
 
 [0.1.3] - 2022-07-29
