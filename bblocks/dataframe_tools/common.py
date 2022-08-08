@@ -28,3 +28,14 @@ def get_population_df(*, most_recent_only, update_population_data) -> pd.DataFra
         update=update_population_data,
         mrnev=most_recent_only,
     )
+
+
+def get_poverty_ratio_df(*, most_recent_only, update_poverty_data) -> pd.DataFrame:
+    """Get a population DataFrame"""
+
+    return __get_wb_ind(
+        ind_code="SI.POV.DDAY",
+        ind_name="poverty_headcount_ratio",
+        update=update_poverty_data,
+        mrnev=most_recent_only,
+    )
