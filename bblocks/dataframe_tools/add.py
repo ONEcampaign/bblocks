@@ -1,7 +1,11 @@
 import pandas as pd
 
 from bblocks.cleaning_tools.clean import convert_id
-from bblocks.dataframe_tools.common import get_population_df, get_poverty_ratio_df
+from bblocks.dataframe_tools.common import (
+    get_population_df,
+    get_poverty_ratio_df,
+    get_population_density_df,
+)
 
 
 def __validate_add_column_params(
@@ -137,6 +141,51 @@ def add_poverty_ratio_column(
     ).rename(columns={"iso_code": "id_"})
 
     df[target_column] = df_.merge(pov_df, on=on_, how="left").poverty_headcount_ratio
+
+    return df
+
+
+def add_population_density_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    date_column: str | None = None,
+    target_column: str = "population_density",
+    update_population_data: bool = False,
+) -> pd.DataFrame:
+    """Add population density column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DACcode, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DACcode" must be passed.
+        date_column: Optionally, a date column can be specified. If so, the population
+            for that year will be used. If it's missing, it will be missing in the returned
+            column as well. If the data isn't specified, the most recent data is used.
+        target_column: the column where the population data will be stored.
+        update_population_data: whether to update the underlying data or not.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing the population
+            density data.
+    """
+
+    # validate parameters
+    df_, on_ = __validate_add_column_params(
+        df=df.copy(deep=True),
+        id_column=id_column,
+        id_type=id_type,
+        date_column=date_column,
+    )
+
+    pov_df = get_population_density_df(
+        most_recent_only=True if date_column is None else False,
+        update_population_data=update_population_data,
+    ).rename(columns={"iso_code": "id_"})
+
+    df[target_column] = df_.merge(pov_df, on=on_, how="left").population_density
 
     return df
 

@@ -39,3 +39,16 @@ def get_poverty_ratio_df(*, most_recent_only, update_poverty_data) -> pd.DataFra
         update=update_poverty_data,
         mrnev=most_recent_only,
     )
+
+
+def get_population_density_df(
+    *, most_recent_only, update_population_data
+) -> pd.DataFrame:
+    """Get a population DataFrame"""
+
+    return __get_wb_ind(
+        ind_code="EN.POP.DNST",
+        ind_name="population_density",
+        update=update_population_data,
+        mrnev=most_recent_only,
+    )

@@ -35,6 +35,8 @@ Changelog
 -  Added a new feature: ``to_date_column()`` which converts a column to a date column.
 -  Added a new feature: ``add_poverty_ratio_column()`` which adds a new column containing the poverty ratio to
    a DataFrame, using World Bank data. Note that yearly population data is missing for many countries in many years.
+-  Added a new feature: ``add_population_density()`` which adds a new column containing the population density to
+   a DataFrame, using World Bank data.
 
 
 [0.1.3] - 2022-07-29
