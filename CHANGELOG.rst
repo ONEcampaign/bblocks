@@ -31,6 +31,8 @@ Changelog
    a DataFrame.
 -  Added a new feature: ``add_iso_codes_column()``, which adds a new column containing ISO3 codes to
    a DataFrame.
+-  Added a new feature: ``latest_by()`` which returns the latest value given a series of columns to group by.
+-  Added a new feature: ``to_date_column()`` which converts a column to a date column.
 
 
 [0.1.3] - 2022-07-29

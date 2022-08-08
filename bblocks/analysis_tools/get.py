@@ -1,6 +1,7 @@
 from typing import Optional
 import pandas as pd
 from operator import xor
+from bblocks.cleaning_tools import clean
 
 
 def __validate_cols(d: pd.DataFrame, sdate, edate, date_col, value_col, grouper):
@@ -85,7 +86,6 @@ def change_from_date(
     date_column: str,
     start_date: str | int,
     end_date: str | int,
-    date_freq: str = "Y",
     value_columns: str | list = None,
     group_by: Optional[str | list] = None,
     percentage: bool = False,
@@ -120,4 +120,51 @@ def change_from_date(
         .apply(__range_diff if not percentage else __pct_diff)
         .reset_index()
         .filter(cols, axis=1)
+    )
+
+
+def latest_by(
+    data: pd.DataFrame,
+    date_column: str,
+    value_columns: str | list = None,
+    group_by: Optional[str | list] = None,
+) -> pd.DataFrame:
+    """
+    Calculate the latest value of (a) column(s) over a period of time.
+
+    Args:
+        data: a DataFrame with a date column (datetime or int) and one or more numeric columns
+        date_column: the name of the date (datetime or int) column
+        value_columns: one or more columns to calculate the average over
+        group_by: Optionally, specify which columns to consider for the latest operation
+    Returns:
+        A DataFrame with the latest value of the specified columns
+    """
+
+    # Create a copy of the dataframe to avoid modifying the original
+    data = data.copy(deep=True)
+
+    # columns order
+    col_order = data.columns
+
+    # Validate args
+    _, _, date_column, value_columns, group_by = __validate_cols(
+        data,
+        sdate=None,
+        edate=None,
+        date_col=date_column,
+        value_col=value_columns,
+        grouper=group_by,
+    )
+
+    data["_date_"] = clean.to_date_column(data[date_column])
+
+    cols = [date_column] + value_columns
+
+    return (
+        data.sort_values(by=["_date_"])
+        .groupby(by=group_by)[cols]
+        .last()
+        .reset_index()
+        .filter(col_order, axis=1)
     )
