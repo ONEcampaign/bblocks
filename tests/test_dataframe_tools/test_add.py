@@ -6,6 +6,7 @@ from bblocks.dataframe_tools.add import (
     add_short_names_column,
     add_iso_codes_column,
     add_poverty_ratio_column,
+    add_population_density_column,
 )
 import pandas as pd
 
@@ -218,3 +219,39 @@ def test_add_poverty_ratio_column():
 
     assert pov_date[0] > pov_no_date[0]
     assert pov_date[1] > pov_no_date[1]
+
+
+def test_add_population_density_column():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "country_name": ["France", "France", "Guatemala"],
+            "date": [1989, 2017, 2014],
+        }
+    )
+
+    df_test = add_population_density_column(
+        df=df.copy(deep=True),
+        id_column="country_name",
+    )
+
+    assert df_test.columns.to_list() == [
+        "country_name",
+        "date",
+        "population_density",
+    ]
+
+    fra = df_test.loc[df_test.country_name == "France", "population_density"].to_list()
+    assert fra[0] == fra[1]
+
+    df_test_date = add_population_density_column(
+        df=df.copy(deep=True),
+        id_column="country_name",
+        date_column="date",
+    )
+
+    pop_date = df_test_date.population_density.to_list()[0:2]
+    pop_no_date = df_test.population_density.to_list()[0:2]
+
+    assert pop_date[0] < pop_no_date[0]
+    assert pop_date[1] < pop_no_date[1]
