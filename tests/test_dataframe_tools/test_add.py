@@ -8,6 +8,7 @@ from bblocks.dataframe_tools.add import (
     add_poverty_ratio_column,
     add_population_density_column,
     add_population_share_column,
+    add_median_observation,
 )
 import pandas as pd
 
@@ -281,7 +282,7 @@ def test_add_population_share_column():
     ]
 
     ger = df_test.loc[df_test.iso_code == "Germany", "population_share"].to_list()
-    assert 2*round(ger[0]) == round(ger[1])
+    assert 2 * round(ger[0]) == round(ger[1])
 
     df_test_date = add_population_share_column(
         df=df.copy(deep=True),
@@ -294,3 +295,108 @@ def test_add_population_share_column():
 
     assert pop_date[0] < pop_no_date[0]
     assert pop_date[1] > pop_no_date[1]
+
+
+def test_add_median_observation():
+    df = pd.DataFrame(
+        {
+            "iso_code": [
+                "Germany",
+                "Germany",
+                "Germany",
+                "France",
+                "France",
+                "France",
+                "Singapore",
+                "Singapore",
+                "Singapore",
+            ],
+            "date": [2020, 2000, 2019, 2020, 2020, 2020, 2019, 2020, 2019],
+            "continent": [
+                "Europe",
+                "Europe",
+                "Europe",
+                "Europe",
+                "Europe",
+                "Europe",
+                "Asia",
+                "Asia",
+                "Asia",
+            ],
+            "value": [1, 3, 5, 5, 7, 9, 9, 11, 13],
+            "number2": [40, 20, 30, 100, 60, 80, 140, 120, 100],
+        }
+    )
+
+    # Test defaults
+    result = add_median_observation(
+        df=df, value_columns=["value", "number2"], group_by=["iso_code"]
+    )
+
+    assert result.loc[result.iso_code == "Germany", "value"][10] == 3.0
+    assert result.loc[result.iso_code == "Singapore", "number2"][11] == 120.0
+
+    # Test multiple group groups
+    result2 = add_median_observation(
+        df=df, value_columns=["value", "number2"], group_by=["iso_code", "continent"]
+    )
+    assert result2.loc[result.iso_code == "Germany", "value"][10] == 3.0
+    assert result2.loc[result.iso_code == "Singapore", "number2"][11] == 120.0
+
+    # test by continent
+    result3 = add_median_observation(
+        df=df,
+        value_columns=["value", "number2"],
+        group_by=["continent"],
+    )
+
+    assert result3.loc[result3.continent == "Europe", "value"].sum() == 35.0
+
+    # test str value
+    results4 = add_median_observation(
+        df=df,
+        value_columns="value",
+        group_by="continent",
+    )
+
+    assert results4.loc[results4.continent == "Europe", "value"].sum() == 35.0
+
+    with pytest.raises(ValueError):
+        add_median_observation(
+            df=df, value_columns=["nonsense"], group_by=["iso_code", "continent"]
+        )
+
+    with pytest.raises(ValueError):
+        add_median_observation(
+            df=df, value_columns=["value"], group_by=["nonsense", "continent"]
+        )
+
+    results5 = add_median_observation(df=df, value_columns=["value", "number2"])
+
+    assert results5.loc[results5.iso_code == "France", "value"][9] == 7.0
+
+    resultw = add_median_observation(
+        df=df,
+        value_columns=["value", "number2"],
+        group_by=["iso_code", "continent"],
+        append=False,
+    )
+
+    assert (
+        resultw.loc[resultw.iso_code == "France", "value (median_observation)"].sum()
+        / 3
+        == 7.0
+    )
+
+    resultw2 = add_median_observation(
+        df=df,
+        value_columns=["value", "number2"],
+        group_by=["continent"],
+        append=False,
+    )
+
+    assert (
+            resultw2.loc[resultw2.iso_code == "France", "value (median_observation)"].sum()
+            / 3
+            == 5.0
+    )
