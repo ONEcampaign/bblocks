@@ -8,6 +8,8 @@ import os
 from typing import Optional
 import warnings
 
+from weo import all_releases, download, WEO
+
 from bblocks.config import PATHS
 from bblocks.cleaning_tools.clean import clean_numeric_series
 from bblocks.import_tools.common import ImportData
@@ -81,7 +83,7 @@ def _read_sdr_tsv(url: str) -> pd.DataFrame:
     )
 
 
-def _check_indicators(indicator: str) -> list:
+def _check_sdr_indicators(indicator: str) -> list:
     """Checks if the indicator is in the list of SDR accepted indicators
 
     Args:
@@ -104,6 +106,32 @@ def _check_indicators(indicator: str) -> list:
         raise ValueError(f"{indicator} is not a valid indicator")
 
     return [indicator]
+
+
+def _get_data(obj: ImportData, indicators: str | list) -> pd.DataFrame:
+    """Unpack dictionary of indicators into a dataframe"""
+    df = pd.DataFrame()
+
+    if indicators == "all":
+        indicators = obj.indicators.values()
+
+    if isinstance(indicators, str):
+        indicators = [indicators]
+
+    if isinstance(indicators, list):
+
+        for _ in indicators:
+            if _ not in obj.indicators:
+                raise ValueError(f"{_} has not been loaded or is an invalid indicator.")
+
+        indicators = [
+            obj.indicators[_] for _ in indicators if _ in list(obj.indicators)
+        ]
+
+    for _ in indicators:
+        df = pd.concat([df, _], ignore_index=True)
+
+    return df
 
 
 class SDR(ImportData):
@@ -160,7 +188,7 @@ class SDR(ImportData):
         """
 
         # make sure indicators are valid
-        indicator_list = _check_indicators(indicator)
+        indicator_list = _check_sdr_indicators(indicator)
 
         if (
             not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
@@ -241,21 +269,7 @@ class SDR(ImportData):
         Returns:
             A pandas dataframe with the SDR data
         """
-        df = pd.DataFrame()
-
-        if indicators != "all" and isinstance(indicators, str):
-            indicators = [indicators]
-
-        if isinstance(indicators, list):
-            indicators = [
-                self.indicators[_] for _ in indicators if _ in list(self.indicators)
-            ]
-
-        elif indicators == "all":
-            indicators = self.indicators.values()
-
-        for indicator in indicators:
-            df = pd.concat([df, indicator], ignore_index=True)
+        df = _get_data(obj=self, indicators=indicators)
 
         if isinstance(members, str) and members != "all":
             members = [members]
@@ -276,3 +290,168 @@ class SDR(ImportData):
     def file_name(self):
         """Returns the name of the stored file"""
         return f"SDR.csv"
+
+
+def _check_weo_parameters(
+    latest_y: int | None = None, latest_r: int | None = None
+) -> (int, int):
+    """Check parameters and return max values or provided input"""
+    if latest_y is None:
+        latest_y = max(*all_releases())[0]
+
+    # if latest release isn't provided, take max value
+    if latest_r is None:
+        latest_r = max(*all_releases())[1]
+
+    return latest_y, latest_r
+
+
+def _update_weo(latest_y: int = None, latest_r: int = None) -> None:
+    """Update data from the World Economic Outlook, using WEO package"""
+
+    latest_y, latest_r = _check_weo_parameters(latest_y, latest_r)
+
+    # Download the file from the IMF website and store in directory
+    download(
+        latest_y,
+        latest_r,
+        directory=PATHS.imported_data,
+        filename=f"weo{latest_y}_{latest_r}.csv",
+    )
+
+
+class WorldEconomicOutlook(ImportData):
+    """World Economic Outlook data"""
+
+    def __load_data(
+        self, latest_y: int | None = None, latest_r: int | None = None
+    ) -> None:
+        """loading WEO as a clean dataframe
+
+        Args:
+            latest_y: passed only optional to override the behaviour to get the latest
+            release year for the WEO.
+            latest_r: passed only optionally to override the behaviour to get the latest
+            released value (1 or 2).
+        """
+
+        latest_y, latest_r = _check_weo_parameters(latest_y, latest_r)
+
+        names = {
+            "ISO": "iso_code",
+            "WEO Subject Code": "indicator",
+            "Subject Descriptor": "indicator_name",
+            "Subject Notes": "indicator_description",
+            "Units": "units",
+            "Scale": "scale",
+            "Estimates Start After": "estimates_start_after",
+        }
+
+        to_drop = [
+            "WEO Country Code",
+            "Country",
+            "Country/Series-specific Notes",
+        ]
+
+        # If data doesn't exist or update is required, update the data
+        if (
+            not os.path.exists(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv")
+            or self.update_data
+        ):
+            _update_weo(latest_y, latest_r)
+
+        # Load the data from disk
+        df = WEO(PATHS.imported_data + rf"/weo{latest_y}_{latest_r}.csv").df
+
+        # Load data into data object
+        self.data = (
+            df.drop(to_drop, axis=1)
+            .rename(columns=names)
+            .melt(id_vars=names.values(), var_name="year", value_name="value")
+            .assign(
+                year=lambda d: pd.to_datetime(d.year, format="%Y"),
+                value=lambda d: clean_numeric_series(d.value),
+            )
+            .dropna(subset=["value"])
+            .reset_index(drop=True)
+        )
+
+    def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
+
+        if self.data is None:
+            self.__load_data()
+
+        # Create dictionary of available indicators
+        indicators_ = dict(
+            zip(self.data.indicator.unique(), self.data.indicator_name.unique())
+        )
+
+        if indicators is None:
+            return indicators_
+
+        if isinstance(indicators, str):
+            indicators = [indicators]
+
+        for _ in indicators:
+            if _ not in indicators_:
+                self.available_indicators()
+                raise ValueError(f"Indicator not found: {_}")
+
+    def load_indicator(
+        self, indicator_code: str, indicator_name: Optional[str] = None
+    ) -> ImportData:
+        """Loads a specific indicator from the World Economic Outlook data"""
+
+        if self.data is None:
+            self.__load_data()
+
+        # Check if indicator exists
+        self._check_indicators(indicators=indicator_code)
+
+        self.indicators[indicator_code] = (
+            self.data.loc[lambda d: d.indicator == indicator_code]
+            .assign(
+                indicator_name=indicator_name
+                if indicator_name is not None
+                else lambda d: d.indicator_name,
+                estimate=lambda d: d.apply(
+                    lambda r: True if r.year.year >= r.estimates_start_after else False,
+                    axis=1,
+                ),
+            )
+            .drop(columns=["estimates_start_after"])
+            .sort_values(["iso_code", "year"])
+            .reset_index(drop=True)
+        )
+        return self
+
+    def update(self, latest_y: int | None = None, latest_r: int | None = None) -> None:
+        """Update the stored WEO data, using WEO package.
+
+        Args:
+            latest_y: passed only optionally to override the behaviour to get the latest
+                release year for the WEO.
+            latest_r: passed only optionally to override the behaviour to get the latest
+                released value (1 or 2).
+        """
+        _update_weo(latest_y=latest_y, latest_r=latest_r)
+
+    def available_indicators(self) -> None:
+        """Print the available indicators in the dataset"""
+
+        indicators_ = self._check_indicators(indicators=None)
+
+        available = [f"{code}: {name} \n" for code, name in indicators_.items()]
+
+        print(f"Available indicators:\n{''.join(available)}")
+
+    def get_data(
+        self, indicators: str | list = "all", keep_metadata: bool = False
+    ) -> pd.DataFrame:
+
+        df = _get_data(obj=self, indicators=indicators)
+
+        if not keep_metadata:
+            return df.filter(["iso_code", "name", "indicator", "year", "value"], axis=1)
+
+        return df
