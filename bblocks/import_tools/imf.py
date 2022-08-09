@@ -227,7 +227,7 @@ class SDR(ImportData):
     def get_data(
         self,
         indicators: str = "all",
-        members: Optional[str] | Optional[list] = "all",
+        members: Optional[str | list] = "all",
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
@@ -241,16 +241,25 @@ class SDR(ImportData):
         Returns:
             A pandas dataframe with the SDR data
         """
+        df = pd.DataFrame()
 
-        df = self.data
+        if indicators != "all" and isinstance(indicators, str):
+            indicators = [indicators]
 
-        indicator_list = _check_indicators(indicators)
-        df = df.loc[df["indicator"].isin(indicator_list)].reset_index(drop=True)
+        if isinstance(indicators, list):
+            indicators = [
+                self.indicators[_] for _ in indicators if _ in list(self.indicators)
+            ]
 
-        if isinstance(members, str):
-            if members != "all":
-                members = [members]
-                df = df[df["member"].isin(members)]
+        elif indicators == "all":
+            indicators = self.indicators.values()
+
+        for indicator in indicators:
+            df = pd.concat([df, indicator], ignore_index=True)
+
+        if isinstance(members, str) and members != "all":
+            members = [members]
+            df = df[df["member"].isin(members)]
 
         elif isinstance(members, list):
             for member in members:
