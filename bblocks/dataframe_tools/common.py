@@ -57,29 +57,22 @@ def get_population_density_df(
     )
 
 
-def get_gdp_df(
+def _get_weo_indicator(
+    indicator: str,
     *,
-    usd: bool = True,
     most_recent_only: bool,
-    update_gdp_data: bool,
+    update_data: bool,
     include_estimates: bool = True,
 ) -> pd.DataFrame:
-    """Get a population DataFrame"""
 
     # Create a World Economic Outlook object
-    weo = WorldEconomicOutlook(update_data=update_gdp_data)
-
-    # Select the right indicator depending on the USD flag
-    indicator = "NGDPD" if usd else "NGDP"
+    weo = WorldEconomicOutlook(update_data=update_data)
 
     # Get the data
     data = (
         weo.load_indicator(indicator)
         .get_data(keep_metadata=True)
-        .assign(
-            value=lambda d: d.value * 1e9,
-            year=lambda d: pd.to_datetime(d.year, format="%Y"),
-        )
+        .assign(year=lambda d: pd.to_datetime(d.year, format="%Y"))
     )
 
     # Filter the data to keep only non-estimates if needed
@@ -91,8 +84,70 @@ def get_gdp_df(
 
     # Filter the data to keep only the most recent data if needed
     if most_recent_only:
-        data = latest_by(data, date_column="year", value_columns="value")
+        data = latest_by(
+            data, date_column="year", value_columns="value", group_by=["iso_code"]
+        )
 
     return data.assign(year=lambda d: d.year.dt.year).filter(
         ["year", "iso_code", "value"], axis=1
+    )
+
+
+def get_gdp_df(
+    *,
+    usd: bool = True,
+    most_recent_only: bool,
+    update_gdp_data: bool,
+    include_estimates: bool = True,
+) -> pd.DataFrame:
+    """Get a population DataFrame"""
+
+    # Select the right indicator depending on the USD flag
+    indicator = "NGDPD" if usd else "NGDP"
+
+    return _get_weo_indicator(
+        indicator,
+        most_recent_only=most_recent_only,
+        update_data=update_gdp_data,
+        include_estimates=include_estimates,
+    ).assign(
+        value=lambda d: d.value * 1e9,
+    )
+
+
+usd = True
+most_recent_only = True
+update_data = False
+include_estimates = True
+
+
+def get_gov_expenditure_df(
+    *,
+    usd: bool = True,
+    most_recent_only: bool,
+    update_data: bool,
+    include_estimates: bool = True,
+) -> pd.DataFrame:
+    """Get a population DataFrame"""
+
+    gov_exp = _get_weo_indicator(
+        indicator="GGX_NGDP",
+        most_recent_only=most_recent_only,
+        update_data=update_data,
+        include_estimates=include_estimates,
+    )
+
+    gdp = get_gdp_df(
+        usd=usd,
+        most_recent_only=most_recent_only,
+        update_gdp_data=update_data,
+        include_estimates=include_estimates,
+    )
+
+    return (
+        gov_exp.merge(
+            gdp, on=["year", "iso_code"], how="left", suffixes=("_gov", "_gdp")
+        )
+        .assign(value=lambda d: d.value_gov / 100 * d.value_gdp)
+        .filter(["year", "iso_code", "value"], axis=1)
     )
