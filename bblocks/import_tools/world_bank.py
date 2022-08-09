@@ -148,7 +148,7 @@ class WorldBankData(ImportData):
 
         return self
 
-    def get_data(self, indicators: Optional | str | list = "all") -> pd.DataFrame:
+    def get_data(self, indicators: Optional[str | list] = "all") -> pd.DataFrame:
         """
         Get the data as a Pandas DataFrame
         Args:
