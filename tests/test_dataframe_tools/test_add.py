@@ -12,6 +12,8 @@ from bblocks.dataframe_tools.add import (
     add_income_level_column,
     add_gdp_column,
     add_gdp_share_column,
+    add_gov_expenditure_column,
+    add_gov_exp_share_column,
 )
 import pandas as pd
 
@@ -509,3 +511,102 @@ def test_add_gdp_share_column():
     _nd = df_test.loc[lambda d: d.iso_code == "Guatemala"].gdp_share.sum()
 
     assert _d != _nd
+
+    with pytest.raises(ValueError):
+        _ = add_gdp_share_column(
+            df=df,
+            id_column="country_name",
+            value_column="nonsense",
+            date_column="date",
+            usd=True,
+            include_estimates=True,
+        )
+
+
+def test_add_gov_expenditure_column():
+    df = pd.DataFrame(
+        {
+            "country_name": ["Sierra Leone", "France", "Guatemala"],
+            "date": [2018, 2021, 2022],
+            "value": [100 * 1e6, 2 * 1e9, 300 * 1e6],
+        }
+    )
+
+    # test include estimates
+    df_test = add_gov_expenditure_column(
+        df=df,
+        id_column="country_name",
+        date_column="date",
+        usd=True,
+        include_estimates=True,
+    )
+
+    assert len(df_test.loc[df_test.gov_exp.isna()]) == 0
+
+    df_test_lcu = add_gov_expenditure_column(
+        df=df,
+        id_column="country_name",
+        date_column="date",
+        usd=False,
+        include_estimates=True,
+    )
+
+    assert df_test.gov_exp.values[0] < df_test_lcu.gov_exp.values[0]
+
+    df_no_estimates = add_gov_expenditure_column(
+        df=df,
+        id_column="country_name",
+        date_column="date",
+        usd=True,
+        include_estimates=False,
+    )
+
+    assert len(df_no_estimates.loc[df_no_estimates.gov_exp.isna()]) > 0
+
+
+def test_add_gov_exp_share_column():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "iso_code": ["Germany", "Germany", "Guatemala"],
+            "date": [2022, 2022, 2012],
+            "value": [5 * 1e9, 10 * 1e9, 2 * 1e9],
+        }
+    )
+
+    df_test = add_gov_exp_share_column(
+        df=df,
+        id_column="iso_code",
+    )
+
+    assert df_test.columns.to_list() == [
+        "iso_code",
+        "date",
+        "value",
+        "gov_exp_share",
+    ]
+
+    ger = df_test.loc[df_test.iso_code == "Germany", "gov_exp_share"].to_list()
+    assert round(2 * ger[0], 1) == round(ger[1], 1)
+
+    df_test_date = add_gov_exp_share_column(
+        df=df.copy(deep=True),
+        id_column="iso_code",
+        date_column="date",
+        include_estimates=True,
+    )
+
+    _d = df_test_date.loc[lambda d: d.iso_code == "Guatemala"].gov_exp_share.sum()
+    _nd = df_test.loc[lambda d: d.iso_code == "Guatemala"].gov_exp_share.sum()
+
+    assert _d != _nd
+
+    with pytest.raises(ValueError):
+        _ = add_gov_exp_share_column(
+            df=df,
+            id_column="country_name",
+            value_column="nonsense",
+            date_column="date",
+            usd=True,
+            include_estimates=True,
+        )

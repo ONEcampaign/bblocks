@@ -8,6 +8,7 @@ from bblocks.dataframe_tools.common import (
     get_poverty_ratio_df,
     get_population_density_df,
     get_gdp_df,
+    get_gov_expenditure_df,
 )
 from bblocks.other_tools.dictionaries import income_levels, __download_income_levels
 
@@ -248,6 +249,60 @@ def add_gdp_column(
     return _
 
 
+def add_gov_expenditure_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    date_column: str | None = None,
+    target_column: str = "gov_exp",
+    usd: bool = True,
+    include_estimates: bool = False,
+    update_data: bool = False,
+) -> pd.DataFrame:
+    """Add Government Expenditure column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DACcode, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DACcode" must be passed.
+        date_column: Optionally, a date column can be specified. If so, the expenditure
+            for that year will be used. If it's missing, it will be missing in the returned
+            column as well. If the date isn't specified, the most recent data is used.
+        include_estimates: Whether to include years for which the WEO data is labelled as
+            estimates.
+        usd: Whether to add the data as US dollars or Local Currency Units.
+        target_column: the column where the expenditure data will be stored.
+        update_data: whether to update the underlying data or not.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing the expenditure data from
+            the IMF World Economic Outlook.
+    """
+
+    # validate parameters
+    df_, on_ = __validate_add_column_params(
+        df=df.copy(deep=True),
+        id_column=id_column,
+        id_type=id_type,
+        date_column=date_column,
+    )
+
+    gov_df = get_gov_expenditure_df(
+        usd=usd,
+        most_recent_only=True if date_column is None else False,
+        include_estimates=include_estimates,
+        update_data=update_data,
+    ).rename(columns={"iso_code": "id_", "value": "gov_exp"})
+
+    # Create a deep copy of the dataframe to avoid overwriting the original data
+    _ = df.copy(deep=True)
+    _[target_column] = df_.merge(gov_df, on=on_, how="left").gov_exp
+
+    return _
+
+
 def add_gdp_share_column(
     df: pd.DataFrame,
     id_column: str,
@@ -335,6 +390,53 @@ def add_population_share_column(
     df[target_column] = round(100 * df_[value_column] / df_[target_column], 3)
 
     return df
+
+
+def add_gov_exp_share_column(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    date_column: str | None = None,
+    value_column: str = "value",
+    target_column: str = "gov_exp_share",
+    usd: bool = False,
+    include_estimates: bool = False,
+    update_data: bool = False,
+) -> pd.DataFrame:
+    """Add value as share of Government Expenditure column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DACcode, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DACcode" must be passed.
+        date_column: Optionally, a date column can be specified. If so, the expenditure data
+            for that year will be used. If it's missing, it will be missing in the returned
+            column as well. If the date isn't specified, the most recent data is used.
+        value_column: the column containing the value to be converted to a share of expenditure.
+        include_estimates: Whether to include years for which the WEO data is labelled as
+            estimates.
+        usd: Whether to add the data as US dollars or Local Currency Units.
+        target_column: the column where the expenditure data will be stored.
+        update_data: whether to update the underlying data or not.
+
+    Returns:
+        DataFrame: the original DataFrame with a new column containing the data as a share
+         of expenditure, using the IMF World Economic Outlook.
+    """
+    kwargs = {k: v for k, v in dict(locals()).items() if k not in ["value_column"]}
+
+    if value_column not in df.columns:
+        raise ValueError(f"value_column '{value_column}' not in dataframe columns")
+
+    df_ = add_gov_expenditure_column(**kwargs)
+
+    _ = df.copy(deep=True)
+
+    _[target_column] = round(100 * df_[value_column] / df_[target_column], 3)
+
+    return _
 
 
 def add_income_level_column(
