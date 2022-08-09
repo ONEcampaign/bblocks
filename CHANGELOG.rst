@@ -42,6 +42,8 @@ Changelog
 -  Added a new feature: ``add_median_observation()`` to add the median observation for a given group, either as a
    new column or appended to the end of the dataframe.
 -  Added a new feature: ``add_income_level_column()`` to add the World Bank income level for countries as a new column.
+-  Added a new feature: ``add_gdp_column()`` and ``add_gdp_share_column()`` to add the GDP information from the
+   IMF World Economic Outlook to a DataFrame.
 
 
 [0.1.3] - 2022-07-29

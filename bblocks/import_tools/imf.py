@@ -382,8 +382,11 @@ class WorldEconomicOutlook(ImportData):
             self.__load_data()
 
         # Create dictionary of available indicators
-        indicators_ = dict(
-            zip(self.data.indicator.unique(), self.data.indicator_name.unique())
+        indicators_ = (
+            self.data.drop_duplicates(subset=["indicator", "indicator_name", "units"])
+            .assign(name_units=lambda d: d.indicator_name + " (" + d.units + ")")
+            .set_index("indicator")["name_units"]
+            .to_dict()
         )
 
         if indicators is None:
