@@ -92,6 +92,9 @@ def test_weo_update():
 
     obj.update()
 
+    obj2 = WorldEconomicOutlook(update_data=True)
+    obj2.load_indicator("NGDP")
+
     # the object only wraps functionality contained in weo package.
     # if no errors are raised, then assert True
     assert True
@@ -135,9 +138,12 @@ def test_get_data():
     assert df_all.indicator.nunique() == 3
     assert list(df_all.indicator.unique()) == valid_indicators
 
+    # test getting data for an indicator that hasn't been loaded
+    with pytest.raises(ValueError):
+        _ = obj.get_data(indicators="BCA")
+
     # get data including metadata
     df_meta = obj.get_data("NGDP", keep_metadata=True)
 
     assert len(df_meta.columns) > len(df_ngdp.columns)
     assert df_meta.estimate.sum() > 1
-
