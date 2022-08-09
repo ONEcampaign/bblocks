@@ -44,6 +44,8 @@ Changelog
 -  Added a new feature: ``add_income_level_column()`` to add the World Bank income level for countries as a new column.
 -  Added a new feature: ``add_gdp_column()`` and ``add_gdp_share_column()`` to add the GDP information from the
    IMF World Economic Outlook to a DataFrame.
+-  Added a new feature: ``add_gov_expenditure_column()`` and ``add_gov_exp_share_column()`` to add government expenditure
+   data from IMF World Economic Outlook to a DataFrame.
 
 
 [0.1.3] - 2022-07-29
