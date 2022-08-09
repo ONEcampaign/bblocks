@@ -1,4 +1,3 @@
-""" """
 from __future__ import annotations
 
 import pandas as pd
@@ -86,8 +85,8 @@ def _check_indicators(indicator: str) -> list:
     """Checks if the indicator is in the list of SDR accepted indicators
 
     Args:
-        indicator: indicator to check. If indicator is None, all accepted indicators are returned
-                    ['holdings', 'allocations']
+        indicator: indicator to check. If indicator is None, all accepted indicators
+            are returned ['holdings', 'allocations']
 
     Returns:
         A list of accepted indicators
@@ -95,15 +94,16 @@ def _check_indicators(indicator: str) -> list:
 
     accepted_indicators = ["allocations", "holdings"]
 
-    if indicator is None:
+    if indicator == "all":
         return accepted_indicators
 
-    elif isinstance(indicator, str):
-        if indicator not in accepted_indicators:
-            raise ValueError(f"{indicator} is not a valid indicator")
-        return [indicator]
-    else:
+    elif not isinstance(indicator, str):
         raise ValueError(f"{indicator} is not a valid indicator type")
+
+    if indicator not in accepted_indicators:
+        raise ValueError(f"{indicator} is not a valid indicator")
+
+    return [indicator]
 
 
 class SDR(ImportData):
@@ -134,23 +134,26 @@ class SDR(ImportData):
         Args:
             indicator_list: list of indicators to load
         """
-
+        # load data from disk
         df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+        # filter data on indicator
         self.data = df.loc[df["indicator"].isin(indicator_list)].reset_index(drop=True)
+
         self.indicators = {
             indicator: self.data.loc[self.data["indicator"] == indicator].reset_index(
                 drop=True
             )
             for indicator in indicator_list
         }
-        print("Successfully loaded SDR data")
+        print(f"Successfully loaded {indicator_list} SDR data")
 
-    def load_indicator(self, indicator: Optional[str] = None) -> ImportData:
+    def load_indicator(self, indicator: str = "all") -> ImportData:
         """Load SDR data. Optionally specify the indicator to load (holdings or allocations).
 
         Args:
-            indicator (Optional[str]): indicator to load, either 'holdings' or 'allocations'.
-            If None, all indicators will be loaded.
+            indicator: indicator to load, either 'holdings' or 'allocations'. The default
+                is 'all' which loads both.
 
         Returns:
             The same object to allow chaining
@@ -170,33 +173,35 @@ class SDR(ImportData):
 
         return self
 
-    def update(self, reload_data=False) -> ImportData:
+    def update(self, reload_data: bool = False) -> ImportData:
         """Update the data saved on disk
 
         When called it extracts the SDR data from the IMF website and saves it to disk.
         Optionally specify whether to reload the data to the object
 
         Args:
-            reload_data (bool): If True, the data will be reloaded to the object
+            reload_data: If True, the data will be reloaded to the object
 
         Returns:
             The same object to allow chaining
         """
 
-        base = "https://www.imf.org/external/np/fin/tad/"
+        base_url = "https://www.imf.org/external/np/fin/tad/"
+
+        links_url = "https://www.imf.org/external/np/fin/tad/extsdr1.aspx"
+
         # check latest year
-        years = _parse_sdr_links(
-            url="https://www.imf.org/external/np/fin/tad/extsdr1.aspx", concat_url=base
-        )
+        years = _parse_sdr_links(url=links_url, concat_url=base_url)
         latest_year_link = list(years.values())[0]
 
         # check latest date
-        dates = _parse_sdr_links(latest_year_link, base)
+        dates = _parse_sdr_links(latest_year_link, base_url)
         latest_date_link = list(dates.values())[0]
+
+        # Convert latest date to formatted string
         latest_date = datetime.strptime(list(dates.keys())[0], "%B %d, %Y").strftime(
             "%d %B %Y"
-        )  # assign latest date
-
+        )
         # find tsv file
         tsv_link = _get_tsv_url(latest_date_link)
 
@@ -213,43 +218,57 @@ class SDR(ImportData):
             self.__load(list(self.indicators.keys()))
         else:
             print(
-                "Successfully updated SDR data to disk. Run `load_indicator` to load the data"
+                "Successfully updated SDR data to disk. "
+                "Run `load_indicator` to load the data"
             )
 
         return self
 
     def get_data(
-        self, indicators: Optional | str = None, members: Optional | str | list = None
+        self,
+        indicators: str = "all",
+        members: Optional[str | list] = "all",
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
         Args:
             indicators: indicator to get, either 'holdings' or 'allocations'.
-                        If None, all indicators will be returned
+                If 'all', both indicators will be returned
 
-            members: member to get (includes countries, prescribed holders, and others.
-                     If None, all members will be returned
+            members: member to get (includes countries, prescribed holders, and others).
+                If 'all', all members will be returned
 
         Returns:
             A pandas dataframe with the SDR data
         """
+        df = pd.DataFrame()
 
-        df = self.data
+        if indicators != "all" and isinstance(indicators, str):
+            indicators = [indicators]
 
-        indicator_list = _check_indicators(indicators)
-        df = df.loc[df["indicator"].isin(indicator_list)].reset_index(drop=True)
+        if isinstance(indicators, list):
+            indicators = [
+                self.indicators[_] for _ in indicators if _ in list(self.indicators)
+            ]
 
-        if members is not None:
-            if isinstance(members, str):
-                members = [members]
+        elif indicators == "all":
+            indicators = self.indicators.values()
 
+        for indicator in indicators:
+            df = pd.concat([df, indicator], ignore_index=True)
+
+        if isinstance(members, str) and members != "all":
+            members = [members]
             df = df[df["member"].isin(members)]
-            if len(df) == 0:
-                raise ValueError(f"No members found")
-            else:
-                for member in members:
-                    if member not in df["member"].unique():
-                        warnings.warn(f"member not found: {member}")
+
+        elif isinstance(members, list):
+            for member in members:
+                if member not in df["member"].unique():
+                    warnings.warn(f"member not found: {member}")
+                    print(f"Available members:\n {df.member.unique()}")
+
+        if len(df) == 0:
+            raise ValueError(f"No members found")
 
         return df
 
