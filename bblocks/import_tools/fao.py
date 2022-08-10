@@ -15,7 +15,7 @@ def __scrape_index_df(url: str) -> pd.DataFrame:
 
     response = requests.get(url)
 
-    if response.status_code != 200:
+    if response.status_code != 200 or response.url != url:
         raise ConnectionError("FAO food price index page not found")
 
     soup = BeautifulSoup(response.content, "html.parser")
@@ -58,3 +58,5 @@ def get_fao_index(
         df.to_csv(local_path, index=False)
 
     return pd.read_csv(local_path)
+
+get_fao_index(update=True)

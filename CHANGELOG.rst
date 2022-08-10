@@ -31,7 +31,7 @@ Changelog
    a DataFrame.
 -  Added a new feature: ``add_iso_codes_column()``, which adds a new column containing ISO3 codes to
    a DataFrame.
--  Added a new feature: ``latest_by()`` which returns the latest value given a series of columns to group by.
+-  Added a new feature: ``filter_latest_by()`` which returns the latest value given a series of columns to group by.
 -  Added a new feature: ``to_date_column()`` which converts a column to a date column.
 -  Added a new feature: ``add_poverty_ratio_column()`` which adds a new column containing the poverty ratio to
    a DataFrame, using World Bank data. Note that yearly population data is missing for many countries in many years.
@@ -49,7 +49,10 @@ Changelog
 -  Added a new feature: ``add_flourish_geometries()`` to map the geometries used by Flourish maps to countries, added to
    a DataFrame as a new column.
 -  Added a new feature: ``add_value_as_share()`` to add a new column with a value as a share of another column.
-
+-  Added new features: A ``_filter_by()`` helper function to filter a DataFrame based on membership to a specific
+   grouping. Additionally ``filter_african_countries()`` to filter a DataFrame to keep only African countries,
+   ``filter_eu_countries()`` to filter to keep ony EU members, ``filter_by_un_region()`` to filter by UN regions,
+   and ``filter_by_continent()`` to filter countries based on their continent.
 
 
 
