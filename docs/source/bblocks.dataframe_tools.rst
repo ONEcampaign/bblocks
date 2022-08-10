@@ -4,6 +4,14 @@ bblocks.dataframe\_tools package
 Submodules
 ----------
 
+bblocks.dataframe\_tools.add module
+-----------------------------------
+
+.. automodule:: bblocks.dataframe_tools.add
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 bblocks.dataframe\_tools.common module
 --------------------------------------
 
