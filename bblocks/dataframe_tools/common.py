@@ -115,12 +115,6 @@ def get_gdp_df(
     )
 
 
-usd = True
-most_recent_only = True
-update_data = False
-include_estimates = True
-
-
 def get_gov_expenditure_df(
     *,
     usd: bool = True,

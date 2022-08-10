@@ -10,7 +10,6 @@ from bblocks.dataframe_tools.common import (
     get_gdp_df,
     get_gov_expenditure_df,
 )
-from bblocks.other_tools.dictionaries import income_levels, __download_income_levels
 
 
 def __validate_add_column_params(
@@ -460,6 +459,7 @@ def add_income_level_column(
     Returns:
         DataFrame: the original DataFrame with a new column containing the income level data.
     """
+    from bblocks.other_tools.dictionaries import income_levels, __download_income_levels
 
     # validate parameters
     df_, on_ = __validate_add_column_params(
@@ -593,3 +593,35 @@ def add_median_observation(
     return df_.merge(
         median.reset_index(), on=group_by, how="left", suffixes=("", f" ({group_name})")
     )
+
+
+def add_flourish_geometries(
+    df: pd.DataFrame,
+    id_column: str,
+    id_type: str | None = None,
+    target_column: str = "geometry",
+) -> pd.DataFrame:
+    """Add flourish geometries column to a dataframe
+
+    Args:
+        df: the dataframe to which the column will be added
+        id_column: the column containing the name, ISO3, ISO2, DAC code, UN code, etc.
+        id_type: the type of ID used in th id_column. The default 'regex' tries to infer
+            using the rules from the 'country_converter' package. For the DAC codes,
+            "DAC" must be passed.
+        target_column: the column where the flourish geometries  will be stored.
+    Returns:
+        DataFrame: the original DataFrame with a new column containing the flourish geometries.
+    """
+    from bblocks.other_tools.dictionaries import flourish_geometries
+
+    if id_column not in df.columns:
+        raise ValueError(f"id_column '{id_column}' not in dataframe columns")
+
+    df_, _ = __validate_add_column_params(
+        df=df.copy(deep=True), id_column=id_column, id_type=id_type, date_column=None
+    )
+
+    df[target_column] = df_.id_.map(flourish_geometries)
+
+    return df
