@@ -31,7 +31,7 @@ Changelog
    a DataFrame.
 -  Added a new feature: ``add_iso_codes_column()``, which adds a new column containing ISO3 codes to
    a DataFrame.
--  Added a new feature: ``latest_by()`` which returns the latest value given a series of columns to group by.
+-  Added a new feature: ``filter_latest_by()`` which returns the latest value given a series of columns to group by.
 -  Added a new feature: ``to_date_column()`` which converts a column to a date column.
 -  Added a new feature: ``add_poverty_ratio_column()`` which adds a new column containing the poverty ratio to
    a DataFrame, using World Bank data. Note that yearly population data is missing for many countries in many years.
