@@ -1,4 +1,4 @@
-from bblocks.analysis_tools.get import period_avg, change_from_date, latest_by
+from bblocks.analysis_tools.get import period_avg, change_from_date
 import pandas as pd
 
 
@@ -89,4 +89,3 @@ def test_change_from_date():
 
     assert result2.value.to_list() == [2.0, 6.0]
     assert result2.value2.to_list() == [2.0, -2.0]
-

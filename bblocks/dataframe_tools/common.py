@@ -1,6 +1,6 @@
 import pandas as pd
 
-from bblocks.analysis_tools.get import latest_by
+from bblocks.cleaning_tools.filter import filter_latest_by
 from bblocks.import_tools.imf import WorldEconomicOutlook
 from bblocks.import_tools.world_bank import WorldBankData
 
@@ -84,7 +84,7 @@ def _get_weo_indicator(
 
     # Filter the data to keep only the most recent data if needed
     if most_recent_only:
-        data = latest_by(
+        data = filter_latest_by(
             data, date_column="year", value_columns="value", group_by=["iso_code"]
         )
 

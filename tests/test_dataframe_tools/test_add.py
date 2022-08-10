@@ -125,10 +125,7 @@ def test_add_population_column():
         }
     )
 
-    df_test = add_population_column(
-        df=df.copy(deep=True),
-        id_column="iso_code",
-    )
+    df_test = add_population_column(df=df.copy(deep=True), id_column="iso_code")
 
     assert df_test.columns.to_list() == ["iso_code", "date", "value", "population"]
 
@@ -136,9 +133,7 @@ def test_add_population_column():
     assert ger[0] == ger[1]
 
     df_test_date = add_population_column(
-        df=df.copy(deep=True),
-        id_column="iso_code",
-        date_column="date",
+        df=df.copy(deep=True), id_column="iso_code", date_column="date"
     )
 
     pop_date = df_test_date.population.to_list()[0:2]
@@ -203,10 +198,7 @@ def test_add_poverty_ratio_column():
         }
     )
 
-    df_test = add_poverty_ratio_column(
-        df=df.copy(deep=True),
-        id_column="country_name",
-    )
+    df_test = add_poverty_ratio_column(df=df.copy(deep=True), id_column="country_name")
 
     assert df_test.columns.to_list() == [
         "country_name",
@@ -218,9 +210,7 @@ def test_add_poverty_ratio_column():
     assert sle[0] == sle[1]
 
     df_test_date = add_poverty_ratio_column(
-        df=df.copy(deep=True),
-        id_column="country_name",
-        date_column="date",
+        df=df.copy(deep=True), id_column="country_name", date_column="date"
     )
 
     pov_date = df_test_date.poverty_ratio.to_list()[0:2]
@@ -240,8 +230,7 @@ def test_add_population_density_column():
     )
 
     df_test = add_population_density_column(
-        df=df.copy(deep=True),
-        id_column="country_name",
+        df=df.copy(deep=True), id_column="country_name"
     )
 
     assert df_test.columns.to_list() == [
@@ -254,9 +243,7 @@ def test_add_population_density_column():
     assert fra[0] == fra[1]
 
     df_test_date = add_population_density_column(
-        df=df.copy(deep=True),
-        id_column="country_name",
-        date_column="date",
+        df=df.copy(deep=True), id_column="country_name", date_column="date"
     )
 
     pop_date = df_test_date.population_density.to_list()[0:2]
@@ -270,9 +257,9 @@ def test_add_population_share_column():
     # Create a sample df
     df = pd.DataFrame(
         {
-            "iso_code": ["Germany", "Germany", "Guatemala"],
-            "date": [2020, 2000, 2012],
-            "value": [5 * 1e6, 10 * 1e6, 2 * 1e6],
+            "iso_code": ["Germany", "Germany", "Guatemala", "Honduras", "Honduras"],
+            "date": [2020, 2000, 2012, 2005, 2020],
+            "value": [5 * 1e6, 10 * 1e6, 2 * 1e6, 5 * 1e6, 5 * 1e6],
         }
     )
 
@@ -288,14 +275,13 @@ def test_add_population_share_column():
     ger = df_test.loc[df_test.iso_code == "Germany", "population_share"].to_list()
     assert 2 * round(ger[0]) == round(ger[1])
 
-    df_test_date = add_population_share_column(df=df.copy(deep=True), id_column="iso_code",
-                                               date_column="date")
+    df_test_date = add_population_share_column(
+        df=df.copy(deep=True), id_column="iso_code", date_column="date"
+    )
 
-    pop_date = df_test_date.population_share.to_list()[0:2]
-    pop_no_date = df_test.population_share.to_list()[0:2]
+    pop_date = df_test_date.population_share.to_list()
 
-    assert pop_date[0] < pop_no_date[0]
-    assert pop_date[1] > pop_no_date[1]
+    assert pop_date[-2] != pop_date[-1]
 
 
 def test_add_median_observation():
@@ -493,8 +479,12 @@ def test_add_gdp_share_column():
     ger = df_test.loc[df_test.iso_code == "Germany", "gdp_share"].to_list()
     assert round(2 * ger[0], 1) == round(ger[1], 1)
 
-    df_test_date = add_gdp_share_column(df=df.copy(deep=True), id_column="iso_code",
-                                        date_column="date", include_estimates=True)
+    df_test_date = add_gdp_share_column(
+        df=df.copy(deep=True),
+        id_column="iso_code",
+        date_column="date",
+        include_estimates=True,
+    )
 
     _d = df_test_date.loc[lambda d: d.iso_code == "Guatemala"].gdp_share.sum()
     _nd = df_test.loc[lambda d: d.iso_code == "Guatemala"].gdp_share.sum()
@@ -502,8 +492,14 @@ def test_add_gdp_share_column():
     assert _d != _nd
 
     with pytest.raises(ValueError):
-        _ = add_gdp_share_column(df=df, id_column="country_name", date_column="date",
-                                 value_column="nonsense", usd=True, include_estimates=True)
+        _ = add_gdp_share_column(
+            df=df,
+            id_column="country_name",
+            date_column="date",
+            value_column="nonsense",
+            usd=True,
+            include_estimates=True,
+        )
 
 
 def test_add_gov_expenditure_column():
