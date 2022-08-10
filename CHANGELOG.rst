@@ -46,6 +46,9 @@ Changelog
    IMF World Economic Outlook to a DataFrame.
 -  Added a new feature: ``add_gov_expenditure_column()`` and ``add_gov_exp_share_column()`` to add government expenditure
    data from IMF World Economic Outlook to a DataFrame.
+-  Added a new feature: ``add_flourish_geometries()`` to map the geometries used by Flourish maps to countries, added to
+   a DataFrame as a new column.
+
 
 
 [0.1.3] - 2022-07-29

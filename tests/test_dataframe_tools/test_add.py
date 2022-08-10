@@ -13,7 +13,7 @@ from bblocks.dataframe_tools.add import (
     add_gdp_column,
     add_gdp_share_column,
     add_gov_expenditure_column,
-    add_gov_exp_share_column,
+    add_gov_exp_share_column, add_flourish_geometries,
 )
 import pandas as pd
 
@@ -610,3 +610,22 @@ def test_add_gov_exp_share_column():
             usd=True,
             include_estimates=True,
         )
+
+
+def test_add_flourish_geometries():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "country_name": ["Sierra Leone", "France", "Guatemala"],
+            "date": [2018, 2021, 2022],
+            "value": [100 * 1e6, 2 * 1e9, 300 * 1e6],
+        }
+    )
+
+    df_test = add_flourish_geometries(
+        df=df,
+        id_column="country_name",
+    )
+
+    assert df_test.columns.to_list() == ['country_name', 'date', 'value', 'geometry']
+    assert df_test['geometry'].dropna().shape[0] == df_test.shape[0]

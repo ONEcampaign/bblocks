@@ -43,17 +43,25 @@ __wb = WorldBankData()
 )
 
 
-def update_dictionaries() -> None:
-    """Updates dictionaries"""
-    __wb.update()
-    __download_income_levels()
-
-
 def __get_dac_codes() -> dict:
     """Return dac codes dictionary"""
     file = PATHS.imported_data + r"/oecd_codes.csv"
 
     return pd.read_csv(file, na_values=None, index_col="code")["iso_code"].to_dict()
+
+
+def __read_flourish_geometries() -> dict:
+    """Reads flourish geometries"""
+    file = f"{PATHS.imported_data}/flourish_geometries.csv"
+    return pd.read_csv(file, na_values=None, index_col="3-letter ISO code")[
+        "geometry"
+    ].to_dict()
+
+
+def update_dictionaries() -> None:
+    """Updates dictionaries"""
+    __wb.update()
+    __download_income_levels()
 
 
 g20_countries: Dict = Dict(
@@ -138,3 +146,5 @@ population_density = Dict(
 population = Dict(__wb.get_data("SP.POP.TOTL").set_index("iso_code")["value"].to_dict())
 
 dac_codes = Dict(__get_dac_codes())
+
+flourish_geometries = Dict(__read_flourish_geometries())
