@@ -1,7 +1,7 @@
 Changelog
 =========
 
-[0.2.0] - 2022
+[0.2.0] - 2022-08-10
 --------------
 
 -  Added a new feature: ``period_avg()``, which calculates the average of a
