@@ -120,9 +120,6 @@ def convert_id(
     # Create convert object
     cc = coco.CountryConverter()
 
-    # save the original index
-    idx = series.index
-
     # Get the unique values for mapping. This is done in order to significantly improve
     # the performance of country_converter with very long datasets.
     s_unique = series.unique()

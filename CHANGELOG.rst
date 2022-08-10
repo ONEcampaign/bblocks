@@ -48,6 +48,8 @@ Changelog
    data from IMF World Economic Outlook to a DataFrame.
 -  Added a new feature: ``add_flourish_geometries()`` to map the geometries used by Flourish maps to countries, added to
    a DataFrame as a new column.
+-  Added a new feature: ``add_value_as_share()`` to add a new column with a value as a share of another column.
+
 
 
 

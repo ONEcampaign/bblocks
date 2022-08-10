@@ -13,7 +13,9 @@ from bblocks.dataframe_tools.add import (
     add_gdp_column,
     add_gdp_share_column,
     add_gov_expenditure_column,
-    add_gov_exp_share_column, add_flourish_geometries,
+    add_gov_exp_share_column,
+    add_flourish_geometries,
+    add_value_as_share,
 )
 import pandas as pd
 
@@ -274,10 +276,7 @@ def test_add_population_share_column():
         }
     )
 
-    df_test = add_population_share_column(
-        df=df.copy(deep=True),
-        id_column="iso_code",
-    )
+    df_test = add_population_share_column(df=df.copy(deep=True), id_column="iso_code")
 
     assert df_test.columns.to_list() == [
         "iso_code",
@@ -289,11 +288,8 @@ def test_add_population_share_column():
     ger = df_test.loc[df_test.iso_code == "Germany", "population_share"].to_list()
     assert 2 * round(ger[0]) == round(ger[1])
 
-    df_test_date = add_population_share_column(
-        df=df.copy(deep=True),
-        id_column="iso_code",
-        date_column="date",
-    )
+    df_test_date = add_population_share_column(df=df.copy(deep=True), id_column="iso_code",
+                                               date_column="date")
 
     pop_date = df_test_date.population_share.to_list()[0:2]
     pop_no_date = df_test.population_share.to_list()[0:2]
@@ -485,10 +481,7 @@ def test_add_gdp_share_column():
         }
     )
 
-    df_test = add_gdp_share_column(
-        df=df,
-        id_column="iso_code",
-    )
+    df_test = add_gdp_share_column(df=df, id_column="iso_code")
 
     assert df_test.columns.to_list() == [
         "iso_code",
@@ -500,12 +493,8 @@ def test_add_gdp_share_column():
     ger = df_test.loc[df_test.iso_code == "Germany", "gdp_share"].to_list()
     assert round(2 * ger[0], 1) == round(ger[1], 1)
 
-    df_test_date = add_gdp_share_column(
-        df=df.copy(deep=True),
-        id_column="iso_code",
-        date_column="date",
-        include_estimates=True,
-    )
+    df_test_date = add_gdp_share_column(df=df.copy(deep=True), id_column="iso_code",
+                                        date_column="date", include_estimates=True)
 
     _d = df_test_date.loc[lambda d: d.iso_code == "Guatemala"].gdp_share.sum()
     _nd = df_test.loc[lambda d: d.iso_code == "Guatemala"].gdp_share.sum()
@@ -513,14 +502,8 @@ def test_add_gdp_share_column():
     assert _d != _nd
 
     with pytest.raises(ValueError):
-        _ = add_gdp_share_column(
-            df=df,
-            id_column="country_name",
-            value_column="nonsense",
-            date_column="date",
-            usd=True,
-            include_estimates=True,
-        )
+        _ = add_gdp_share_column(df=df, id_column="country_name", date_column="date",
+                                 value_column="nonsense", usd=True, include_estimates=True)
 
 
 def test_add_gov_expenditure_column():
@@ -627,5 +610,39 @@ def test_add_flourish_geometries():
         id_column="country_name",
     )
 
-    assert df_test.columns.to_list() == ['country_name', 'date', 'value', 'geometry']
-    assert df_test['geometry'].dropna().shape[0] == df_test.shape[0]
+    assert df_test.columns.to_list() == ["country_name", "date", "value", "geometry"]
+    assert df_test["geometry"].dropna().shape[0] == df_test.shape[0]
+
+
+def test_add_value_as_share():
+    # Create a sample df
+    df = pd.DataFrame(
+        {
+            "country_name": ["Sierra Leone", "France", "Guatemala"],
+            "date": [2018, 2021, 2022],
+            "value": [100 * 1e3, 2 * 1e9, 300.343 * 1e5],
+            "value2": [100 * 1e6, 2 * 1e9, 300 * 1e6],
+        }
+    )
+
+    df_test = add_value_as_share(df, "value", "value2")
+
+    assert df_test.columns.to_list() == [
+        "country_name",
+        "date",
+        "value",
+        "value2",
+        "value_as_share_of_value2",
+    ]
+
+    assert df_test["value_as_share_of_value2"].to_list() == [0.1, 100.0, 10.01]
+
+    with pytest.raises(ValueError):
+        _ = add_value_as_share(df, "value", "nonsense")
+
+    with pytest.raises(ValueError):
+        _ = add_value_as_share(df, "nonsense", "value")
+
+    df_test2 = add_value_as_share(df, "value", "value2", "share", 4)
+
+    assert df_test2["share"].to_list() == [0.1, 100.0, 10.0114]

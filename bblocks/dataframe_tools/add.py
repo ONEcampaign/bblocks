@@ -309,9 +309,10 @@ def add_gdp_share_column(
     date_column: str | None = None,
     value_column: str = "value",
     target_column: str = "gdp_share",
+    decimals: int = 2,
     usd: bool = False,
     include_estimates: bool = False,
-    update_gdp_data: bool = False,
+    update_data: bool = False,
 ) -> pd.DataFrame:
     """Add value as share of GDP column to a dataframe
 
@@ -325,11 +326,12 @@ def add_gdp_share_column(
             for that year will be used. If it's missing, it will be missing in the returned
             column as well. If the date isn't specified, the most recent data is used.
         value_column: the column containing the value to be converted to a share of GDP.
+        decimals: the number of decimals to use in the returned column.
         include_estimates: Whether to include years for which the WEO data is labelled as
             estimates.
         usd: Whether to add the data as US dollars or Local Currency Units.
         target_column: the column where the gdp data will be stored.
-        update_gdp_data: whether to update the underlying data or not.
+        update_data: whether to update the underlying data or not.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the data as a share
@@ -344,7 +346,7 @@ def add_gdp_share_column(
 
     _ = df.copy(deep=True)
 
-    _[target_column] = round(100 * df_[value_column] / df_[target_column], 3)
+    _[target_column] = round(100 * df_[value_column] / df_[target_column], decimals)
 
     return _
 
@@ -356,7 +358,8 @@ def add_population_share_column(
     date_column: str | None = None,
     value_column: str = "value",
     target_column: str = "population_share",
-    update_population_data: bool = False,
+    decimals: int = 2,
+    update_data: bool = False,
 ) -> pd.DataFrame:
     """Add population share column to a dataframe
 
@@ -372,7 +375,8 @@ def add_population_share_column(
             the world bank is used.
         value_column: the column containing the value to be used in the calculation.
         target_column: the column where the population data will be stored.
-        update_population_data: whether to update the underlying data or not.
+        decimals: the number of decimals to use in the returned column.
+        update_data: whether to update the underlying data or not.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing value as share of
@@ -386,9 +390,11 @@ def add_population_share_column(
 
     df_ = add_population_column(**kwargs)
 
-    df[target_column] = round(100 * df_[value_column] / df_[target_column], 3)
+    _ = df.copy(deep=True)
 
-    return df
+    _[target_column] = round(100 * df_[value_column] / df_[target_column], decimals)
+
+    return _
 
 
 def add_gov_exp_share_column(
@@ -623,5 +629,32 @@ def add_flourish_geometries(
     )
 
     df[target_column] = df_.id_.map(flourish_geometries)
+
+    return df
+
+
+def add_value_as_share(
+    df: pd.DataFrame,
+    value_col: str,
+    share_of_value_col: str,
+    target_col: str | None = None,
+    decimals: int = 2,
+) -> pd.DataFrame:
+
+    # Copy the dataframe to avoid modifying the original one
+    df = df.copy(deep=True)
+
+    if value_col not in df.columns:
+        raise ValueError(f"value_col '{value_col}' not in dataframe columns")
+
+    if share_of_value_col not in df.columns:
+        raise ValueError(
+            f"share_of_value_col '{share_of_value_col}' not in dataframe columns"
+        )
+
+    if target_col is None:
+        target_col = f"{value_col}_as_share_of_{share_of_value_col}"
+
+    df[target_col] = round(100 * df[value_col] / df[share_of_value_col], decimals)
 
     return df
