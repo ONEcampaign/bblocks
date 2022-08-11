@@ -67,6 +67,3 @@ def date_resample_to(
         .sort_values(by=[date_column] + group_by)
         .reset_index(drop=True)
     )
-
-
-d = date_resample_to(df, "date", ["country", "continent"], keep_latest=None)
