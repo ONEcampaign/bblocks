@@ -1,4 +1,5 @@
 import re
+import warnings
 from typing import Type, Optional
 
 import country_converter as coco
@@ -157,16 +158,63 @@ def date_to_str(series: pd.Series, date_format: str = "%d %B %Y") -> pd.Series:
     return series.dt.strftime(date_format)
 
 
-def format_number(series: pd.Series, format_: str = "{:,.1f}%") -> pd.Series:
+def format_number(
+    series: pd.Series,
+    as_units: bool = False,
+    as_percentage: bool = False,
+    as_millions: bool = False,
+    as_billions: bool = False,
+    decimals: int = 2,
+    other_format: str = "{:,.2f}",
+) -> pd.Series:
     """Formats a Pandas' numeric series into a formatted string series.
 
     Args:
         series: the series to convert to a formatted string
-        format_: the string format. Examples are available at:
+        as_units: formatted with commas to separate thousands and the specified decimals
+        as_percentage: formatted as a percentage with the specified decimals. This assumes
+            that the series contains numbers where 1 would equal 100%.
+        as_millions: divided by 1 million, formatted with commas and the specified decimals
+        as_billions: divided by 1 billion, formatted with commas and the specified decimals
+        decimals: the number of decimals to use
+        other_format: Other formats to use. This option can only be used if all others
+            are false. Examples are available at:
             https://mkaz.blog/code/python-string-format-cookbook/
     """
 
     if not pd.api.types.is_numeric_dtype(series):
         raise ValueError(f"The series must be of numeric type")
 
-    return series.map(f"{format_}".format)
+    if (true_params := sum([as_units, as_percentage, as_millions, as_billions])) > 1:
+        raise KeyError(
+            f"Only one of as_units, as_percentage, as_millions, as_billions can be True"
+        )
+    if true_params > 0 and other_format != "{:,.2f}":
+        raise KeyError(f"other_format can only be used if all other options are False")
+
+    if true_params == 0:
+        warnings.showwarning("Using 'other_format'. The decimals setting is ignored.",
+                             UserWarning, "clean.py", 168)
+
+    formats = {
+        "as_units": f"{{:,.{decimals}f}}",
+        "as_percentage": f"{{:,.{decimals}%}}",
+        "as_millions": f"{{:,.{decimals}f}}",
+        "as_billions": f"{{:,.{decimals}f}}",
+    }
+
+    if as_units:
+        return series.map(formats["as_units"].format)
+
+    if as_percentage:
+        return series.map(formats["as_percentage"].format)
+
+    if as_millions:
+        series = series / 1e6
+        return series.map(formats["as_millions"].format)
+
+    if as_billions:
+        series = series / 1e9
+        return series.map(formats["as_billions"].format)
+
+    return series.map(f"{other_format}".format)
