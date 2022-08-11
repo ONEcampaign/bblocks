@@ -1,8 +1,15 @@
 Changelog
 =========
 
+[0.2.1] - 2022 - IN PROGRESS
+--------------------
+-  Added a new feature: ``date_to_str()``, which formats a date as an english string.
+-  Added a new feature: ``format_number``, which formats a numeric series as a formatted string (e.g. 1,234,567.89
+   instead of 1234567.89). Optionally can specify to format as percentage, millions, or billions.
+
+
 [0.2.0] - 2022-08-10
---------------
+--------------------
 
 -  Added a new feature: ``period_avg()``, which calculates the average of a
    time series/DataFrame for a given period.
@@ -57,7 +64,7 @@ Changelog
 
 
 [0.1.3] - 2022-07-29
---------------
+--------------------
 
 -  Added a new feature: ``clean_number()`` which cleans a string and
    returns a float or int.

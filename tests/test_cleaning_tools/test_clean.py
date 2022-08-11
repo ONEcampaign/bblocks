@@ -1,10 +1,13 @@
 import pandas as pd
+import pytest
 
 from bblocks.cleaning_tools.clean import (
     clean_number,
     clean_numeric_series,
     convert_id,
     to_date_column,
+    date_to_str,
+    format_number,
 )
 
 
@@ -132,3 +135,86 @@ def test_to_date_column():
     result4 = to_date_column(df.date3, date_format="%d/%m/%Y")
     assert result4.dtype == "datetime64[ns]"
     assert result4.dt.day.to_list() == [12, 12, 18, 24, 3]
+
+
+def test_date_to_str():
+    # Create a sample dataframe with a date column
+    df = pd.DataFrame(
+        {
+            "date": [
+                "2020-01-01",
+                "2020-04-02",
+                "2021-01-03",
+                "2021-08-04",
+                "2022-11-05",
+            ],
+            "date2": [
+                "2100-error",
+                "2020-01-02",
+                "2021-01-03",
+                "2021-01-04",
+                "2022-01-05",
+            ],
+            "country": ["DNK", "FRA", "GBR", "USA", "DNK"],
+        }
+    )
+
+    df = df.assign(date=date_to_str(df.date))
+
+    assert df.date.to_list() == [
+        "01 January 2020",
+        "02 April 2020",
+        "03 January 2021",
+        "04 August 2021",
+        "05 November 2022",
+    ]
+
+    with pytest.raises(ValueError):
+        df = df.assign(date=date_to_str(df.date2))
+
+
+def test_format_number():
+    # sample dataframe with numeric columns
+    df = pd.DataFrame(
+        {
+            "a": [123, 2433, 32, 4.6, 53423.3],
+            "b": [10000, 20000, 343214532, 4432, 53],
+            "c": [0.5, 0.6, 0.7, 0.8, 0.9],
+            "d": [12.2 * 1e9, 2.3 * 1e9, 1.4 * 1e9, 2.5 * 1e9, 1.6 * 1e9],
+        }
+    )
+
+    test = df.assign(a=format_number(df.a, as_units=True, decimals=0))
+    assert test.a.to_list() == ["123", "2,433", "32", "5", "53,423"]
+
+    test = df.assign(b=format_number(df.b, as_millions=True, decimals=3))
+    assert test.b.to_list() == ["0.010", "0.020", "343.215", "0.004", "0.000"]
+
+    test = df.assign(c=format_number(df.c, as_percentage=True, decimals=1))
+    assert test.c.to_list() == ["50.0%", "60.0%", "70.0%", "80.0%", "90.0%"]
+
+    test = df.assign(d=format_number(df.d, as_billions=True, decimals=1))
+    assert test.d.to_list() == ["12.2", "2.3", "1.4", "2.5", "1.6"]
+
+    test = df.assign(a=format_number(df.a, other_format="{:.8f}"))
+    assert test.a.to_list() == [
+        "123.00000000",
+        "2433.00000000",
+        "32.00000000",
+        "4.60000000",
+        "53423.30000000",
+    ]
+
+    with pytest.raises(ValueError):
+        _ = test.assign(a=format_number(test.a))
+
+    with pytest.raises(KeyError):
+        _ = test.assign(b=format_number(test.b, as_billions=True, as_percentage=True))
+
+    with pytest.warns(UserWarning):
+        _ = test.assign(c=format_number(test.c))
+
+    with pytest.raises(KeyError):
+        _ = test.assign(
+            b=format_number(test.b, as_billions=True, other_format="{:.8f}")
+        )
