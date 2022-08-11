@@ -1,10 +1,13 @@
 import pandas as pd
+import pytest
 
 from bblocks.cleaning_tools.clean import (
     clean_number,
     clean_numeric_series,
     convert_id,
     to_date_column,
+    date_to_str,
+    format_number,
 )
 
 
@@ -132,3 +135,62 @@ def test_to_date_column():
     result4 = to_date_column(df.date3, date_format="%d/%m/%Y")
     assert result4.dtype == "datetime64[ns]"
     assert result4.dt.day.to_list() == [12, 12, 18, 24, 3]
+
+
+def test_date_to_str():
+    # Create a sample dataframe with a date column
+    df = pd.DataFrame(
+        {
+            "date": [
+                "2020-01-01",
+                "2020-04-02",
+                "2021-01-03",
+                "2021-08-04",
+                "2022-11-05",
+            ],
+            "date2": [
+                "2100-error",
+                "2020-01-02",
+                "2021-01-03",
+                "2021-01-04",
+                "2022-01-05",
+            ],
+            "country": ["DNK", "FRA", "GBR", "USA", "DNK"],
+        }
+    )
+
+    df = df.assign(date=date_to_str(df.date))
+
+    assert df.date.to_list() == [
+        "01 January 2020",
+        "02 April 2020",
+        "03 January 2021",
+        "04 August 2021",
+        "05 November 2022",
+    ]
+
+    with pytest.raises(ValueError):
+        df = df.assign(date=date_to_str(df.date2))
+
+
+def test_format_number():
+    # sample dataframe with numeric columns
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5],
+            "b": [10000, 20000, 343214532, 4432, 53],
+            "c": [0.5, 0.6, 0.7, 0.8, 0.9],
+        }
+    )
+
+    test = df.assign(a=format_number(df.a))
+    assert test.a.to_list() == ["1.0%", "2.0%", "3.0%", "4.0%", "5.0%"]
+
+    test = df.assign(b=format_number(df.b, format_="{:,.0f}"))
+    assert test.b.to_list() == ["10,000", "20,000", "343,214,532", "4,432", "53"]
+
+    test = df.assign(c=format_number(df.c, format_="{:,.0%}"))
+    assert test.c.to_list() == ["50%", "60%", "70%", "80%", "90%"]
+
+    with pytest.raises(ValueError):
+        _ = test.assign(c=format_number(test.c))

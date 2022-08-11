@@ -135,3 +135,38 @@ def convert_id(
         mapping = mapping | additional_mapping
 
     return series.map(mapping).fillna(series if not_found is None else not_found)
+
+
+def date_to_str(series: pd.Series, date_format: str = "%d %B %Y") -> pd.Series:
+    """Converts a Pandas' series into a string series.
+
+    Args:
+        series: the Pandas series to convert to a formatted date string
+        date_format: the format to use for the date string. The default is "%d %B %Y"
+    """
+
+    if not pd.api.types.is_datetime64_any_dtype(series):
+        try:
+            series = pd.to_datetime(series, infer_datetime_format=True)
+        except ValueError:
+            raise ValueError(
+                f"could not parse date format in. "
+                f"To fix, convert column to datetime"
+            )
+
+    return series.dt.strftime(date_format)
+
+
+def format_number(series: pd.Series, format_: str = "{:,.1f}%") -> pd.Series:
+    """Formats a Pandas' numeric series into a formatted string series.
+
+    Args:
+        series: the series to convert to a formatted string
+        format_: the string format. Examples are available at:
+            https://mkaz.blog/code/python-string-format-cookbook/
+    """
+
+    if not pd.api.types.is_numeric_dtype(series):
+        raise ValueError(f"The series must be of numeric type")
+
+    return series.map(f"{format_}".format)
