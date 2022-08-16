@@ -242,7 +242,7 @@ def add_gdp_column(
     ).rename(columns={"iso_code": "id_", "value": "gdp"})
 
     # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True)
+    _ = df.copy(deep=True).reset_index(drop=True)
     _[target_column] = df_.merge(gdp_df, on=on_, how="left").gdp
 
     return _
@@ -296,7 +296,7 @@ def add_gov_expenditure_column(
     ).rename(columns={"iso_code": "id_", "value": "gov_exp"})
 
     # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True)
+    _ = df.copy(deep=True).reset_index(drop=True)
     _[target_column] = df_.merge(gov_df, on=on_, how="left").gov_exp
 
     return _
@@ -346,7 +346,7 @@ def add_gdp_share_column(
 
     df_ = add_gdp_column(**kwargs)
 
-    _ = df.copy(deep=True)
+    _ = df.copy(deep=True).reset_index(drop=True)
 
     _[target_column] = round(100 * df_[value_column] / df_[target_column], decimals)
 
@@ -394,7 +394,7 @@ def add_population_share_column(
 
     df_ = add_population_column(**kwargs)
 
-    _ = df.copy(deep=True)
+    _ = df.copy(deep=True).reset_index(drop=True)
 
     _[target_column] = round(100 * df_[value_column] / df_[target_column], decimals)
 
@@ -443,7 +443,7 @@ def add_gov_exp_share_column(
 
     df_ = add_gov_expenditure_column(**kwargs)
 
-    _ = df.copy(deep=True)
+    _ = df.copy(deep=True).reset_index(drop=True)
 
     _[target_column] = round(100 * df_[value_column] / df_[target_column], 3)
 
