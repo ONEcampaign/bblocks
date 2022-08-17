@@ -181,28 +181,12 @@ class WorldBankData(ImportData):
         return self.data
 
 
-def _read_pink_sheet(sheet: str):
-    """read pink sheet data from web"""
-
-    url = (
-        "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-"
-        "0350012021/related/CMO-Historical-Data-Monthly.xlsx"
-    )
-    if sheet not in ["Monthly Indices", "Monthly Prices"]:
-        raise ValueError(
-            "invalid sheet name. "
-            "Please specify 'Monthly Indices' or 'Monthly Prices'"
-        )
-    else:
-        return pd.read_excel(url, sheet_name=sheet)
-
-
 def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
     """clean, format, standardize pink sheet data"""
 
     if sheet == "Monthly Prices":
         df.columns = df.iloc[3]
-        return (
+        df = (
             df.rename(columns={np.nan: "period"})
             .iloc[6:]
             .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
@@ -231,98 +215,151 @@ def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
             "Precious Metals",
         ]
         df["period"] = pd.to_datetime(df.period, format="%YM%m")
+    df = pd.melt(df, id_vars="period", var_name="indicator", value_name="value")
 
-        return df
-
-    else:
-        raise ValueError(
-            "invalid sheet name. "
-            "Please specify 'Monthly Indices' or 'Monthly Prices'"
-        )
+    return df
 
 
 @dataclass
-class WorldBankPinkSheet:
-    """An object to help download data from World Bank Pink sheets
+class PinkSheet(ImportData):
+    """An object to help download data from World Bank Pink sheets.
 
-    Parameters:
-        sheet (str): name of the sheet in the Pink Sheet ['Monthly Prices', 'Monthly Indices']
+    In order to use, create an instance of this class, specifying the sheet name - 'Monthly Prices', 'Monthly Indices'.
+    Then, call the load_indicator method to load an indicator, optionally specifying in indicator or
+    list of indicators. This can be done multiple times. If the data has never been downloaded,
+    it will be downloaded. If it has been downloaded, it will be loaded from disk.
+    If `update_data` is set to True when creating the object, the full dataset will be downloaded to disk
+    when `load_indicator` is called for the first time.
+    You can force an update by calling `update` if you want to refresh the data stored on disk.
+    You can get a dataframe of the data by calling `get_data`
+
     """
 
-    sheet: str
-    data: pd.DataFrame = None
-    update_data: bool = False
+    sheet: str = None
 
-    def __post_init__(self) -> None:
-        if self.update_data:
+    def __post_init__(self):
+        if self.sheet not in ["Monthly Indices", "Monthly Prices"]:
+            raise ValueError(
+                "Invalid sheet name. "
+                "Please specify 'Monthly Indices' or 'Monthly Prices'"
+            )
+        self.indicators = {}
+
+    def __load(self, indicator_list: list) -> None:
+        """Loads indicators and data from disk
+
+        Args:
+            indicator_list: list of indicators to load"""
+
+        df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+        if indicator_list == "all":
+            indicator_list = list(df.indicator.unique())
+
+        elif isinstance(indicator_list, str):
+            indicator_list = [indicator_list]
+
+        for indicator in indicator_list:
+            if indicator not in df.indicator.unique():
+                raise Warning(f"{indicator} not found")
+            else:
+                self.indicators[indicator] = df[df.indicator == indicator].reset_index(
+                    drop=True
+                )
+
+        self.data = df[df.indicator.isin(list(self.indicators))].reset_index(drop=True)
+
+    def load_indicator(self, indicator: Optional | str | list = "all") -> ImportData:
+        """Load data for an indicator or list of indicators.
+
+        Args:
+            indicator: indicator to load, either 'holdings' or 'allocations'. The default
+                is 'all' which loads both.
+
+        Returns:
+            The same object to allow chaining
+        """
+
+        if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}") or (
+            self.update_data and self.data is None
+        ):
             self.update()
-        if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}"):
-            self.update()
-        else:
-            self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
 
-    @property
-    def file_name(self) -> str:
-        """Returns the name of the stored file"""
-        return f"World Bank Pink Sheet - {self.sheet}.csv"
+        self.__load(indicator)
 
-    def update(self) -> None:
-        """Updates the underlying data"""
+        return self
+
+    def update(self, reload_data=False) -> ImportData:
+        """Update the data saved on disk
+
+        When called it downloads Pink sheet Data from the World Bank and saves it to disk.
+        Optionally specify whether to reload the data to the object
+
+        Args:
+            reload_data: If True, the data will be reloaded to the object
+
+        Returns:
+            The same object to allow chaining
+        """
+
+        url = (
+            "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
+            "-Historical-Data-Monthly.xlsx"
+        )
+
         (
-            _read_pink_sheet(self.sheet)
-            .pipe(_clean_pink_sheet, self.sheet)
+            pd.read_excel(url, sheet_name=self.sheet)
+            .pipe(_clean_pink_sheet, sheet=self.sheet)
             .to_csv(f"{PATHS.imported_data}/{self.file_name}", index=False)
         )
 
-        self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+        if reload_data:
+            self.__load(indicator_list=list(self.indicators))
+
+        return self
 
     def get_data(
         self,
-        *,
+        indicators: str | list = None,
         start_date: str = None,
         end_date: str = None,
-        indicators: str | list = None,
-    ):
-        """Get data as a Pandas DataFrame
+    ) -> pd.DataFrame:
+        """Get the data as a Pandas DataFrame
 
         Args:
-            start_date : start date of the data to be returned (inclusive).
-            end_date : end date of the data to be returned (inclusive).
-            indicators : one or more indicators to be returned.
-
+            indicators: indicator to get. If 'all', both indicators will be returned
+            start_date: start date of the data (e.g. '2019-01-01')
+            end_date: end date of the data (e.g. '2019-12-31')
 
         Returns:
-            pd.DataFrame: Pandas dataframe with the requested data
+            Pandas DataFrame of the data
         """
 
-        self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+        df = self.data.copy(deep=True)
+
+        if indicators is not None:
+            if isinstance(indicators, str):
+                indicators = [indicators]
+            for indicator in indicators:
+                if indicator not in df.indicator.unique():
+                    raise Warning(f"indicator not found: {indicator}")
+            df = df[df.indicator.isin(indicators)]
 
         if (start_date is not None) & (end_date is not None):
             if start_date > end_date:
                 raise ValueError("start date cannot be earlier than end date")
 
         if start_date is not None:
-            self.data = self.data[self.data["period"] >= start_date]
+            df = df[df["period"] >= start_date]
         if end_date is not None:
-            self.data = self.data[self.data["period"] <= end_date]
+            df = df[df["period"] <= end_date]
 
-        if len(self.data) == 0:
+        if len(df) == 0:
             raise ValueError("No data available for current parameters")
-        if indicators is not None:
-            # if indicator is a string, add it to a list
-            if isinstance(indicators, str):
-                indicators = [indicators]
 
-            # check that there is at least 1 valid indicator, otherwise raise error
-            if sum([i in self.data.columns for i in indicators]) == 0:
-                raise ValueError("No valid indicators selected")
+        return df.reset_index(drop=True)
 
-            # check for valid indicators, raise warning if indicator is not found
-            for indicator in indicators:
-                if indicator not in self.data.columns:
-                    warnings.warn(f"{indicator} not found")
-                    indicators.remove(indicator)
-
-            self.data = self.data[["period"] + indicators].reset_index(drop=True)
-
-        return self.data
+    @property
+    def file_name(self) -> str:
+        """Returns the name of the stored file"""
+        return f"World Bank Pink Sheet - {self.sheet}.csv"
