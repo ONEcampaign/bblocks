@@ -35,6 +35,12 @@ def __validate_cols(d: pd.DataFrame, sdate, edate, date_col, value_col, grouper)
         if col not in d.columns:
             raise ValueError(f"{col} not found in data")
 
+    if not pd.api.types.is_datetime64_any_dtype(sdate):
+        sdate = pd.to_datetime(sdate, infer_datetime_format=True)
+
+    if not pd.api.types.is_datetime64_any_dtype(edate):
+        edate = pd.to_datetime(edate, infer_datetime_format=True)
+
     return sdate, edate, date_col, value_col, grouper
 
 

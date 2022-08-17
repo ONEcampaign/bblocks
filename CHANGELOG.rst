@@ -1,12 +1,15 @@
 Changelog
 =========
 
-[0.2.1] - 2022 - IN PROGRESS
+[0.2.2] - 2022 - IN PROGRESS
 --------------------
 -  Added a new feature: ``date_to_str()``, which formats a date as an english string.
 -  Added a new feature: ``format_number``, which formats a numeric series as a formatted string (e.g. 1,234,567.89
    instead of 1234567.89). Optionally can specify to format as percentage, millions, or billions.
 
+[0.2.1] - 2022-08-16
+--------------------
+-  Fixed a bug with adding WEO columns to dataframes
 
 [0.2.0] - 2022-08-10
 --------------------
