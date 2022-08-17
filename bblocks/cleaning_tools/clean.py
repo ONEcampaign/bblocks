@@ -165,6 +165,7 @@ def format_number(
     as_millions: bool = False,
     as_billions: bool = False,
     decimals: int = 2,
+    add_sign: bool = False,
     other_format: str = "{:,.2f}",
 ) -> pd.Series:
     """Formats a Pandas' numeric series into a formatted string series.
@@ -193,14 +194,20 @@ def format_number(
         raise KeyError(f"other_format can only be used if all other options are False")
 
     if true_params == 0:
-        warnings.showwarning("Using 'other_format'. The decimals setting is ignored.",
-                             UserWarning, "clean.py", 168)
+        warnings.showwarning(
+            "Using 'other_format'. The decimals setting is ignored.",
+            UserWarning,
+            "clean.py",
+            168,
+        )
+
+    sign = "-" if add_sign else ""
 
     formats = {
-        "as_units": f"{{:,.{decimals}f}}",
-        "as_percentage": f"{{:,.{decimals}%}}",
-        "as_millions": f"{{:,.{decimals}f}}",
-        "as_billions": f"{{:,.{decimals}f}}",
+        "as_units": f"{{:{sign},.{decimals}f}}",
+        "as_percentage": f"{{:{sign},.{decimals}%}}",
+        "as_millions": f"{{:{sign},.{decimals}f}}",
+        "as_billions": f"{{:{sign},.{decimals}f}}",
     }
 
     if as_units:

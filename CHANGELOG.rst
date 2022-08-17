@@ -6,6 +6,9 @@ Changelog
 -  Added a new feature: ``date_to_str()``, which formats a date as an english string.
 -  Added a new feature: ``format_number``, which formats a numeric series as a formatted string (e.g. 1,234,567.89
    instead of 1234567.89). Optionally can specify to format as percentage, millions, or billions.
+-  Improved the `change_from_date` behaviour in order to accept strings as starting and end dates (instead of just
+   datetime objects)
+-  Improved `format_number` to optionally add the value sign (e.g. +1,234,567.89 instead of 1,234,567.89).
 
 [0.2.1] - 2022-08-16
 --------------------
