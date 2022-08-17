@@ -156,6 +156,11 @@ class SDR(ImportData):
     (the date of the SDR announcement), and `value`.
     """
 
+    def __post_init__(self):
+
+        self.indicators = {}
+        self.data = None
+
     def __load(self, indicator_list: list) -> None:
         """Loads indicators and data from disk
 
@@ -165,16 +170,11 @@ class SDR(ImportData):
         # load data from disk
         df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
 
-        # filter data on indicator
-        self.data = df.loc[df["indicator"].isin(indicator_list)].reset_index(drop=True)
+        for indicator in indicator_list:
+            self.indicators[indicator] = df[df["indicator"] == indicator].reset_index(
+                    drop=True)
 
-        self.indicators = {
-            indicator: self.data.loc[self.data["indicator"] == indicator].reset_index(
-                drop=True
-            )
-            for indicator in indicator_list
-        }
-        print(f"Successfully loaded {indicator_list} SDR data")
+        self.data = df.loc[df["indicator"].isin(list(self.indicators))].reset_index(drop=True)
 
     def load_indicator(self, indicator: str = "all") -> ImportData:
         """Load SDR data. Optionally specify the indicator to load (holdings or allocations).
@@ -192,12 +192,11 @@ class SDR(ImportData):
 
         if (
             not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
-            or self.update_data
+            or (self.update_data and self.data is None)
         ):
             self.update()
 
-        else:
-            self.__load(indicator_list)
+        self.__load(indicator_list)
 
         return self
 
