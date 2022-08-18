@@ -243,7 +243,6 @@ class PinkSheet(ImportData):
                 "Invalid sheet name. "
                 "Please specify 'Monthly Indices' or 'Monthly Prices'"
             )
-        self.indicators = {}
 
     def __load(self, indicator_list: list) -> None:
         """Loads indicators and data from disk
@@ -269,11 +268,11 @@ class PinkSheet(ImportData):
 
         self.data = df[df.indicator.isin(list(self.indicators))].reset_index(drop=True)
 
-    def load_indicator(self, indicator: Optional | str | list = "all") -> ImportData:
+    def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
         """Load data for an indicator or list of indicators.
 
         Args:
-            indicator: indicator to load, either 'holdings' or 'allocations'. The default
+            indicator: indicator to load, either. The default
                 is 'all' which loads both.
 
         Returns:
@@ -283,13 +282,13 @@ class PinkSheet(ImportData):
         if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}") or (
             self.update_data and self.data is None
         ):
-            self.update()
+            self.update(reload_data=False)
 
         self.__load(indicator)
 
         return self
 
-    def update(self, reload_data=False) -> ImportData:
+    def update(self, reload_data=True) -> ImportData:
         """Update the data saved on disk
 
         When called it downloads Pink sheet Data from the World Bank and saves it to disk.
@@ -320,9 +319,9 @@ class PinkSheet(ImportData):
 
     def get_data(
         self,
-        indicators: str | list = None,
-        start_date: str = None,
-        end_date: str = None,
+        indicators: Optional[str | list] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
@@ -335,15 +334,19 @@ class PinkSheet(ImportData):
             Pandas DataFrame of the data
         """
 
-        df = self.data.copy(deep=True)
+        df = pd.DataFrame()
 
         if indicators is not None:
             if isinstance(indicators, str):
                 indicators = [indicators]
             for indicator in indicators:
-                if indicator not in df.indicator.unique():
-                    raise Warning(f"indicator not found: {indicator}")
-            df = df[df.indicator.isin(indicators)]
+                if indicator not in self.indicators:
+                    warnings.warn(f"Indicator not found: {indicator}")
+                else:
+                    df = pd.concat([df, self.indicators[indicator]])
+
+        else:
+            df = self.data
 
         if (start_date is not None) & (end_date is not None):
             if start_date > end_date:

@@ -191,13 +191,14 @@ def test_pink_sheet():
     assert error.match("start date cannot be earlier than end date")
 
     with pytest.raises(ValueError) as error:
-        pk_obj_4.get_data(start_date = '2300-01-01')
-    assert error.match("No data available for current parameters")
+        pk_obj_4.get_data(start_date='2500-01-01')
+    assert error.match('No data available for current parameters')
 
-    invalid_indicator = 'invalid indicator'
-    with pytest.raises(Warning) as error:
-        pk_obj_4.get_data(indicators=invalid_indicator)
-    assert error.match(f"indicator not found: {invalid_indicator}")
+    invalid_indicator_list = ['Energy', 'invalid indicator']
+    with pytest.warns(UserWarning) as warning:
+        pk_obj_4.get_data(indicators=invalid_indicator_list)
+    assert len(warning) == 1
+
 
 
 
