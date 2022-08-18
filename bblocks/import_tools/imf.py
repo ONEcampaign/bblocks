@@ -83,11 +83,11 @@ def _read_sdr_tsv(url: str) -> pd.DataFrame:
     )
 
 
-def _check_sdr_indicators(indicator: str) -> list:
+def _check_sdr_indicators(indicator: str | list) -> list:
     """Checks if the indicator is in the list of SDR accepted indicators
 
     Args:
-        indicator: indicator to check. If indicator is None, all accepted indicators
+        indicator: indicator to check. If indicator is 'all', all accepted indicators
             are returned ['holdings', 'allocations']
 
     Returns:
@@ -99,13 +99,15 @@ def _check_sdr_indicators(indicator: str) -> list:
     if indicator == "all":
         return accepted_indicators
 
-    elif not isinstance(indicator, str):
-        raise ValueError(f"{indicator} is not a valid indicator type")
+    else:
+        if isinstance(indicator, str):
+            indicator = [indicator]
 
-    if indicator not in accepted_indicators:
-        raise ValueError(f"{indicator} is not a valid indicator")
+        for i in indicator:
+            if i not in accepted_indicators:
+                raise ValueError(f"{i} is not a valid indicator.")
 
-    return [indicator]
+        return indicator
 
 
 def _get_data(obj: ImportData, indicators: str | list) -> pd.DataFrame:
@@ -156,27 +158,7 @@ class SDR(ImportData):
     (the date of the SDR announcement), and `value`.
     """
 
-    def __post_init__(self):
-
-        self.indicators = {}
-        self.data = None
-
-    def __load(self, indicator_list: list) -> None:
-        """Loads indicators and data from disk
-
-        Args:
-            indicator_list: list of indicators to load
-        """
-        # load data from disk
-        df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
-
-        for indicator in indicator_list:
-            self.indicators[indicator] = df[df["indicator"] == indicator].reset_index(
-                    drop=True)
-
-        self.data = df.loc[df["indicator"].isin(list(self.indicators))].reset_index(drop=True)
-
-    def load_indicator(self, indicator: str = "all") -> ImportData:
+    def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
         """Load SDR data. Optionally specify the indicator to load (holdings or allocations).
 
         Args:
@@ -194,13 +176,17 @@ class SDR(ImportData):
             not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
             or (self.update_data and self.data is None)
         ):
-            self.update()
+            self.update(reload_data=False)
 
-        self.__load(indicator_list)
+        if self.data is None:
+            self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+        for i in indicator_list:
+            self.indicators[i] = self.data[self.data["indicator"] == i].reset_index(drop=True)
 
         return self
 
-    def update(self, reload_data: bool = False) -> ImportData:
+    def update(self, reload_data: bool = True) -> ImportData:
         """Update the data saved on disk
 
         When called it extracts the SDR data from the IMF website and saves it to disk.
@@ -242,7 +228,7 @@ class SDR(ImportData):
         )
 
         if reload_data:
-            self.__load(list(self.indicators.keys()))
+            self.load_indicator(list(self.indicators))
         else:
             print(
                 "Successfully updated SDR data to disk. "

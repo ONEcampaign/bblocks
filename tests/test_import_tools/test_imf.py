@@ -11,17 +11,20 @@ def test_sdr_load_indicator():
 
     sdr_obj.load_indicator()
     assert "holdings" and "allocations" in sdr_obj.indicators.keys()
+    assert isinstance(sdr_obj.data, pd.DataFrame)
 
-    sdr_obj.load_indicator("holdings")
+    sdr_obj2 = SDR()
+    sdr_obj2.load_indicator("holdings")
     assert (
-        "holdings" in sdr_obj.indicators.keys()
-        and "allocations" not in sdr_obj.indicators.keys()
+        "holdings" in sdr_obj2.indicators.keys()
+        and "allocations" not in sdr_obj2.indicators.keys()
     )
-    assert isinstance(sdr_obj.indicators["holdings"], pd.DataFrame)
+    assert isinstance(sdr_obj2.indicators["holdings"], pd.DataFrame)
 
-    sdr_obj.load_indicator("allocations")
-    assert "holdings" not in sdr_obj.indicators and "allocations" in sdr_obj.indicators
-    assert isinstance(sdr_obj.indicators["allocations"], pd.DataFrame)
+    sdr_obj3 = SDR()
+    sdr_obj3.load_indicator("allocations")
+    assert "holdings" not in sdr_obj3.indicators and "allocations" in sdr_obj3.indicators
+    assert isinstance(sdr_obj3.indicators["allocations"], pd.DataFrame)
 
     invalid_indicator = "invalid"
     with pytest.raises(ValueError) as error:
