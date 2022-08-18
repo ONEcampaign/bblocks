@@ -14,11 +14,11 @@ from bblocks.import_tools.common import ImportData
 
 
 def _get_wb_data(
-    series: str,
-    series_name: str | None = None,
-    start_year: int | None = None,
-    end_year: int | None = None,
-    most_recent_only: bool = False,
+        series: str,
+        series_name: str | None = None,
+        start_year: int | None = None,
+        end_year: int | None = None,
+        most_recent_only: bool = False,
 ) -> pd.DataFrame:
     """Get data for an indicator, using wbgapi"""
 
@@ -42,8 +42,8 @@ def _get_wb_data(
             columns="series",
             timeColumns=True,
         )
-        .reset_index()
-        .rename(
+            .reset_index()
+            .rename(
             columns={
                 "economy": "iso_code",
                 "index": "iso_code",
@@ -52,14 +52,14 @@ def _get_wb_data(
                 f"{series}:T": "date",
             }
         )
-        .assign(
+            .assign(
             indicator=series_name if series_name is not None else series,
             indicator_code=series,
             date=lambda d: pd.to_datetime(d.date, format="%Y"),
         )
-        .sort_values(by=["iso_code", "date"])
-        .reset_index(drop=True)
-        .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
+            .sort_values(by=["iso_code", "date"])
+            .reset_index(drop=True)
+            .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
     )
 
 
@@ -75,12 +75,12 @@ class WorldBankData(ImportData):
     You can get a dataframe of the data by calling `get_data`."""
 
     def load_indicator(
-        self,
-        indicator_code: str,
-        indicator_name=None,
-        start_year: Optional | int = None,
-        end_year: Optional | int = None,
-        most_recent_only: bool = False,
+            self,
+            indicator_code: str,
+            indicator_name=None,
+            start_year: Optional | int = None,
+            end_year: Optional | int = None,
+            most_recent_only: bool = False,
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
 
@@ -188,10 +188,10 @@ def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
         df.columns = df.iloc[3]
         df = (
             df.rename(columns={np.nan: "period"})
-            .iloc[6:]
-            .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
-            .replace("..", np.nan)
-            .reset_index(drop=True)
+                .iloc[6:]
+                .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
+                .replace("..", np.nan)
+                .reset_index(drop=True)
         )
 
     elif sheet == "Monthly Indices":
@@ -244,30 +244,6 @@ class PinkSheet(ImportData):
                 "Please specify 'Monthly Indices' or 'Monthly Prices'"
             )
 
-    def __load(self, indicator_list: list) -> None:
-        """Loads indicators and data from disk
-
-        Args:
-            indicator_list: list of indicators to load"""
-
-        df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
-
-        if indicator_list == "all":
-            indicator_list = list(df.indicator.unique())
-
-        elif isinstance(indicator_list, str):
-            indicator_list = [indicator_list]
-
-        for indicator in indicator_list:
-            if indicator not in df.indicator.unique():
-                raise Warning(f"{indicator} not found")
-            else:
-                self.indicators[indicator] = df[df.indicator == indicator].reset_index(
-                    drop=True
-                )
-
-        self.data = df[df.indicator.isin(list(self.indicators))].reset_index(drop=True)
-
     def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
         """Load data for an indicator or list of indicators.
 
@@ -280,11 +256,24 @@ class PinkSheet(ImportData):
         """
 
         if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}") or (
-            self.update_data and self.data is None
+                self.update_data and self.data is None
         ):
             self.update(reload_data=False)
 
-        self.__load(indicator)
+        if self.data is None:
+            self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+        if indicator == "all":
+            indicator = list(self.data.indicator.unique())
+        elif isinstance(indicator, str):
+            indicator = [indicator]
+
+        for i in indicator:
+            if i not in self.data.indicator.unique():
+                raise Warning(f"Indicator not found: {i}")
+            else:
+                self.indicators[i] = (self.data[self.data.indicator == i]
+                                      .reset_index(drop=True))
 
         return self
 
@@ -308,20 +297,20 @@ class PinkSheet(ImportData):
 
         (
             pd.read_excel(url, sheet_name=self.sheet)
-            .pipe(_clean_pink_sheet, sheet=self.sheet)
-            .to_csv(f"{PATHS.imported_data}/{self.file_name}", index=False)
+                .pipe(_clean_pink_sheet, sheet=self.sheet)
+                .to_csv(f"{PATHS.imported_data}/{self.file_name}", index=False)
         )
 
         if reload_data:
-            self.__load(indicator_list=list(self.indicators))
+            self.load_indicator(list(self.indicators))
 
         return self
 
     def get_data(
-        self,
-        indicators: Optional[str | list] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+            self,
+            indicators: Optional[str | list] = None,
+            start_date: Optional[str] = None,
+            end_date: Optional[str] = None,
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
@@ -333,6 +322,10 @@ class PinkSheet(ImportData):
         Returns:
             Pandas DataFrame of the data
         """
+
+        if (start_date is not None) & (end_date is not None):
+            if start_date > end_date:
+                raise ValueError("start date cannot be earlier than end date")
 
         df = pd.DataFrame()
 
@@ -347,10 +340,6 @@ class PinkSheet(ImportData):
 
         else:
             df = self.data
-
-        if (start_date is not None) & (end_date is not None):
-            if start_date > end_date:
-                raise ValueError("start date cannot be earlier than end date")
 
         if start_date is not None:
             df = df[df["period"] >= start_date]
