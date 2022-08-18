@@ -11,17 +11,20 @@ def test_sdr_load_indicator():
 
     sdr_obj.load_indicator()
     assert "holdings" and "allocations" in sdr_obj.indicators.keys()
+    assert isinstance(sdr_obj.data, pd.DataFrame)
 
-    sdr_obj.load_indicator("holdings")
+    sdr_obj2 = SDR()
+    sdr_obj2.load_indicator("holdings")
     assert (
-        "holdings" in sdr_obj.indicators.keys()
-        and "allocations" not in sdr_obj.indicators.keys()
+        "holdings" in sdr_obj2.indicators.keys()
+        and "allocations" not in sdr_obj2.indicators.keys()
     )
-    assert isinstance(sdr_obj.indicators["holdings"], pd.DataFrame)
+    assert isinstance(sdr_obj2.indicators["holdings"], pd.DataFrame)
 
-    sdr_obj.load_indicator("allocations")
-    assert "holdings" not in sdr_obj.indicators and "allocations" in sdr_obj.indicators
-    assert isinstance(sdr_obj.indicators["allocations"], pd.DataFrame)
+    sdr_obj3 = SDR()
+    sdr_obj3.load_indicator("allocations")
+    assert "holdings" not in sdr_obj3.indicators and "allocations" in sdr_obj3.indicators
+    assert isinstance(sdr_obj3.indicators["allocations"], pd.DataFrame)
 
     invalid_indicator = "invalid"
     with pytest.raises(ValueError) as error:
@@ -60,14 +63,16 @@ def test_sdr_get_data():
     with pytest.raises(ValueError) as error:
         sdr_obj.load_indicator()
         sdr_obj.get_data(members=invalid_member)
-    assert "No members found" in str(error.value)
+    assert "member not found" in str(error.value)
 
     invalid_list = ["Zimbabwe", "invalid"]
     with pytest.warns(UserWarning) as record:
         sdr_obj.load_indicator()
         df = sdr_obj.get_data(members=invalid_list)
     assert len(record) == 1
-    assert record[0].message.args[0] == "member not found: invalid"
+    assert record[0].message.args[0] == f"member not found: invalid.\nPlease call `obj.member` to see available members."
+    assert 'Zimbabwe' in df.member.unique()
+    assert df.member.nunique() == 1
 
 
 def test_weo_load_indicator():

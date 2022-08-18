@@ -77,17 +77,17 @@ def _read_sdr_tsv(url: str) -> pd.DataFrame:
 
     return (
         df.melt(id_vars="member", value_vars=["holdings", "allocations"])
-        .pipe(clean_numeric_series, series_columns="value")
-        .rename(columns={"variable": "indicator"})
-        .reset_index(drop=True)
+            .pipe(clean_numeric_series, series_columns="value")
+            .rename(columns={"variable": "indicator"})
+            .reset_index(drop=True)
     )
 
 
-def _check_sdr_indicators(indicator: str) -> list:
+def _check_sdr_indicators(indicator: str | list) -> list:
     """Checks if the indicator is in the list of SDR accepted indicators
 
     Args:
-        indicator: indicator to check. If indicator is None, all accepted indicators
+        indicator: indicator to check. If indicator is 'all', all accepted indicators
             are returned ['holdings', 'allocations']
 
     Returns:
@@ -99,13 +99,15 @@ def _check_sdr_indicators(indicator: str) -> list:
     if indicator == "all":
         return accepted_indicators
 
-    elif not isinstance(indicator, str):
-        raise ValueError(f"{indicator} is not a valid indicator type")
+    else:
+        if isinstance(indicator, str):
+            indicator = [indicator]
 
-    if indicator not in accepted_indicators:
-        raise ValueError(f"{indicator} is not a valid indicator")
+        for i in indicator:
+            if i not in accepted_indicators:
+                raise ValueError(f"{i} is not a valid indicator.")
 
-    return [indicator]
+        return indicator
 
 
 def _get_data(obj: ImportData, indicators: str | list) -> pd.DataFrame:
@@ -156,27 +158,7 @@ class SDR(ImportData):
     (the date of the SDR announcement), and `value`.
     """
 
-    def __load(self, indicator_list: list) -> None:
-        """Loads indicators and data from disk
-
-        Args:
-            indicator_list: list of indicators to load
-        """
-        # load data from disk
-        df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
-
-        # filter data on indicator
-        self.data = df.loc[df["indicator"].isin(indicator_list)].reset_index(drop=True)
-
-        self.indicators = {
-            indicator: self.data.loc[self.data["indicator"] == indicator].reset_index(
-                drop=True
-            )
-            for indicator in indicator_list
-        }
-        print(f"Successfully loaded {indicator_list} SDR data")
-
-    def load_indicator(self, indicator: str = "all") -> ImportData:
+    def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
         """Load SDR data. Optionally specify the indicator to load (holdings or allocations).
 
         Args:
@@ -191,17 +173,20 @@ class SDR(ImportData):
         indicator_list = _check_sdr_indicators(indicator)
 
         if (
-            not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
-            or self.update_data
+                not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
+                or (self.update_data and self.data is None)
         ):
-            self.update()
+            self.update(reload_data=False)
 
-        else:
-            self.__load(indicator_list)
+        if self.data is None:
+            self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+        for i in indicator_list:
+            self.indicators[i] = self.data[self.data["indicator"] == i].reset_index(drop=True)
 
         return self
 
-    def update(self, reload_data: bool = False) -> ImportData:
+    def update(self, reload_data: bool = True) -> ImportData:
         """Update the data saved on disk
 
         When called it extracts the SDR data from the IMF website and saves it to disk.
@@ -243,7 +228,7 @@ class SDR(ImportData):
         )
 
         if reload_data:
-            self.__load(list(self.indicators.keys()))
+            self.load_indicator(list(self.indicators))
         else:
             print(
                 "Successfully updated SDR data to disk. "
@@ -253,9 +238,9 @@ class SDR(ImportData):
         return self
 
     def get_data(
-        self,
-        indicators: str = "all",
-        members: Optional[str | list] = "all",
+            self,
+            indicators: str = "all",
+            members: Optional[str | list] = "all",
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
@@ -272,28 +257,35 @@ class SDR(ImportData):
         df = _get_data(obj=self, indicators=indicators)
 
         if isinstance(members, str) and members != "all":
-            members = [members]
-            df = df[df["member"].isin(members)]
+            if members not in self.members:
+                raise ValueError(f"member not found: {members}.\nPlease call `obj.member` to see available members.")
+
+            df = df[df["member"] == members]
 
         elif isinstance(members, list):
             for member in members:
                 if member not in df["member"].unique():
-                    warnings.warn(f"member not found: {member}")
-                    print(f"Available members:\n {df.member.unique()}")
+                    warnings.warn(f"member not found: {member}.\nPlease call `obj.member` to see available members.")
+            df = df[df["member"].isin(members)]
 
         if len(df) == 0:
             raise ValueError(f"No members found")
 
-        return df
+        return df.reset_index(drop=True)
 
     @property
     def file_name(self):
         """Returns the name of the stored file"""
         return f"SDR.csv"
 
+    @property
+    def members(self):
+        """Returns a list of all members"""
+        return self.data["member"].unique()
+
 
 def _check_weo_parameters(
-    latest_y: int | None = None, latest_r: int | None = None
+        latest_y: int | None = None, latest_r: int | None = None
 ) -> (int, int):
     """Check parameters and return max values or provided input"""
     if latest_y is None:
@@ -324,7 +316,7 @@ class WorldEconomicOutlook(ImportData):
     """World Economic Outlook data"""
 
     def __load_data(
-        self, latest_y: int | None = None, latest_r: int | None = None
+            self, latest_y: int | None = None, latest_r: int | None = None
     ) -> None:
         """loading WEO as a clean dataframe
 
@@ -355,8 +347,8 @@ class WorldEconomicOutlook(ImportData):
 
         # If data doesn't exist or update is required, update the data
         if (
-            not os.path.exists(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv")
-            or self.update_data
+                not os.path.exists(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv")
+                or self.update_data
         ):
             _update_weo(latest_y, latest_r)
 
@@ -366,14 +358,14 @@ class WorldEconomicOutlook(ImportData):
         # Load data into data object
         self.data = (
             df.drop(to_drop, axis=1)
-            .rename(columns=names)
-            .melt(id_vars=names.values(), var_name="year", value_name="value")
-            .assign(
+                .rename(columns=names)
+                .melt(id_vars=names.values(), var_name="year", value_name="value")
+                .assign(
                 year=lambda d: pd.to_datetime(d.year, format="%Y"),
                 value=lambda d: clean_numeric_series(d.value),
             )
-            .dropna(subset=["value"])
-            .reset_index(drop=True)
+                .dropna(subset=["value"])
+                .reset_index(drop=True)
         )
 
     def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
@@ -384,9 +376,9 @@ class WorldEconomicOutlook(ImportData):
         # Create dictionary of available indicators
         indicators_ = (
             self.data.drop_duplicates(subset=["indicator", "indicator_name", "units"])
-            .assign(name_units=lambda d: d.indicator_name + " (" + d.units + ")")
-            .set_index("indicator")["name_units"]
-            .to_dict()
+                .assign(name_units=lambda d: d.indicator_name + " (" + d.units + ")")
+                .set_index("indicator")["name_units"]
+                .to_dict()
         )
 
         if indicators is None:
@@ -401,7 +393,7 @@ class WorldEconomicOutlook(ImportData):
                 raise ValueError(f"Indicator not found: {_}")
 
     def load_indicator(
-        self, indicator_code: str, indicator_name: Optional[str] = None
+            self, indicator_code: str, indicator_name: Optional[str] = None
     ) -> ImportData:
         """Loads a specific indicator from the World Economic Outlook data"""
 
@@ -413,7 +405,7 @@ class WorldEconomicOutlook(ImportData):
 
         self.indicators[indicator_code] = (
             self.data.loc[lambda d: d.indicator == indicator_code]
-            .assign(
+                .assign(
                 indicator_name=indicator_name
                 if indicator_name is not None
                 else lambda d: d.indicator_name,
@@ -422,9 +414,9 @@ class WorldEconomicOutlook(ImportData):
                     axis=1,
                 ),
             )
-            .drop(columns=["estimates_start_after"])
-            .sort_values(["iso_code", "year"])
-            .reset_index(drop=True)
+                .drop(columns=["estimates_start_after"])
+                .sort_values(["iso_code", "year"])
+                .reset_index(drop=True)
         )
         return self
 
@@ -449,7 +441,7 @@ class WorldEconomicOutlook(ImportData):
         print(f"Available indicators:\n{''.join(available)}")
 
     def get_data(
-        self, indicators: str | list = "all", keep_metadata: bool = False
+            self, indicators: str | list = "all", keep_metadata: bool = False
     ) -> pd.DataFrame:
 
         df = _get_data(obj=self, indicators=indicators)
