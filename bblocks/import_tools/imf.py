@@ -77,9 +77,9 @@ def _read_sdr_tsv(url: str) -> pd.DataFrame:
 
     return (
         df.melt(id_vars="member", value_vars=["holdings", "allocations"])
-        .pipe(clean_numeric_series, series_columns="value")
-        .rename(columns={"variable": "indicator"})
-        .reset_index(drop=True)
+            .pipe(clean_numeric_series, series_columns="value")
+            .rename(columns={"variable": "indicator"})
+            .reset_index(drop=True)
     )
 
 
@@ -173,8 +173,8 @@ class SDR(ImportData):
         indicator_list = _check_sdr_indicators(indicator)
 
         if (
-            not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
-            or (self.update_data and self.data is None)
+                not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
+                or (self.update_data and self.data is None)
         ):
             self.update(reload_data=False)
 
@@ -238,9 +238,9 @@ class SDR(ImportData):
         return self
 
     def get_data(
-        self,
-        indicators: str = "all",
-        members: Optional[str | list] = "all",
+            self,
+            indicators: str = "all",
+            members: Optional[str | list] = "all",
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
@@ -257,28 +257,35 @@ class SDR(ImportData):
         df = _get_data(obj=self, indicators=indicators)
 
         if isinstance(members, str) and members != "all":
-            members = [members]
-            df = df[df["member"].isin(members)]
+            if members not in self.members:
+                raise ValueError(f"member not found: {members}.\nPlease call `obj.member` to see available members.")
+
+            df = df[df["member"] == members]
 
         elif isinstance(members, list):
             for member in members:
                 if member not in df["member"].unique():
-                    warnings.warn(f"member not found: {member}")
-                    print(f"Available members:\n {df.member.unique()}")
+                    warnings.warn(f"member not found: {member}.\nPlease call `obj.member` to see available members.")
+            df = df[df["member"].isin(members)]
 
         if len(df) == 0:
             raise ValueError(f"No members found")
 
-        return df
+        return df.reset_index(drop=True)
 
     @property
     def file_name(self):
         """Returns the name of the stored file"""
         return f"SDR.csv"
 
+    @property
+    def members(self):
+        """Returns a list of all members"""
+        return self.data["member"].unique()
+
 
 def _check_weo_parameters(
-    latest_y: int | None = None, latest_r: int | None = None
+        latest_y: int | None = None, latest_r: int | None = None
 ) -> (int, int):
     """Check parameters and return max values or provided input"""
     if latest_y is None:
@@ -309,7 +316,7 @@ class WorldEconomicOutlook(ImportData):
     """World Economic Outlook data"""
 
     def __load_data(
-        self, latest_y: int | None = None, latest_r: int | None = None
+            self, latest_y: int | None = None, latest_r: int | None = None
     ) -> None:
         """loading WEO as a clean dataframe
 
@@ -340,8 +347,8 @@ class WorldEconomicOutlook(ImportData):
 
         # If data doesn't exist or update is required, update the data
         if (
-            not os.path.exists(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv")
-            or self.update_data
+                not os.path.exists(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv")
+                or self.update_data
         ):
             _update_weo(latest_y, latest_r)
 
@@ -351,14 +358,14 @@ class WorldEconomicOutlook(ImportData):
         # Load data into data object
         self.data = (
             df.drop(to_drop, axis=1)
-            .rename(columns=names)
-            .melt(id_vars=names.values(), var_name="year", value_name="value")
-            .assign(
+                .rename(columns=names)
+                .melt(id_vars=names.values(), var_name="year", value_name="value")
+                .assign(
                 year=lambda d: pd.to_datetime(d.year, format="%Y"),
                 value=lambda d: clean_numeric_series(d.value),
             )
-            .dropna(subset=["value"])
-            .reset_index(drop=True)
+                .dropna(subset=["value"])
+                .reset_index(drop=True)
         )
 
     def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
@@ -369,9 +376,9 @@ class WorldEconomicOutlook(ImportData):
         # Create dictionary of available indicators
         indicators_ = (
             self.data.drop_duplicates(subset=["indicator", "indicator_name", "units"])
-            .assign(name_units=lambda d: d.indicator_name + " (" + d.units + ")")
-            .set_index("indicator")["name_units"]
-            .to_dict()
+                .assign(name_units=lambda d: d.indicator_name + " (" + d.units + ")")
+                .set_index("indicator")["name_units"]
+                .to_dict()
         )
 
         if indicators is None:
@@ -386,7 +393,7 @@ class WorldEconomicOutlook(ImportData):
                 raise ValueError(f"Indicator not found: {_}")
 
     def load_indicator(
-        self, indicator_code: str, indicator_name: Optional[str] = None
+            self, indicator_code: str, indicator_name: Optional[str] = None
     ) -> ImportData:
         """Loads a specific indicator from the World Economic Outlook data"""
 
@@ -398,7 +405,7 @@ class WorldEconomicOutlook(ImportData):
 
         self.indicators[indicator_code] = (
             self.data.loc[lambda d: d.indicator == indicator_code]
-            .assign(
+                .assign(
                 indicator_name=indicator_name
                 if indicator_name is not None
                 else lambda d: d.indicator_name,
@@ -407,9 +414,9 @@ class WorldEconomicOutlook(ImportData):
                     axis=1,
                 ),
             )
-            .drop(columns=["estimates_start_after"])
-            .sort_values(["iso_code", "year"])
-            .reset_index(drop=True)
+                .drop(columns=["estimates_start_after"])
+                .sort_values(["iso_code", "year"])
+                .reset_index(drop=True)
         )
         return self
 
@@ -434,7 +441,7 @@ class WorldEconomicOutlook(ImportData):
         print(f"Available indicators:\n{''.join(available)}")
 
     def get_data(
-        self, indicators: str | list = "all", keep_metadata: bool = False
+            self, indicators: str | list = "all", keep_metadata: bool = False
     ) -> pd.DataFrame:
 
         df = _get_data(obj=self, indicators=indicators)
