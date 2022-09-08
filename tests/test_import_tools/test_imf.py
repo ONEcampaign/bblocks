@@ -3,7 +3,7 @@ import pytest
 import os
 
 from bblocks.config import PATHS
-from bblocks.import_tools.imf import SDR, WorldEconomicOutlook
+from bblocks.import_tools.imf import SDR, WorldEconomicOutlook, get_latest_exchange
 
 
 def test_sdr_load_indicator():
@@ -152,3 +152,10 @@ def test_get_data():
 
     assert len(df_meta.columns) > len(df_ngdp.columns)
     assert df_meta.estimate.sum() > 1
+
+
+def test_get_latest_exchange():
+    exchange_info = get_latest_exchange()
+    assert isinstance(exchange_info, dict)
+    assert ['date', 'SDRs per 1 USD', 'USD per 1 SDR'] == list(exchange_info.keys())
+    assert round(exchange_info['SDRs per 1 USD'], 3) == round(1/exchange_info['USD per 1 SDR'], 3)

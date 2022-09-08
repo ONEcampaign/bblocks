@@ -450,3 +450,42 @@ class WorldEconomicOutlook(ImportData):
             return df.filter(["iso_code", "name", "indicator", "year", "value"], axis=1)
 
         return df
+
+
+def get_latest_exchange() -> dict:
+    """Extracts the latest SDR exchange rate info
+
+    Extracts the latest SDR exchange rate information including USD per SDR, SDRs per USD, and date
+
+    return:
+        dictionary with date, SDRs per USD value, USD per SDR value
+    """
+
+    page = 'https://www.imf.org/external/np/fin/data/rms_sdrv.aspx'
+    exchange_info = {}
+    try:
+        content = requests.get(page).content
+    except ConnectionError:
+        raise ConnectionError('Could not extract exchange rates')
+
+    soup = BeautifulSoup(content, 'html.parser')
+    table = soup.find_all('table')[5]
+
+    date = table.find_all('th')[0].text.strip()
+    date = datetime.strptime(date, '%A, %B %d, %Y').strftime('%d-%m-%Y')
+    exchange_info.update({'date': date})
+
+    rows = table.find_all('td')
+
+    for i in range(len(rows)):
+        if 'U.S.$1.00 = SDR' in rows[i].text:
+            usd_in_sdr_value = float(rows[i+1].text.strip().split('\r\n')[0])
+            exchange_info.update({'SDRs per 1 USD': usd_in_sdr_value})
+
+        if 'SDR1 = US$' in rows[i].text:
+            sdr_in_usd = float(rows[i+1].text.strip().split('\r\n')[0])
+            exchange_info.update({'USD per 1 SDR': sdr_in_usd})
+
+    return exchange_info
+
+
