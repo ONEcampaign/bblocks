@@ -6,6 +6,7 @@ Changelog
 -  Added a new feature: ``date_to_str()``, which formats a date as an english string.
 -  Added a new feature: ``format_number``, which formats a numeric series as a formatted string (e.g. 1,234,567.89
    instead of 1234567.89). Optionally can specify to format as percentage, millions, or billions.
+- Added a new feature: ``get_latest_exchange``, which extracts the latest SDR exchange rate information in a dictionary
 
 [0.2.1] - 2022-08-16
 --------------------
