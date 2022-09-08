@@ -3,7 +3,7 @@ import pytest
 import os
 
 from bblocks.config import PATHS
-from bblocks.import_tools.imf import SDR, WorldEconomicOutlook, get_latest_exchange
+from bblocks.import_tools.imf import SDR, WorldEconomicOutlook, latest_sdr_exchange
 
 
 def test_sdr_load_indicator():
@@ -154,8 +154,21 @@ def test_get_data():
     assert df_meta.estimate.sum() > 1
 
 
-def test_get_latest_exchange():
-    exchange_info = get_latest_exchange()
-    assert isinstance(exchange_info, dict)
-    assert ['date', 'SDRs per 1 USD', 'USD per 1 SDR'] == list(exchange_info.keys())
-    assert round(exchange_info['SDRs per 1 USD'], 3) == round(1/exchange_info['USD per 1 SDR'], 3)
+def test_latest_sdr_exchange():
+
+    usd_ex = latest_sdr_exchange()
+    assert isinstance(usd_ex, dict)
+    assert ['date', 'value'] == list(usd_ex.keys())
+    usd_ex_2 = latest_sdr_exchange('USD')
+    assert usd_ex['value'] == usd_ex_2['value']
+
+    sdr_ex = latest_sdr_exchange('SDR')
+    assert isinstance(sdr_ex, dict)
+    assert ['date', 'value'] == list(sdr_ex.keys())
+
+    assert round(sdr_ex['value'], 3) == round(1/usd_ex['value'], 3)
+
+    with pytest.raises(ValueError) as error:
+        latest_sdr_exchange('invalid_currency')
+
+    assert 'Invalid currency' in str(error.value)
