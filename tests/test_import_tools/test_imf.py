@@ -158,13 +158,13 @@ def test_latest_sdr_exchange():
 
     usd_ex = latest_sdr_exchange()
     assert isinstance(usd_ex, dict)
-    assert ['date', 'value'] == list(usd_ex.keys())
+    assert ['date', 'value'] == list(usd_ex)
     usd_ex_2 = latest_sdr_exchange('USD')
     assert usd_ex['value'] == usd_ex_2['value']
 
     sdr_ex = latest_sdr_exchange('SDR')
     assert isinstance(sdr_ex, dict)
-    assert ['date', 'value'] == list(sdr_ex.keys())
+    assert ['date', 'value'] == list(sdr_ex)
 
     assert round(sdr_ex['value'], 3) == round(1/usd_ex['value'], 3)
 
