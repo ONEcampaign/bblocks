@@ -83,11 +83,11 @@ def _read_sdr_tsv(url: str) -> pd.DataFrame:
     )
 
 
-def _check_sdr_indicators(indicator: str) -> list:
+def _check_sdr_indicators(indicator: str | list) -> list:
     """Checks if the indicator is in the list of SDR accepted indicators
 
     Args:
-        indicator: indicator to check. If indicator is None, all accepted indicators
+        indicator: indicator to check. If indicator is 'all', all accepted indicators
             are returned ['holdings', 'allocations']
 
     Returns:
@@ -99,13 +99,15 @@ def _check_sdr_indicators(indicator: str) -> list:
     if indicator == "all":
         return accepted_indicators
 
-    elif not isinstance(indicator, str):
-        raise ValueError(f"{indicator} is not a valid indicator type")
+    else:
+        if isinstance(indicator, str):
+            indicator = [indicator]
 
-    if indicator not in accepted_indicators:
-        raise ValueError(f"{indicator} is not a valid indicator")
+        for i in indicator:
+            if i not in accepted_indicators:
+                raise ValueError(f"{i} is not a valid indicator.")
 
-    return [indicator]
+        return indicator
 
 
 def _get_data(obj: ImportData, indicators: str | list) -> pd.DataFrame:
@@ -156,27 +158,7 @@ class SDR(ImportData):
     (the date of the SDR announcement), and `value`.
     """
 
-    def __load(self, indicator_list: list) -> None:
-        """Loads indicators and data from disk
-
-        Args:
-            indicator_list: list of indicators to load
-        """
-        # load data from disk
-        df = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
-
-        # filter data on indicator
-        self.data = df.loc[df["indicator"].isin(indicator_list)].reset_index(drop=True)
-
-        self.indicators = {
-            indicator: self.data.loc[self.data["indicator"] == indicator].reset_index(
-                drop=True
-            )
-            for indicator in indicator_list
-        }
-        print(f"Successfully loaded {indicator_list} SDR data")
-
-    def load_indicator(self, indicator: str = "all") -> ImportData:
+    def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
         """Load SDR data. Optionally specify the indicator to load (holdings or allocations).
 
         Args:
@@ -190,18 +172,22 @@ class SDR(ImportData):
         # make sure indicators are valid
         indicator_list = _check_sdr_indicators(indicator)
 
-        if (
-            not os.path.exists(f"{PATHS.imported_data}/{self.file_name}")
-            or self.update_data
+        if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}") or (
+            self.update_data and self.data is None
         ):
-            self.update()
+            self.update(reload_data=False)
 
-        else:
-            self.__load(indicator_list)
+        if self.data is None:
+            self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+
+        for i in indicator_list:
+            self.indicators[i] = self.data[self.data["indicator"] == i].reset_index(
+                drop=True
+            )
 
         return self
 
-    def update(self, reload_data: bool = False) -> ImportData:
+    def update(self, reload_data: bool = True) -> ImportData:
         """Update the data saved on disk
 
         When called it extracts the SDR data from the IMF website and saves it to disk.
@@ -243,7 +229,7 @@ class SDR(ImportData):
         )
 
         if reload_data:
-            self.__load(list(self.indicators.keys()))
+            self.load_indicator(list(self.indicators))
         else:
             print(
                 "Successfully updated SDR data to disk. "
@@ -272,24 +258,35 @@ class SDR(ImportData):
         df = _get_data(obj=self, indicators=indicators)
 
         if isinstance(members, str) and members != "all":
-            members = [members]
-            df = df[df["member"].isin(members)]
+            if members not in self.members:
+                raise ValueError(
+                    f"member not found: {members}.\nPlease call `obj.member` to see available members."
+                )
+
+            df = df[df["member"] == members]
 
         elif isinstance(members, list):
             for member in members:
                 if member not in df["member"].unique():
-                    warnings.warn(f"member not found: {member}")
-                    print(f"Available members:\n {df.member.unique()}")
+                    warnings.warn(
+                        f"member not found: {member}.\nPlease call `obj.member` to see available members."
+                    )
+            df = df[df["member"].isin(members)]
 
         if len(df) == 0:
             raise ValueError(f"No members found")
 
-        return df
+        return df.reset_index(drop=True)
 
     @property
     def file_name(self):
         """Returns the name of the stored file"""
         return f"SDR.csv"
+
+    @property
+    def members(self):
+        """Returns a list of all members"""
+        return self.data["member"].unique()
 
 
 def _check_weo_parameters(
@@ -458,3 +455,51 @@ class WorldEconomicOutlook(ImportData):
             return df.filter(["iso_code", "name", "indicator", "year", "value"], axis=1)
 
         return df
+
+
+def __get_rate(rows: list, text: str):
+    """Returns currency value from SDR exchange rate table"""
+
+    for i in range(len(rows)):
+        if text in rows[i].text:
+            return float(rows[i + 1].text.strip().split("\r\n")[0])
+    else:
+        raise ValueError("Could not find exchange rate")
+
+
+def latest_sdr_exchange(currency: Optional | str = "USD") -> dict[str:str, str:float]:
+    """Extracts the latest SDR exchange rate and date
+
+    Args:
+        currency: exchange rate currency, either "USD" or "SDR". Defaults to "USD". If "USD" is selected
+                  the value returned is the value of SDRs equivalent to 1 USD
+
+    Returns:
+        dictionary with date and value
+    """
+
+    page = "https://www.imf.org/external/np/fin/data/rms_sdrv.aspx"
+    exchange_info = {}
+
+    try:
+        content = requests.get(page).content
+    except ConnectionError:
+        raise ConnectionError("Could not extract exchange rates")
+
+    soup = BeautifulSoup(content, "html.parser")
+    table = soup.find_all("table")[5]
+
+    date = table.find_all("th")[0].text.strip()
+    date = datetime.strptime(date, "%A, %B %d, %Y").strftime("%d %b %Y")
+    exchange_info.update({"date": date})
+
+    rows = table.find_all("td")
+
+    if currency == "USD":
+        exchange_info.update({"value": __get_rate(rows, "U.S.$1.00 = SDR")})
+    elif currency == "SDR":
+        exchange_info.update({"value": __get_rate(rows, "SDR1 = US$")})
+    else:
+        raise ValueError('Invalid currency. Please select from ["SDR", "USD]')
+
+    return exchange_info

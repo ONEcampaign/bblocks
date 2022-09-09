@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from bblocks.config import PATHS
-from bblocks.import_tools.world_bank import WorldBankPinkSheet, WorldBankData
+from bblocks.import_tools.world_bank import WorldBankData, PinkSheet
 
 
 def test_world_bank_data_load_indicator():
@@ -128,70 +128,83 @@ def test__world_bank_data_get_data():
     assert df.indicator.nunique() == 2
 
 
-def test_pink_sheet_invalid_sheet():
-    """Test error handling for invalid sheet name"""
+def test_pink_sheet():
+
+    invalid_sheet_name = "invalid sheet name"
     with pytest.raises(ValueError) as error:
-        WorldBankPinkSheet("")
+        PinkSheet(sheet=invalid_sheet_name)
+    assert 'Invalid sheet name' in str(error.value)
 
-    assert error.match(
-        "invalid sheet name. "
-        "Please specify 'Monthly Indices' or 'Monthly Prices'"
-    )
+    pk_obj = PinkSheet(sheet = "Monthly Prices")
+    assert pk_obj.sheet == "Monthly Prices"
 
+    pk_obj = PinkSheet(sheet = "Monthly Indices")
+    assert pk_obj.sheet == "Monthly Indices"
 
-def test_pink_sheet_update():
-    """test update function"""
-    pk_obj = WorldBankPinkSheet("Monthly Prices")
+    # test update
+    pk_obj = PinkSheet(sheet = "Monthly Prices")
     file_path = f"{PATHS.imported_data}/{pk_obj.file_name}"
     time = os.path.getmtime(file_path)
     pk_obj.update()
     # check underlying file has been modified
     assert os.path.getmtime(file_path) > time
 
+    assert "Monthly Prices" in pk_obj.file_name
 
-def test_pink_sheet_get_data():
-    """Test get_data function"""
-    pk_obj_1 = WorldBankPinkSheet("Monthly Prices")
-    assert isinstance(pk_obj_1.get_data(), pd.DataFrame)
+    pk_obj_1 = PinkSheet(sheet = "Monthly Indices")
+    pk_obj_1.load_indicator()
+    assert isinstance(pk_obj_1.data, pd.DataFrame)
+    assert isinstance(pk_obj_1.indicators, dict)
 
-    pk_obj_2 = WorldBankPinkSheet("Monthly Indices")
-    assert isinstance(pk_obj_2.get_data(), pd.DataFrame)
+    pk_obj_2 = PinkSheet(sheet = "Monthly Indices")
+    pk_obj_2.load_indicator('Energy')
+    assert isinstance(pk_obj_2.data, pd.DataFrame)
+    assert isinstance(pk_obj_2.indicators, dict)
+    assert 'Energy' in pk_obj_2.indicators.keys()
 
-    # test dates
+    pk_obj_3 = PinkSheet(sheet = "Monthly Indices")
+    pk_obj_3.load_indicator(['Energy', 'Agriculture'])
+    assert isinstance(pk_obj_3.data, pd.DataFrame)
+    assert isinstance(pk_obj_3.indicators, dict)
+    assert 'Agriculture' in pk_obj_3.indicators.keys()
+
+    pk_obj_4 = PinkSheet(sheet = "Monthly Indices")
+    pk_obj_4.load_indicator()
     start = "2020-01-01"
     end = "2021-10-01"
-    pk_obj_3 = WorldBankPinkSheet("Monthly Prices")
-    df = pk_obj_3.get_data(start_date=start, end_date=end)
+    indicator = 'Energy'
+    indicator_list = ['Energy', 'Agriculture']
+
+    df = pk_obj_4.get_data(start_date=start, end_date=end)
     assert min(df.period) == start
     assert max(df.period) == end
 
+    df1 = pk_obj_4.get_data(indicators=indicator)
+    assert df1.indicator.unique()[0] == indicator
+    df2 = pk_obj_4.get_data(indicators=indicator_list)
+    for indicator in indicator_list:
+        assert indicator in df2.indicator.unique()
+
     with pytest.raises(ValueError) as error:
         # check when dates are inverted
-        pk_obj_3.get_data(start_date="2021-09-01", end_date="2020_01_01")
-
+        pk_obj_4.get_data(start_date=end, end_date=start)
     assert error.match("start date cannot be earlier than end date")
 
-    # test no data returned
     with pytest.raises(ValueError) as error:
-        pk_obj_3.get_data(start_date="2100-01-01")
+        pk_obj_4.get_data(start_date='2500-01-01')
+    assert error.match('No data available for current parameters')
 
-    assert error.match("No data available for current parameters")
-
-    # test invalid indicators
-    with pytest.raises(ValueError) as error:
-        pk_obj_1.get_data(indicators="")
-
-    assert error.match("No valid indicators selected")
-
-    # test warning
-    with pytest.warns(UserWarning) as record:
-        pk_obj_1.get_data(indicators=["Crude oil, Brent", "Oil"])
-
-    assert len(record) > 0
-    assert record[0].message.args[0] == "Oil not found"
+    invalid_indicator_list = ['Energy', 'invalid indicator']
+    with pytest.warns(UserWarning) as warning:
+        pk_obj_4.get_data(indicators=invalid_indicator_list)
+    assert len(warning) == 1
 
 
-def test_pink_sheet_file_name():
-    """test that file name is generated correctly"""
-    pk_obj = WorldBankPinkSheet("Monthly Prices")
-    assert "Monthly Prices" in pk_obj.file_name
+
+
+
+
+
+
+
+

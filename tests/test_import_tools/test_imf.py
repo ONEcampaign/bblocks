@@ -3,7 +3,7 @@ import pytest
 import os
 
 from bblocks.config import PATHS
-from bblocks.import_tools.imf import SDR, WorldEconomicOutlook
+from bblocks.import_tools.imf import SDR, WorldEconomicOutlook, latest_sdr_exchange
 
 
 def test_sdr_load_indicator():
@@ -11,17 +11,20 @@ def test_sdr_load_indicator():
 
     sdr_obj.load_indicator()
     assert "holdings" and "allocations" in sdr_obj.indicators.keys()
+    assert isinstance(sdr_obj.data, pd.DataFrame)
 
-    sdr_obj.load_indicator("holdings")
+    sdr_obj2 = SDR()
+    sdr_obj2.load_indicator("holdings")
     assert (
-        "holdings" in sdr_obj.indicators.keys()
-        and "allocations" not in sdr_obj.indicators.keys()
+        "holdings" in sdr_obj2.indicators.keys()
+        and "allocations" not in sdr_obj2.indicators.keys()
     )
-    assert isinstance(sdr_obj.indicators["holdings"], pd.DataFrame)
+    assert isinstance(sdr_obj2.indicators["holdings"], pd.DataFrame)
 
-    sdr_obj.load_indicator("allocations")
-    assert "holdings" not in sdr_obj.indicators and "allocations" in sdr_obj.indicators
-    assert isinstance(sdr_obj.indicators["allocations"], pd.DataFrame)
+    sdr_obj3 = SDR()
+    sdr_obj3.load_indicator("allocations")
+    assert "holdings" not in sdr_obj3.indicators and "allocations" in sdr_obj3.indicators
+    assert isinstance(sdr_obj3.indicators["allocations"], pd.DataFrame)
 
     invalid_indicator = "invalid"
     with pytest.raises(ValueError) as error:
@@ -60,14 +63,16 @@ def test_sdr_get_data():
     with pytest.raises(ValueError) as error:
         sdr_obj.load_indicator()
         sdr_obj.get_data(members=invalid_member)
-    assert "No members found" in str(error.value)
+    assert "member not found" in str(error.value)
 
     invalid_list = ["Zimbabwe", "invalid"]
     with pytest.warns(UserWarning) as record:
         sdr_obj.load_indicator()
         df = sdr_obj.get_data(members=invalid_list)
     assert len(record) == 1
-    assert record[0].message.args[0] == "member not found: invalid"
+    assert record[0].message.args[0] == f"member not found: invalid.\nPlease call `obj.member` to see available members."
+    assert 'Zimbabwe' in df.member.unique()
+    assert df.member.nunique() == 1
 
 
 def test_weo_load_indicator():
@@ -147,3 +152,23 @@ def test_get_data():
 
     assert len(df_meta.columns) > len(df_ngdp.columns)
     assert df_meta.estimate.sum() > 1
+
+
+def test_latest_sdr_exchange():
+
+    usd_ex = latest_sdr_exchange()
+    assert isinstance(usd_ex, dict)
+    assert ['date', 'value'] == list(usd_ex)
+    usd_ex_2 = latest_sdr_exchange('USD')
+    assert usd_ex['value'] == usd_ex_2['value']
+
+    sdr_ex = latest_sdr_exchange('SDR')
+    assert isinstance(sdr_ex, dict)
+    assert ['date', 'value'] == list(sdr_ex)
+
+    assert round(sdr_ex['value'], 3) == round(1/usd_ex['value'], 3)
+
+    with pytest.raises(ValueError) as error:
+        latest_sdr_exchange('invalid_currency')
+
+    assert 'Invalid currency' in str(error.value)
