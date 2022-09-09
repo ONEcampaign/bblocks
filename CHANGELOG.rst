@@ -1,7 +1,7 @@
 Changelog
 =========
 
-[0.2.2] - 2022 - IN PROGRESS
+[0.2.2] - 2022-09-09
 --------------------
 -  Added a new feature: ``date_to_str()``, which formats a date as an english string.
 -  Added a new feature: ``format_number``, which formats a numeric series as a formatted string (e.g. 1,234,567.89
