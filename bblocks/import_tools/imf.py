@@ -3,6 +3,8 @@ from __future__ import annotations
 import pandas as pd
 import requests
 from datetime import datetime
+
+import weo.dates
 from bs4 import BeautifulSoup
 import os
 from typing import Optional
@@ -316,9 +318,25 @@ def _update_weo(latest_y: int = None, latest_r: int = None) -> None:
         filename=f"weo{latest_y}_{latest_r}.csv",
     )
 
+    # Validate the file
+    if os.path.getsize(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv") < 1000:
+        print(
+            f"Downloading release {latest_r} of "
+            f"{latest_y} failed. Trying previous release"
+        )
+        os.remove(f"{PATHS.imported_data}/weo{latest_y}_{latest_r}.csv")
+
+        try:
+            _update_weo(latest_y, latest_r - 1)
+        except weo.dates.DateError:
+            _update_weo(latest_y - 1, latest_r)
+
 
 class WorldEconomicOutlook(ImportData):
     """World Economic Outlook data"""
+
+    year: Optional[int] = None
+    release: Optional[int] = None
 
     def __load_data(
         self, latest_y: int | None = None, latest_r: int | None = None
@@ -357,8 +375,17 @@ class WorldEconomicOutlook(ImportData):
         ):
             _update_weo(latest_y, latest_r)
 
-        # Load the data from disk
-        df = WEO(PATHS.imported_data + rf"/weo{latest_y}_{latest_r}.csv").df
+        # Load the data from disk. If it doesn't exist, try the previous one
+        try:
+            df = WEO(PATHS.imported_data + rf"/weo{latest_y}_{latest_r}.csv").df
+            self.version = {"year": latest_y, "release": latest_r}
+        except FileNotFoundError:
+            try:
+                df = WEO(PATHS.imported_data + rf"/weo{latest_y}_{latest_r-1}.csv").df
+                self.version = {"year": latest_y, "release": latest_r - 1}
+            except FileNotFoundError:
+                df = WEO(PATHS.imported_data + rf"/weo{latest_y-1}_{latest_r}.csv").df
+                self.version = {"year": latest_y - 1, "release": latest_r}
 
         # Load data into data object
         self.data = (

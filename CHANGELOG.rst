@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[0.2.3] - 2022-10-01
+--------------------
+-  Fixed how the ``WorldEconomicOutlook`` object handles moving to the latest data
+-  Added new optional parameters to ``WorldEconomicOutlook`` to allow for
+   specifying the data version.
+-  ``WorldEconomicOutlook`` now has an instance attribute ``version`` that
+   stores the version of the data used to create the object.
+
 [0.2.2] - 2022-09-09
 --------------------
 -  Added a new feature: ``date_to_str()``, which formats a date as an english string.
