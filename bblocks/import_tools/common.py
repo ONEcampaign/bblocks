@@ -18,7 +18,10 @@ class ImportData(ABC):
 
     def __post_init__(self):
         if self.data_path is None:
-            self.data_path = f"{PATHS.imported_data}/"
+            self.data_path = f"{PATHS.imported_data}"
+
+        if self.data_path[-1] == "/":
+            self.data_path = self.data_path[:-1]
 
     @abstractmethod
     def load_indicator(self, **kwargs) -> ImportData:
