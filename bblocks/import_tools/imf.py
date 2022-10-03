@@ -337,9 +337,9 @@ def _update_weo(
         os.remove(f"{data_path}/weo{latest_y}_{latest_r}.csv")
 
         try:
-            _update_weo(latest_y, latest_r - 1)
+            _update_weo(latest_y, latest_r - 1, data_path=data_path)
         except weo.dates.DateError:
-            _update_weo(latest_y - 1, latest_r)
+            _update_weo(latest_y - 1, latest_r, data_path=data_path)
 
 
 class WorldEconomicOutlook(ImportData):
@@ -383,7 +383,7 @@ class WorldEconomicOutlook(ImportData):
             not os.path.exists(f"{self.data_path}/weo{latest_y}_{latest_r}.csv")
             or self.update_data
         ):
-            _update_weo(latest_y, latest_r)
+            _update_weo(latest_y, latest_r, data_path=self.data_path)
 
         # Load the data from disk. If it doesn't exist, try the previous one
         try:
@@ -471,7 +471,7 @@ class WorldEconomicOutlook(ImportData):
             latest_r: passed only optionally to override the behaviour to get the latest
                 released value (1 or 2).
         """
-        _update_weo(latest_y=latest_y, latest_r=latest_r)
+        _update_weo(latest_y=latest_y, latest_r=latest_r, data_path=self.data_path)
 
     def available_indicators(self) -> None:
         """Print the available indicators in the dataset"""
