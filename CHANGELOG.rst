@@ -1,6 +1,10 @@
 Changelog
 =========
 
+[0.2.4] - 2022-10-03
+--------------------
+-  Added an optional parameter to importers in order to specify where the data should be stored.
+
 [0.2.3] - 2022-10-01
 --------------------
 -  Fixed how the ``WorldEconomicOutlook`` object handles moving to the latest data
