@@ -9,16 +9,15 @@ import numpy as np
 import pandas as pd
 import wbgapi as wb
 
-from bblocks.config import PATHS
 from bblocks.import_tools.common import ImportData
 
 
 def _get_wb_data(
-        series: str,
-        series_name: str | None = None,
-        start_year: int | None = None,
-        end_year: int | None = None,
-        most_recent_only: bool = False,
+    series: str,
+    series_name: str | None = None,
+    start_year: int | None = None,
+    end_year: int | None = None,
+    most_recent_only: bool = False,
 ) -> pd.DataFrame:
     """Get data for an indicator, using wbgapi"""
 
@@ -42,8 +41,8 @@ def _get_wb_data(
             columns="series",
             timeColumns=True,
         )
-            .reset_index()
-            .rename(
+        .reset_index()
+        .rename(
             columns={
                 "economy": "iso_code",
                 "index": "iso_code",
@@ -52,14 +51,14 @@ def _get_wb_data(
                 f"{series}:T": "date",
             }
         )
-            .assign(
+        .assign(
             indicator=series_name if series_name is not None else series,
             indicator_code=series,
             date=lambda d: pd.to_datetime(d.date, format="%Y"),
         )
-            .sort_values(by=["iso_code", "date"])
-            .reset_index(drop=True)
-            .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
+        .sort_values(by=["iso_code", "date"])
+        .reset_index(drop=True)
+        .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
     )
 
 
@@ -75,12 +74,12 @@ class WorldBankData(ImportData):
     You can get a dataframe of the data by calling `get_data`."""
 
     def load_indicator(
-            self,
-            indicator_code: str,
-            indicator_name=None,
-            start_year: Optional | int = None,
-            end_year: Optional | int = None,
-            most_recent_only: bool = False,
+        self,
+        indicator_code: str,
+        indicator_name=None,
+        start_year: Optional | int = None,
+        end_year: Optional | int = None,
+        most_recent_only: bool = False,
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
 
@@ -114,12 +113,12 @@ class WorldBankData(ImportData):
         }
 
         # get the indicator data if it's not saved on disk.
-        if not os.path.exists(f"{PATHS.imported_data}/{file_name}") or self.update_data:
+        if not os.path.exists(f"{self.data_path}/{file_name}") or self.update_data:
             _get_wb_data(**__params).to_csv(
-                f"{PATHS.imported_data}/{file_name}", index=False
+                f"{self.data_path}/{file_name}", index=False
             )
 
-        _ = pd.read_csv(f"{PATHS.imported_data}/{file_name}", parse_dates=["date"])
+        _ = pd.read_csv(f"{self.data_path}/{file_name}", parse_dates=["date"])
 
         __params["file_name"] = file_name
 
@@ -142,9 +141,7 @@ class WorldBankData(ImportData):
 
         for indicator_code, (_, args) in self.indicators.items():
             file_name = args.pop("file_name")
-            _get_wb_data(**args).to_csv(
-                f"{PATHS.imported_data}/{file_name}", index=False
-            )
+            _get_wb_data(**args).to_csv(f"{self.data_path}/{file_name}", index=False)
 
         return self
 
@@ -188,10 +185,10 @@ def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
         df.columns = df.iloc[3]
         df = (
             df.rename(columns={np.nan: "period"})
-                .iloc[6:]
-                .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
-                .replace("..", np.nan)
-                .reset_index(drop=True)
+            .iloc[6:]
+            .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
+            .replace("..", np.nan)
+            .reset_index(drop=True)
         )
 
     elif sheet == "Monthly Indices":
@@ -255,13 +252,13 @@ class PinkSheet(ImportData):
             The same object to allow chaining
         """
 
-        if not os.path.exists(f"{PATHS.imported_data}/{self.file_name}") or (
-                self.update_data and self.data is None
+        if not os.path.exists(f"{self.data_path}/{self.file_name}") or (
+            self.update_data and self.data is None
         ):
             self.update(reload_data=False)
 
         if self.data is None:
-            self.data = pd.read_csv(f"{PATHS.imported_data}/{self.file_name}")
+            self.data = pd.read_csv(f"{self.data_path}/{self.file_name}")
 
         if indicator == "all":
             indicator = list(self.data.indicator.unique())
@@ -272,8 +269,9 @@ class PinkSheet(ImportData):
             if i not in self.data.indicator.unique():
                 raise Warning(f"Indicator not found: {i}")
             else:
-                self.indicators[i] = (self.data[self.data.indicator == i]
-                                      .reset_index(drop=True))
+                self.indicators[i] = self.data[self.data.indicator == i].reset_index(
+                    drop=True
+                )
 
         return self
 
@@ -297,8 +295,8 @@ class PinkSheet(ImportData):
 
         (
             pd.read_excel(url, sheet_name=self.sheet)
-                .pipe(_clean_pink_sheet, sheet=self.sheet)
-                .to_csv(f"{PATHS.imported_data}/{self.file_name}", index=False)
+            .pipe(_clean_pink_sheet, sheet=self.sheet)
+            .to_csv(f"{self.data_path}/{self.file_name}", index=False)
         )
 
         if reload_data:
@@ -307,10 +305,10 @@ class PinkSheet(ImportData):
         return self
 
     def get_data(
-            self,
-            indicators: Optional[str | list] = None,
-            start_date: Optional[str] = None,
-            end_date: Optional[str] = None,
+        self,
+        indicators: Optional[str | list] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 

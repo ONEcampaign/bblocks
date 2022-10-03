@@ -6,11 +6,11 @@ from bblocks.import_tools.world_bank import WorldBankData
 
 
 def __get_wb_ind(
-    ind_code: str, ind_name: str, update: bool, mrnev: bool
+    ind_code: str, ind_name: str, update: bool, mrnev: bool, data_path: str = None
 ) -> pd.DataFrame:
     """Get a simplified DataFrame for a World Bank indicator"""
     return (
-        WorldBankData(update_data=update)
+        WorldBankData(update_data=update, data_path=data_path)
         .load_indicator(
             ind_code,
             most_recent_only=mrnev,
@@ -22,7 +22,9 @@ def __get_wb_ind(
     )
 
 
-def get_population_df(*, most_recent_only, update_population_data) -> pd.DataFrame:
+def get_population_df(
+    *, most_recent_only, update_population_data, data_path: str = None
+) -> pd.DataFrame:
     """Get a population DataFrame"""
 
     return __get_wb_ind(
@@ -30,10 +32,13 @@ def get_population_df(*, most_recent_only, update_population_data) -> pd.DataFra
         ind_name="population",
         update=update_population_data,
         mrnev=most_recent_only,
+        data_path=data_path,
     )
 
 
-def get_poverty_ratio_df(*, most_recent_only, update_poverty_data) -> pd.DataFrame:
+def get_poverty_ratio_df(
+    *, most_recent_only, update_poverty_data, data_path: str = None
+) -> pd.DataFrame:
     """Get a population DataFrame"""
 
     return __get_wb_ind(
@@ -41,11 +46,12 @@ def get_poverty_ratio_df(*, most_recent_only, update_poverty_data) -> pd.DataFra
         ind_name="poverty_headcount_ratio",
         update=update_poverty_data,
         mrnev=most_recent_only,
+        data_path=data_path,
     )
 
 
 def get_population_density_df(
-    *, most_recent_only, update_population_data
+    *, most_recent_only, update_population_data, data_path: str = None
 ) -> pd.DataFrame:
     """Get a population DataFrame"""
 
@@ -54,6 +60,7 @@ def get_population_density_df(
         ind_name="population_density",
         update=update_population_data,
         mrnev=most_recent_only,
+        data_path=data_path,
     )
 
 
@@ -63,10 +70,11 @@ def _get_weo_indicator(
     most_recent_only: bool,
     update_data: bool,
     include_estimates: bool = True,
+    data_path: str = None,
 ) -> pd.DataFrame:
 
     # Create a World Economic Outlook object
-    weo = WorldEconomicOutlook(update_data=update_data)
+    weo = WorldEconomicOutlook(update_data=update_data, data_path=data_path)
 
     # Get the data
     data = (
@@ -99,6 +107,7 @@ def get_gdp_df(
     most_recent_only: bool,
     update_gdp_data: bool,
     include_estimates: bool = True,
+    data_path: str = None,
 ) -> pd.DataFrame:
     """Get a population DataFrame"""
 
@@ -110,6 +119,7 @@ def get_gdp_df(
         most_recent_only=most_recent_only,
         update_data=update_gdp_data,
         include_estimates=include_estimates,
+        data_path=data_path,
     ).assign(
         value=lambda d: d.value * 1e9,
     )
@@ -121,6 +131,7 @@ def get_gov_expenditure_df(
     most_recent_only: bool,
     update_data: bool,
     include_estimates: bool = True,
+    data_path: str = None,
 ) -> pd.DataFrame:
     """Get a population DataFrame"""
 
@@ -129,6 +140,7 @@ def get_gov_expenditure_df(
         most_recent_only=most_recent_only,
         update_data=update_data,
         include_estimates=include_estimates,
+        data_path=data_path,
     )
 
     gdp = get_gdp_df(
@@ -136,6 +148,7 @@ def get_gov_expenditure_df(
         most_recent_only=most_recent_only,
         update_gdp_data=update_data,
         include_estimates=include_estimates,
+        data_path=data_path,
     )
 
     return (

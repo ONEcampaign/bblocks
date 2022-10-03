@@ -58,5 +58,3 @@ def get_fao_index(
         df.to_csv(local_path, index=False)
 
     return pd.read_csv(local_path)
-
-get_fao_index(update=True)
