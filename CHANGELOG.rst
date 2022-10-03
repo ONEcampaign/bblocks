@@ -1,6 +1,10 @@
 Changelog
 =========
 
+[0.2.5] - 2022-10-03
+--------------------
+-  Minor bug with file management resolved.
+
 [0.2.4] - 2022-10-03
 --------------------
 -  Added an optional parameter to importers in order to specify where the data should be stored.
