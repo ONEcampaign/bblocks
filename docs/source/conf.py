@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../../'))
 
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
 project = 'bblocks'
 copyright = '2022, The ONE Campaign'
