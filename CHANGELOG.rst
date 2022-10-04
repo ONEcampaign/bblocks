@@ -1,6 +1,10 @@
 Changelog
 =========
 
+[0.2.7] - 2022-10-04
+--------------------
+-  Update WFP data handling to append new data instead of replacing.
+
 [0.2.6] - 2022-10-03
 --------------------
 -  WEO update file path bug fix.

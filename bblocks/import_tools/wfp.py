@@ -110,7 +110,7 @@ def _get_insufficient_food(code: int, iso: str, data_path: str) -> None:
             )
         )
         .assign(date=lambda d: pd.to_datetime(d.date, format="%Y-%m-%d"), iso_code=iso)
-        .pipe(append_new_data, rf"{iso}_insufficient_food.csv", "date")
+        .pipe(append_new_data, rf"{data_path}/{iso}_insufficient_food.csv", "date")
     )
 
     data.to_csv(f"{data_path}/wfp_raw/{iso}_insufficient_food.csv", index=False)
