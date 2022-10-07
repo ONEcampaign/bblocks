@@ -21,6 +21,9 @@ def __validate_add_column_params(
 ) -> tuple:
     """Validate parameters to use in an *add column* function type"""
 
+    # Create a dataframe copy to avoid overriding the original data
+    df = df.copy(deep=True)
+
     if id_type is None:
         id_type = "regex"
 
@@ -97,15 +100,21 @@ def add_population_column(
         date_column=date_column,
     )
 
-    pop_df = get_population_df(
-        most_recent_only=True if date_column is None else False,
-        update_population_data=update_data,
-        data_path=data_path,
-    ).rename(columns={"iso_code": "id_"})
+    pop_df = (
+        get_population_df(
+            most_recent_only=True if date_column is None else False,
+            update_population_data=update_data,
+            data_path=data_path,
+        )
+        .rename(columns={"iso_code": "id_"})
+        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    )
 
-    df[target_column] = df_.merge(pop_df, on=on_, how="left").population
+    # Create a deep copy of the dataframe to avoid overwriting the original data
+    _ = df.copy(deep=True).reset_index(drop=True)
+    _[target_column] = df_.merge(pop_df, on=on_, how="left").population
 
-    return df
+    return _
 
 
 def add_poverty_ratio_column(
@@ -144,15 +153,21 @@ def add_poverty_ratio_column(
         date_column=date_column,
     )
 
-    pov_df = get_poverty_ratio_df(
-        most_recent_only=True if date_column is None else False,
-        update_poverty_data=update_data,
-        data_path=data_path,
-    ).rename(columns={"iso_code": "id_"})
+    pov_df = (
+        get_poverty_ratio_df(
+            most_recent_only=True if date_column is None else False,
+            update_poverty_data=update_data,
+            data_path=data_path,
+        )
+        .rename(columns={"iso_code": "id_"})
+        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    )
 
-    df[target_column] = df_.merge(pov_df, on=on_, how="left").poverty_headcount_ratio
+    # Create a deep copy of the dataframe to avoid overwriting the original data
+    _ = df.copy(deep=True).reset_index(drop=True)
+    _[target_column] = df_.merge(pov_df, on=on_, how="left").poverty_headcount_ratio
 
-    return df
+    return _
 
 
 def add_population_density_column(
@@ -177,6 +192,7 @@ def add_population_density_column(
             column as well. If the data isn't specified, the most recent data is used.
         target_column: the column where the population data will be stored.
         update_data: whether to update the underlying data or not.
+        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the population
@@ -191,15 +207,21 @@ def add_population_density_column(
         date_column=date_column,
     )
 
-    pov_df = get_population_density_df(
-        most_recent_only=True if date_column is None else False,
-        update_population_data=update_data,
-        data_path=data_path,
-    ).rename(columns={"iso_code": "id_"})
+    pod_df = (
+        get_population_density_df(
+            most_recent_only=True if date_column is None else False,
+            update_population_data=update_data,
+            data_path=data_path,
+        )
+        .rename(columns={"iso_code": "id_"})
+        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    )
 
-    df[target_column] = df_.merge(pov_df, on=on_, how="left").population_density
+    # Create a deep copy of the dataframe to avoid overwriting the original data
+    _ = df.copy(deep=True).reset_index(drop=True)
+    _[target_column] = df_.merge(pod_df, on=on_, how="left").population_denisty
 
-    return df
+    return _
 
 
 def add_gdp_column(
@@ -244,13 +266,17 @@ def add_gdp_column(
         date_column=date_column,
     )
 
-    gdp_df = get_gdp_df(
-        usd=usd,
-        most_recent_only=True if date_column is None else False,
-        include_estimates=include_estimates,
-        update_gdp_data=update_data,
-        data_path=data_path,
-    ).rename(columns={"iso_code": "id_", "value": "gdp"})
+    gdp_df = (
+        get_gdp_df(
+            usd=usd,
+            most_recent_only=True if date_column is None else False,
+            include_estimates=include_estimates,
+            update_gdp_data=update_data,
+            data_path=data_path,
+        )
+        .rename(columns={"iso_code": "id_", "value": "gdp"})
+        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    )
 
     # Create a deep copy of the dataframe to avoid overwriting the original data
     _ = df.copy(deep=True).reset_index(drop=True)
@@ -301,13 +327,17 @@ def add_gov_expenditure_column(
         date_column=date_column,
     )
 
-    gov_df = get_gov_expenditure_df(
-        usd=usd,
-        most_recent_only=True if date_column is None else False,
-        include_estimates=include_estimates,
-        update_data=update_data,
-        data_path=data_path,
-    ).rename(columns={"iso_code": "id_", "value": "gov_exp"})
+    gov_df = (
+        get_gov_expenditure_df(
+            usd=usd,
+            most_recent_only=True if date_column is None else False,
+            include_estimates=include_estimates,
+            update_data=update_data,
+            data_path=data_path,
+        )
+        .rename(columns={"iso_code": "id_", "value": "gov_exp"})
+        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    )
 
     # Create a deep copy of the dataframe to avoid overwriting the original data
     _ = df.copy(deep=True).reset_index(drop=True)
