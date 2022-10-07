@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[0.2.7] - 2022-10-08
+--------------------
+-  Fix bug in how years are matched under DataFrame add
+
+[0.2.8] - 2022-10-07
+--------------------
+-  Change how dates are handled when adding to a dataframe
+
 [0.2.7] - 2022-10-04
 --------------------
 -  Update WFP data handling to append new data instead of replacing.
