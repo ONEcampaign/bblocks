@@ -40,7 +40,7 @@ def __validate_add_column_params(
 
         if pd.api.types.is_numeric_dtype(df[date_column]):
             try:
-                df["year"] = pd.to_datetime(df[date_column], format="%Y").dt.year
+                df["merge_year"] = pd.to_datetime(df[date_column], format="%Y").dt.year
             except ValueError:
                 raise ValueError(
                     f"could not parse date format in '{date_column}'."
@@ -48,7 +48,7 @@ def __validate_add_column_params(
                 )
         else:
             try:
-                df["year"] = pd.to_datetime(
+                df["merge_year"] = pd.to_datetime(
                     df[date_column], infer_datetime_format=True
                 ).dt.year
 
@@ -58,7 +58,7 @@ def __validate_add_column_params(
                     f"To fix, convert column to datetime"
                 )
 
-    on_ = ["id_", "year"] if date_column is not None else ["id_"]
+    on_ = ["id_", "merge_year"] if date_column is not None else ["id_"]
 
     return df, on_
 
@@ -100,21 +100,24 @@ def add_population_column(
         date_column=date_column,
     )
 
-    pop_df = (
-        get_population_df(
-            most_recent_only=True if date_column is None else False,
-            update_population_data=update_data,
-            data_path=data_path,
-        )
-        .rename(columns={"iso_code": "id_"})
-        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    pop_df = get_population_df(
+        most_recent_only=True if date_column is None else False,
+        update_population_data=update_data,
+        data_path=data_path,
+    ).rename(
+        columns={"iso_code": "id_", "year": "merge_year", "population": target_column}
     )
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True).reset_index(drop=True)
-    _[target_column] = df_.merge(pop_df, on=on_, how="left").population
+    if date_column is None:
+        pop_df = pop_df.drop(columns=["merge_year"])
 
-    return _
+    # Create a deep copy of the dataframe to avoid overwriting the original data
+    df_ = df_.merge(pop_df, on=on_, how="left")
+
+    if date_column is not None:
+        df_ = df_.drop(columns=["merge_year"])
+
+    return df_.drop(columns=["id_"])
 
 
 def add_poverty_ratio_column(
@@ -153,21 +156,28 @@ def add_poverty_ratio_column(
         date_column=date_column,
     )
 
-    pov_df = (
-        get_poverty_ratio_df(
-            most_recent_only=True if date_column is None else False,
-            update_poverty_data=update_data,
-            data_path=data_path,
-        )
-        .rename(columns={"iso_code": "id_"})
-        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    pov_df = get_poverty_ratio_df(
+        most_recent_only=True if date_column is None else False,
+        update_poverty_data=update_data,
+        data_path=data_path,
+    ).rename(
+        columns={
+            "iso_code": "id_",
+            "year": "merge_year",
+            "poverty_headcount_ratio": target_column,
+        }
     )
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True).reset_index(drop=True)
-    _[target_column] = df_.merge(pov_df, on=on_, how="left").poverty_headcount_ratio
+    if date_column is None:
+        pov_df = pov_df.drop(columns=["merge_year"])
 
-    return _
+    # Create a deep copy of the dataframe to avoid overwriting the original data
+    df_ = df_.merge(pov_df, on=on_, how="left")
+
+    if date_column is not None:
+        df_ = df_.drop(columns=["merge_year"])
+
+    return df_.drop(columns=["id_"])
 
 
 def add_population_density_column(
@@ -207,21 +217,27 @@ def add_population_density_column(
         date_column=date_column,
     )
 
-    pod_df = (
-        get_population_density_df(
-            most_recent_only=True if date_column is None else False,
-            update_population_data=update_data,
-            data_path=data_path,
-        )
-        .rename(columns={"iso_code": "id_"})
-        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    pod_df = get_population_density_df(
+        most_recent_only=True if date_column is None else False,
+        update_population_data=update_data,
+        data_path=data_path,
+    ).rename(
+        columns={
+            "iso_code": "id_",
+            "year": "merge_year",
+            "population_density": target_column,
+        }
     )
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True).reset_index(drop=True)
-    _[target_column] = df_.merge(pod_df, on=on_, how="left").population_denisty
+    if date_column is None:
+        pod_df = pod_df.drop(columns=["merge_year"])
 
-    return _
+    df_ = df_.merge(pod_df, on=on_, how="left")
+
+    if date_column is not None:
+        df_ = df_.drop(columns=["merge_year"])
+
+    return df_.drop(columns=["id_"])
 
 
 def add_gdp_column(
@@ -266,23 +282,29 @@ def add_gdp_column(
         date_column=date_column,
     )
 
-    gdp_df = (
-        get_gdp_df(
-            usd=usd,
-            most_recent_only=True if date_column is None else False,
-            include_estimates=include_estimates,
-            update_gdp_data=update_data,
-            data_path=data_path,
-        )
-        .rename(columns={"iso_code": "id_", "value": "gdp"})
-        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    gdp_df = get_gdp_df(
+        usd=usd,
+        most_recent_only=True if date_column is None else False,
+        include_estimates=include_estimates,
+        update_gdp_data=update_data,
+        data_path=data_path,
+    ).rename(
+        columns={
+            "iso_code": "id_",
+            "year": "merge_year",
+            "gdp": target_column,
+        }
     )
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True).reset_index(drop=True)
-    _[target_column] = df_.merge(gdp_df, on=on_, how="left").gdp
+    if date_column is None:
+        gdp_df = gdp_df.drop(columns=["merge_year"])
 
-    return _
+    df_ = df_.merge(gdp_df, on=on_, how="left")
+
+    if date_column is not None:
+        df_ = df_.drop(columns=["merge_year"])
+
+    return df_.drop(columns=["id_"])
 
 
 def add_gov_expenditure_column(
@@ -327,23 +349,29 @@ def add_gov_expenditure_column(
         date_column=date_column,
     )
 
-    gov_df = (
-        get_gov_expenditure_df(
-            usd=usd,
-            most_recent_only=True if date_column is None else False,
-            include_estimates=include_estimates,
-            update_data=update_data,
-            data_path=data_path,
-        )
-        .rename(columns={"iso_code": "id_", "value": "gov_exp"})
-        .assign(year=lambda d: pd.to_datetime(d["year"], format="%Y"))
+    gov_df = get_gov_expenditure_df(
+        usd=usd,
+        most_recent_only=True if date_column is None else False,
+        include_estimates=include_estimates,
+        update_data=update_data,
+        data_path=data_path,
+    ).rename(
+        columns={
+            "iso_code": "id_",
+            "year": "merge_year",
+            "gov_exp": target_column,
+        }
     )
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
-    _ = df.copy(deep=True).reset_index(drop=True)
-    _[target_column] = df_.merge(gov_df, on=on_, how="left").gov_exp
+    if date_column is None:
+        gov_df = gov_df.drop(columns=["merge_year"])
 
-    return _
+    df_ = df_.merge(gov_df, on=on_, how="left")
+
+    if date_column is not None:
+        df_ = df_.drop(columns=["merge_year"])
+
+    return df_.drop(columns=["id_"])
 
 
 def add_gdp_share_column(

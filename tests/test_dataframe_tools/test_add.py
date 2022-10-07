@@ -47,7 +47,7 @@ def test___validate_column_params():
         date_column="date",
     )
 
-    assert on_ == ["id_", "year"]
+    assert on_ == ["id_", "merge_year"]
     assert df_test.year.to_list() == df_test.date.to_list()
 
     with pytest.raises(ValueError):
