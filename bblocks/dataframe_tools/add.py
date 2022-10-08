@@ -292,7 +292,7 @@ def add_gdp_column(
         columns={
             "iso_code": "id_",
             "year": "merge_year",
-            "gdp": target_column,
+            "value": target_column,
         }
     )
 
@@ -359,7 +359,7 @@ def add_gov_expenditure_column(
         columns={
             "iso_code": "id_",
             "year": "merge_year",
-            "gov_exp": target_column,
+            "value": target_column,
         }
     )
 

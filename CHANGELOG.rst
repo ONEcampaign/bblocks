@@ -1,7 +1,11 @@
 Changelog
 =========
 
-[0.2.7] - 2022-10-08
+[0.2.10] - 2022-10-08
+--------------------
+-  Fix bug in how years added variables are named in DataFrame add
+
+[0.2.9] - 2022-10-08
 --------------------
 -  Fix bug in how years are matched under DataFrame add
 
