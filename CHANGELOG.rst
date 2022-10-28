@@ -1,6 +1,12 @@
 Changelog
 =========
 
+[0.3.0] - 2022-10-28
+--------------------
+-  Added a new feature: can now import data from the World Bank IDS
+   database. The new module is called `ids` and it is part of
+   `import_tools.debt`.
+
 [0.2.10] - 2022-10-08
 --------------------
 -  Fix bug in how years added variables are named in DataFrame add
