@@ -81,7 +81,7 @@ def download_ids_codes() -> None:
 def ids_codes() -> dict:
     """Return a dataframe of World Bank 3-letter country codes and their names"""
 
-    path = pathlib.Path("./ids_codes.csv")
+    path = pathlib.Path("./ids_codes.csv").resolve()
 
     if not pathlib.Path.exists(path):
         download_ids_codes()
