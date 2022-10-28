@@ -30,6 +30,7 @@ camelot-py = "^0.10.1"
 opencv-python = "^4.6.0"
 beautifulsoup4 = "^4.11.1"
 weo = "^0.7.4"
+pyjstat = "^2.3.0"
 
 
 [tool.poetry.dev-dependencies]
