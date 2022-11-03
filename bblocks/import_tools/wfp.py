@@ -5,7 +5,7 @@ from typing import KeysView
 import pandas as pd
 import requests
 
-from bblocks import config
+from bblocks.config import PATHS
 from bblocks.import_tools.common import append_new_data, ImportData
 
 
@@ -24,9 +24,7 @@ def _get_country_codes() -> None:
 
     # Create a dataframe with the country codes and save
     df = pd.DataFrame(list(codes.items()), columns=["iso_code", "wfp_code"])
-    df.to_csv(
-        config.PATHS.imported_data + r"/wfp_raw/wfp_country_codes.csv", index=False
-    )
+    df.to_csv(PATHS.imported_data + r"/wfp_raw/wfp_country_codes.csv", index=False)
 
     print("WFP country codes successfully downloaded.")
 
@@ -34,12 +32,16 @@ def _get_country_codes() -> None:
 def _read_wfp_country_codes() -> dict:
     """Returns a dictionary with the country codes used by WFP."""
 
-    d = pd.read_csv(config.PATHS.imported_data + r"/wfp_raw/wfp_country_codes.csv")
+    d = pd.read_csv(PATHS.imported_data + r"/wfp_raw/wfp_country_codes.csv")
     return dict(zip(d["iso_code"], d["wfp_code"].astype(int)))
 
 
-def _get_inflation(country_iso: str) -> None:
+def _get_inflation(country_iso: str, data_path: str) -> None:
     """Get inflation data from VAM for a single country based on iso code"""
+
+    if data_path[-1] == "/":
+        data_path = data_path[:-1]
+
     url = f"https://api.vam.wfp.org/dataviz/api/GetCsv?idx=71,116&iso3={country_iso}"
 
     try:
@@ -66,13 +68,14 @@ def _get_inflation(country_iso: str) -> None:
         .sort_values(by=["indicator", "date"])
     )
 
-    df.to_csv(
-        f"{config.PATHS.imported_data}/wfp_raw/{country_iso}_inflation.csv", index=False
-    )
+    df.to_csv(f"{data_path}/wfp_raw/{country_iso}_inflation.csv", index=False)
 
 
-def _get_insufficient_food(code: int, iso: str) -> None:
+def _get_insufficient_food(code: int, iso: str, data_path: str) -> None:
     """Get food consumption data from WFP"""
+
+    if data_path[-1] == "/":
+        data_path = data_path[:-1]
 
     # API URL
     url = (
@@ -107,34 +110,33 @@ def _get_insufficient_food(code: int, iso: str) -> None:
             )
         )
         .assign(date=lambda d: pd.to_datetime(d.date, format="%Y-%m-%d"), iso_code=iso)
-        .pipe(append_new_data, rf"{iso}_insufficient_food.csv", "date")
+        .pipe(append_new_data, rf"{data_path}/{iso}_insufficient_food.csv", "date")
     )
 
-    data.to_csv(
-        config.PATHS.imported_data + rf"/wfp_raw/{iso}_insufficient_food.csv",
-        index=False,
-    )
+    data.to_csv(f"{data_path}/wfp_raw/{iso}_insufficient_food.csv", index=False)
 
 
-def _read_files(iso_code: str, file_name: str) -> pd.DataFrame:
+def _read_files(iso_code: str, file_name: str, data_path: str) -> pd.DataFrame:
+    if data_path[-1] == "/":
+        data_path = data_path[:-1]
     try:
         return pd.read_csv(
-            config.PATHS.imported_data + rf"/wfp_raw/{iso_code}_{file_name}.csv",
-            parse_dates=["date"],
+            f"{data_path}/wfp_raw/{iso_code}_{file_name}.csv", parse_dates=["date"]
         )
 
     except FileNotFoundError:
         return pd.DataFrame()
 
 
-def _read_insufficient_food(iso_codes: list) -> pd.DataFrame:
+def _read_insufficient_food(iso_codes: list, data_path: str) -> pd.DataFrame:
     """Read and merge the data for the given iso codes."""
 
     data = pd.DataFrame()
 
     for iso in iso_codes:
         data = pd.concat(
-            [data, _read_files(iso, "insufficient_food")], ignore_index=True
+            [data, _read_files(iso, "insufficient_food", data_path=data_path)],
+            ignore_index=True,
         )
 
     if len(data) == 0:
@@ -148,13 +150,16 @@ def _read_insufficient_food(iso_codes: list) -> pd.DataFrame:
     )
 
 
-def _read_inflation(iso_codes: list) -> pd.DataFrame:
+def _read_inflation(iso_codes: list, data_path: str) -> pd.DataFrame:
     """Read and merge the data for the given iso codes."""
 
     data = pd.DataFrame()
 
     for iso in iso_codes:
-        data = pd.concat([data, _read_files(iso, "inflation")], ignore_index=True)
+        data = pd.concat(
+            [data, _read_files(iso, "inflation", data_path=data_path)],
+            ignore_index=True,
+        )
 
     if len(data) == 0:
         print("No inflation data available. Run update to download data")
@@ -183,7 +188,9 @@ class WFPData(ImportData):
     def load_indicator(self, indicator: str, **kwargs) -> None:
         """Load an indicator into the WFPData object"""
         try:
-            self.indicators[indicator] = _AVAILABLE_INDICATORS[indicator](_CODES)
+            self.indicators[indicator] = _AVAILABLE_INDICATORS[indicator](
+                _CODES, data_path=self.data_path
+            )
         except KeyError:
             raise ValueError(f"Indicator {indicator} not available")
 
@@ -195,9 +202,12 @@ class WFPData(ImportData):
 
         for indicator in self.indicators:
             if indicator == "inflation":
-                _ = [_get_inflation(iso) for iso in _CODES]
+                _ = [_get_inflation(iso, self.data_path) for iso in _CODES]
             elif indicator == "insufficient_food":
-                _ = [_get_insufficient_food(code, iso) for iso, code in _CODES.items()]
+                _ = [
+                    _get_insufficient_food(code, iso, self.data_path)
+                    for iso, code in _CODES.items()
+                ]
 
         print("Data correctly updated. Run `load_indicator` to load the new data")
 

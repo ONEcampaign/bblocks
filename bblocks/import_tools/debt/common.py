@@ -5,8 +5,9 @@ import camelot
 import country_converter as coco
 import pandas as pd
 import requests
-from bblocks.config import PATHS
 from numpy import nan
+
+from bblocks.config import PATHS
 
 URL: str = "https://www.imf.org/external/Pubs/ft/dsa/dsalist.pdf"
 

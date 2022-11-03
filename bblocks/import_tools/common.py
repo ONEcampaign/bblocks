@@ -5,12 +5,22 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from bblocks.config import PATHS
+
 
 @dataclass
 class ImportData(ABC):
     indicators: dict = field(default_factory=dict)
     data: pd.DataFrame = None
     update_data: bool = False
+    data_path: str = None
+
+    def __post_init__(self):
+        if self.data_path is None:
+            self.data_path = f"{PATHS.imported_data}"
+
+        if self.data_path[-1] == "/":
+            self.data_path = self.data_path[:-1]
 
     @abstractmethod
     def load_indicator(self, **kwargs) -> ImportData:

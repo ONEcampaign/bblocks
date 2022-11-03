@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bblocks"
-version = "0.2.2"
+version = "0.3.0"
 homepage = "https://github.com/ONECampaign/bblocks"
 description = "A package with tools to download and analyse international development data."
 authors = ["The ONE Campaign <data@one.org>"]
@@ -30,6 +30,7 @@ camelot-py = "^0.10.1"
 opencv-python = "^4.6.0"
 beautifulsoup4 = "^4.11.1"
 weo = "^0.7.4"
+pyjstat = "^2.3.0"
 
 
 [tool.poetry.dev-dependencies]

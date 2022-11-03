@@ -1,6 +1,48 @@
 Changelog
 =========
 
+[0.3.0] - 2022-10-28
+--------------------
+-  Added a new feature: can now import data from the World Bank IDS
+   database. The new module is called `ids` and it is part of
+   `import_tools.debt`.
+
+[0.2.10] - 2022-10-08
+--------------------
+-  Fix bug in how years added variables are named in DataFrame add
+
+[0.2.9] - 2022-10-08
+--------------------
+-  Fix bug in how years are matched under DataFrame add
+
+[0.2.8] - 2022-10-07
+--------------------
+-  Change how dates are handled when adding to a dataframe
+
+[0.2.7] - 2022-10-04
+--------------------
+-  Update WFP data handling to append new data instead of replacing.
+
+[0.2.6] - 2022-10-03
+--------------------
+-  WEO update file path bug fix.
+
+[0.2.5] - 2022-10-03
+--------------------
+-  Minor bug with file management resolved.
+
+[0.2.4] - 2022-10-03
+--------------------
+-  Added an optional parameter to importers in order to specify where the data should be stored.
+
+[0.2.3] - 2022-10-01
+--------------------
+-  Fixed how the ``WorldEconomicOutlook`` object handles moving to the latest data
+-  Added new optional parameters to ``WorldEconomicOutlook`` to allow for
+   specifying the data version.
+-  ``WorldEconomicOutlook`` now has an instance attribute ``version`` that
+   stores the version of the data used to create the object.
+
 [0.2.2] - 2022-09-09
 --------------------
 -  Added a new feature: ``date_to_str()``, which formats a date as an english string.
