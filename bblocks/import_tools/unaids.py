@@ -81,7 +81,7 @@ def get_category(df: pd.DataFrame, indicator: str) -> str:
 def check_response(response: dict) -> None:
     """ """
     if len(response['tableData']) == 0:
-        raise ValueError(f'No data available for this indicator')
+        raise ValueError('No data available for this indicator')
 
 
 def get_dimensions(response: dict) -> list:
