@@ -1,5 +1,9 @@
 Changelog
 =========
+[0.3.1] - 2022-11-01
+--------------------
+-  Added a new feature: can now import data from UNAIDS.
+   The module is called `unaids` and is located in `import_tools`.
 
 [0.3.0] - 2022-10-28
 --------------------
