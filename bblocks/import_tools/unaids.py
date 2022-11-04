@@ -11,11 +11,16 @@ from bblocks.config import PATHS
 from typing import Optional
 import warnings
 
+URL: str = "https://aidsinfo.unaids.org/datasheetdatarequest"
+AREA_CODES: dict = {
+    "country": {"name": "world", "code": 2},
+    "region": {"name": "world-continents", "code": 1},
+}
+AVAILABLE_INDICATORS = pd.read_json(f"{PATHS.import_tools}/aids_indicators.json")
 
-def get_response(indicator: str, category: str, area_name: str, area_code: str) -> dict:
+
+def get_response(url: str, indicator: str, category: str, area_name: str, area_code: str) -> dict:
     """returns a json response from UNAIDS"""
-
-    url = "https://aidsinfo.unaids.org/datasheetdatarequest"
 
     request_data = {
         "reqObj[Group_Name]": category,
@@ -30,22 +35,21 @@ def get_response(indicator: str, category: str, area_name: str, area_code: str) 
         return json.loads(response.content)
 
     except ConnectionError:
-        raise ConnectionError("Could not extract data")
+        raise ConnectionError(f"Could not extract data for indicator: {indicator}")
 
 
 def parse_data_table(response: dict, dimensions: list, years: list) -> pd.DataFrame:
     """parses data table in json response and returns a formatted dataframe"""
 
     records = []
+
     for row in response["tableData"]:
-        area_name = row["Area_Name"]
-        area_id = row["Area_ID"]
-        for i in range(len(row["Data_Val"])):
-            values = row["Data_Val"][i]
-            values_dict = {dimensions[j]: values[0][j] for j in range(len(dimensions))}
-            values_dict.update(
-                {"area_name": area_name, "area_id": area_id, "year": years[i]}
-            )
+        area_name = row["Area_Name"]  # collect area name
+        area_id = row["Area_ID"]  # collect area id
+
+        for i, values in enumerate(row["Data_Val"]):
+            values_dict = {d: v for d, v in zip(dimensions, values[0])}
+            values_dict.update({"area_name": area_name, "area_id": area_id, "year": years[i]})
 
             records.append(values_dict)
 
@@ -66,21 +70,20 @@ def clean_data(df: pd.DataFrame, indicator: str) -> pd.DataFrame:
 
     return (
         df.assign(indicator=indicator)
-        .dropna(how="all", axis=1)
-        .melt(
+            .dropna(how="all", axis=1)
+            .melt(
             id_vars=["area_name", "area_id", "year", "indicator"],
             var_name="dimension",
             value_name="value",
         )
-        .replace("...", np.nan)
-        .assign(value=lambda d: pd.to_numeric(d.value))
+            .assign(value=lambda d: pd.to_numeric(d.value, errors='coerce'))
     )
 
 
-def get_category(df: pd.DataFrame, indicator: str) -> str:
+def get_category(indicator: str) -> str:
     """returns the category for an indicator"""
 
-    return df.loc[df.indicator == indicator, "category"].unique()[0]
+    return AVAILABLE_INDICATORS.loc[AVAILABLE_INDICATORS.indicator == indicator, "category"].unique()[0]
 
 
 def check_response(response: dict) -> None:
@@ -99,11 +102,70 @@ def get_years(response: dict) -> list:
     return response["tableYear"]
 
 
-@dataclass
+def extract_data(indicator: str, grouping: str) -> pd.DataFrame:
+    """Extract and clean aids data"""
+
+    group_name = AREA_CODES[grouping]["name"]
+    group_code = AREA_CODES[grouping]["code"]
+    category = get_category(indicator)
+
+    response = get_response(
+        URL, indicator, category, group_name, group_code
+    )
+
+    dimensions = get_dimensions(response)
+    years = get_years(response)
+
+    df = parse_data_table(response, dimensions, years)
+    if grouping == "region":
+        df = pd.concat([df, parse_global_data(response, dimensions, years)])
+
+    return clean_data(df, indicator)
+
+
+def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
+    """Checks if data is already downloaded for an indicator and area grouping
+
+    Returns:
+        True if data is not downloaded, False if data is downloaded
+
+    """
+    if os.path.exists(f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}"):
+        return False
+    else:
+        return True
+
+
+def check_area_grouping(area_grouping: str) -> list:
+    """Checks if area grouping is valid and returns a list of area codes"""
+
+    if (area_grouping not in AREA_CODES.keys()) and (area_grouping != 'all'):
+        raise ValueError('Invalid grouping. Choose from ["country", "region", "all"]')
+
+    if area_grouping == 'all':
+        return [group for group in AREA_CODES]
+    else:
+        return [area_grouping]
+
+
+def concat_dataframes(indicator_dict: dict[str: pd.DataFrame], indicators: list, groupings: list) -> pd.DataFrame:
+    """concatenate dataframes stored in a dictionary"""
+
+    df = pd.DataFrame()
+
+    for grouping in groupings:
+        for indicator in indicators:
+            if indicator not in indicator_dict[grouping].keys():
+                warnings.warn(f"No {grouping} data available for indicator: {indicator}")
+            else:
+                df = pd.concat([df, indicator_dict[grouping][indicator]])
+    return df
+
+
 class Aids(ImportData):
     """An object to extract data from UNAIDS.
-    To use, create an instance of the class and set the grouping - either 'country' or 'region'
-    (default is 'country'. 'region' includes global values).
+
+    To use, create an instance of the class.
     The load indicators using the load_indicators method. This can be done multiple times.
     To return a dataframe of all available indicators to load, use the available_indicators method.
     If the data for an indicator has never been downloaded, it will be downloaded.
@@ -113,74 +175,43 @@ class Aids(ImportData):
     You can get a dataframe by calling 'get_data' and passing the indicator name.
     """
 
-    grouping: str = "country"
+    available_indicators: pd.DataFrame = AVAILABLE_INDICATORS
 
-    @staticmethod
-    def available_indicators() -> pd.DataFrame:
-        """returns a DataFrame of available indicators"""
-        return pd.read_json(f"{PATHS.import_tools}/aids_indicators.json")
+    def __init__(self):
 
-    def __post_init__(self):
+        self.indicators = {'country': {}, 'region': {}}
 
-        area_codes = {
-            "country": {"name": "world", "code": 2},
-            "region": {"name": "world-continents", "code": 1},
-        }
-
-        if self.grouping not in ["country", "region"]:
-            raise ValueError('Invalid grouping. Choose from ["country", "region"]')
-        else:
-            self.__group_name = area_codes[self.grouping]["name"]
-            self.__group_code = area_codes[self.grouping]["code"]
-
-    def load_indicator(self, indicator: str) -> ImportData:
+    def load_indicator(self, indicator: str, area_grouping: str = 'all') -> ImportData:
         """Load an indicator to the object
 
         Args:
             indicator (str): The name of the indicator to load. To see a DataFrame of available indicators,
              use the available_indicators method.
+            area_grouping (str): The grouping to use. Choose from ["country", "region"].
 
         Returns:
             The same object to allow chaining
         """
 
-        if indicator not in list(self.available_indicators().indicator):
+        if indicator not in list(self.available_indicators.indicator):
             raise ValueError("Invalid indicator")
-        if indicator in self.indicators:
-            raise ValueError(f"{indicator} already loaded")
 
-        if not os.path.exists(
-            f"{PATHS.imported_data}/aids_{self.grouping}_{indicator}"
-        ) or (indicator not in self.indicators and self.update_data):
-            df = self.__extract_data(indicator)
-            self.indicators[indicator] = df
-            df.to_csv(
-                f"{PATHS.imported_data}/aids_{self.grouping}_{indicator}.csv",
-                index=False,
-            )
+        for grouping in check_area_grouping(area_grouping):
 
-        self.indicators[indicator] = pd.read_csv(
-            f"{PATHS.imported_data}/aids_{self.grouping}_{indicator}.csv"
-        )
+            # check if either indicator for grouping has not been downloaded or if update_data is True
+            if check_if_not_downloaded(indicator, grouping) or self.update_data:
+
+                df = extract_data(indicator, grouping)
+                df.to_csv(
+                    f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv",
+                    index=False,
+                )
+
+            (self.indicators[grouping]
+                .update({indicator: pd.read_csv(f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv")})
+             )
 
         return self
-
-    def __extract_data(self, indicator) -> pd.DataFrame:
-        """Extract and clean aids data"""
-
-        category = get_category(self.available_indicators(), indicator)
-        response = get_response(
-            indicator, category, self.__group_name, self.__group_code
-        )
-
-        dimensions = get_dimensions(response)
-        years = get_years(response)
-
-        df = parse_data_table(response, dimensions, years)
-        if self.grouping == "region":
-            df = pd.concat([df, parse_global_data(response, dimensions, years)])
-
-        return clean_data(df, indicator)
 
     def update(self, reload_data: bool = True):
         """Update all loaded indicators saved on the disk
@@ -200,43 +231,49 @@ class Aids(ImportData):
             raise RuntimeError("No indicators loaded")
 
         for indicator in self.indicators:
-            df = self.__extract_data(indicator)
-            df.to_csv(
-                f"{PATHS.imported_data}/aids_{self.grouping}_{indicator}", index=False
-            )
-
-            if reload_data is True:
-                self.indicators[indicator] = df
+            for area_grouping in self.indicators[indicator]:
+                df = extract_data(indicator, area_grouping)
+                df.to_csv(
+                    f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv",
+                    index=False,
+                )
+                if reload_data:
+                    self.indicators[area_grouping][indicator] = df
 
         return self
 
-    def get_data(self, indicators: Optional[str | list] = None) -> pd.DataFrame:
+    def get_data(self, indicators: Optional[str | list] = None, area_grouping: str = 'all') -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
         Args:
             indicators:  By default, all indicators are returned in a single DataFrame.
-            If a list of indicators is passed, only those indicators will be returned.
-            A single indicator can be passed as a string as well.
+                If a list of indicators is passed, only those indicators will be returned.
+                A single indicator can be passed as a string as well.
+            area_grouping (str): The area grouping to use. Choose from ["country", "region", "all"]. Default is "all".
 
         Returns:
             A Pandas DataFrame with the requested indicator data
         """
 
         if len(self.indicators) == 0:
-            raise RuntimeError("No indicators loaded")
+            raise RuntimeError("No indicators loaded. Use the load_indicators method to load indicators "
+                               "into the object. To see a DataFrame of available indicators to load, call the class "
+                               "attribute available_indicators")
+
+        if isinstance(indicators, str):
+            indicators = [indicators]
 
         if indicators is None:
-            return pd.concat(self.indicators.values())
 
-        if isinstance(indicators, list):
-            df = pd.concat([self.indicators[i] for i in indicators])
-            for i in indicators:
-                if i not in self.available_indicators().indicator:
-                    warnings.warn(f"Invalid indicator: {i}")
+            indicators = list(set(list(self.indicators['country'].keys())
+                                  + list(self.indicators['region'].keys())))
 
-            return df
+        groupings = check_area_grouping(area_grouping)
+        return concat_dataframes(self.indicators, indicators, groupings)
 
-        if indicators not in self.indicators:
-            raise ValueError(f"Indicator not loaded: {indicators}")
 
-        return self.indicators[indicators]
+if __name__ == "__main__":
+    i = AVAILABLE_INDICATORS.indicator[0]
+    aids = Aids()
+    aids.load_indicator(i)
+    data = aids.get_data()
