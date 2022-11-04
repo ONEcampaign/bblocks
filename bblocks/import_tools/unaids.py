@@ -173,12 +173,13 @@ class Aids(ImportData):
 
     To use, create an instance of the class.
     The load indicators using the load_indicators method. This can be done multiple times.
-    To return a dataframe of all available indicators to load, use the available_indicators method.
+    To return a dataframe of all available indicators to load, use the available_indicators class attribute.
     If the data for an indicator has never been downloaded, it will be downloaded.
     If it has been downloaded, it will be loaded from disk. If update_data is set to true,
     the data will be downloaded each time an indicator is loaded.
     You can force an update by calling 'update', and all indicators will be reloaded into the object.
-    You can get a dataframe by calling 'get_data' and passing the indicator name.
+    You can get a dataframe by calling 'get_data' and passing the indicator name(s)
+    (or None and this will return all indicators) and passing the area grouping(s) ('all' by default)
     """
 
     available_indicators: pd.DataFrame = AVAILABLE_INDICATORS
@@ -193,7 +194,7 @@ class Aids(ImportData):
         Args:
             indicator (str): The name of the indicator to load. To see a DataFrame of available indicators,
              use the available_indicators method.
-            area_grouping (str): The grouping to use. Choose from ["country", "region"].
+            area_grouping (str): The grouping to use. Choose from ["country", "region", "all"].
 
         Returns:
             The same object to allow chaining
@@ -228,7 +229,7 @@ class Aids(ImportData):
     def update(self, reload_data: bool = True):
         """Update all loaded indicators saved on the disk
 
-        When called, it will go through each loaded indicator
+        When called, it will go through each loaded indicator/area grouping combination
         and update the data saved on disk.
 
         Args:
@@ -263,7 +264,8 @@ class Aids(ImportData):
             indicators:  By default, all indicators are returned in a single DataFrame.
                 If a list of indicators is passed, only those indicators will be returned.
                 A single indicator can be passed as a string as well.
-            area_grouping (str): The area grouping to use. Choose from ["country", "region", "all"]. Default is "all".
+            area_grouping (str): The area grouping to use. Choose from ["country", "region", "all"].
+                Default is "all".
 
         Returns:
             A Pandas DataFrame with the requested indicator data
@@ -290,10 +292,3 @@ class Aids(ImportData):
 
         groupings = check_area_grouping(area_grouping)
         return concat_dataframes(self.indicators, indicators, groupings)
-
-
-if __name__ == "__main__":
-    i = AVAILABLE_INDICATORS.indicator[0]
-    aids = Aids()
-    aids.load_indicator(i)
-    data = aids.get_data()
