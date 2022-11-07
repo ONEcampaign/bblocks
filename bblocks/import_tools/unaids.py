@@ -151,7 +151,7 @@ def check_area_grouping(area_grouping: str) -> list:
 
 
 def concat_dataframes(
-    indicator_dict: dict[str : pd.DataFrame], indicators: list, groupings: list
+    indicator_dict: dict[str : pd.DataFrame], indicators: list | set, groupings: list
 ) -> pd.DataFrame:
     """concatenate dataframes stored in a dictionary"""
 
@@ -205,7 +205,8 @@ class Aids(ImportData):
 
         for grouping in check_area_grouping(area_grouping):
 
-            # check if either indicator for grouping has not been downloaded or if update_data is True
+            # check if either indicator for grouping has not been downloaded
+            # or if update_data is True
             if check_if_not_downloaded(indicator, grouping) or self.update_data:
 
                 df = extract_data(indicator, grouping)
@@ -283,11 +284,8 @@ class Aids(ImportData):
 
         if indicators is None:
 
-            indicators = list(
-                set(
-                    list(self.indicators["country"].keys())
-                    + list(self.indicators["region"].keys())
-                )
+            indicators = set(
+                list(self.indicators["country"]) + list(self.indicators["region"])
             )
 
         groupings = check_area_grouping(area_grouping)
