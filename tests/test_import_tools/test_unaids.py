@@ -395,36 +395,81 @@ def test_check_response():
     assert "No data available for this indicator" in str(error.value)
 
 
-
 def mock_indicators():
     """return mock indicator dictionary as would be stored in Aids object"""
 
-    return {'country': {'People living with HIV - All ages':
-                            pd.DataFrame({'area_name': {31: 'Afghanistan', 5535: 'Afghanistan', 11039: 'Afghanistan'},
-                                          'area_id': {31: 'AFG', 5535: 'AFG', 11039: 'AFG'},
-                                          'year': {31: 2021, 5535: 2021, 11039: 2021},
-                                          'indicator': {31: 'People living with HIV - All ages', 5535: 'People living with HIV - All ages', 11039: 'People living with HIV - All ages'},
-                                          'dimension': {31: 'All ages estimate', 5535: 'All ages lower estimate', 11039: 'All ages upper estimate'},
-                                          'value': {31: 10933.0, 5535: 4330.0, 11039: 42133.0}}
-                                                                   )},
-            'region': {'People living with HIV - All ages':
-                           pd.DataFrame({'area_name': {287: 'Global', 575: 'Global', 863: 'Global'},
-                                    'area_id': {287: '03M49WLD', 575: '03M49WLD', 863: '03M49WLD'},
-                                         'year': {287: 2021, 575: 2021, 863: 2021},
-                                         'indicator': {287: 'People living with HIV - All ages', 575: 'People living with HIV - All ages', 863: 'People living with HIV - All ages'},
-                                         'dimension': {287: 'All ages estimate', 575: 'All ages lower estimate', 863: 'All ages upper estimate'},
-                                         'value': {287: 38362151.6994, 575: 33851565.9, 863: 43798273.29}})}
-                            }
+    return {
+        "country": {
+            "People living with HIV - All ages": pd.DataFrame(
+                {
+                    "area_name": {
+                        31: "Afghanistan",
+                        5535: "Afghanistan",
+                        11039: "Afghanistan",
+                    },
+                    "area_id": {31: "AFG", 5535: "AFG", 11039: "AFG"},
+                    "year": {31: 2021, 5535: 2021, 11039: 2021},
+                    "indicator": {
+                        31: "People living with HIV - All ages",
+                        5535: "People living with HIV - All ages",
+                        11039: "People living with HIV - All ages",
+                    },
+                    "dimension": {
+                        31: "All ages estimate",
+                        5535: "All ages lower estimate",
+                        11039: "All ages upper estimate",
+                    },
+                    "value": {31: 10933.0, 5535: 4330.0, 11039: 42133.0},
+                }
+            )
+        },
+        "region": {
+            "People living with HIV - All ages": pd.DataFrame(
+                {
+                    "area_name": {287: "Global", 575: "Global", 863: "Global"},
+                    "area_id": {287: "03M49WLD", 575: "03M49WLD", 863: "03M49WLD"},
+                    "year": {287: 2021, 575: 2021, 863: 2021},
+                    "indicator": {
+                        287: "People living with HIV - All ages",
+                        575: "People living with HIV - All ages",
+                        863: "People living with HIV - All ages",
+                    },
+                    "dimension": {
+                        287: "All ages estimate",
+                        575: "All ages lower estimate",
+                        863: "All ages upper estimate",
+                    },
+                    "value": {287: 38362151.6994, 575: 33851565.9, 863: 43798273.29},
+                }
+            )
+        },
+    }
 
 
 def test_concat_dataframes():
 
-    expected_df = pd.DataFrame({'area_name': {31: 'Afghanistan', 5535: 'Afghanistan', 11039: 'Afghanistan'},
-                                'area_id': {31: 'AFG', 5535: 'AFG', 11039: 'AFG'},
-                                'year': {31: 2021, 5535: 2021, 11039: 2021}, 'indicator': {31: 'People living with HIV - All ages', 5535: 'People living with HIV - All ages', 11039: 'People living with HIV - All ages'}, 'dimension': {31: 'All ages estimate', 5535: 'All ages lower estimate', 11039: 'All ages upper estimate'}, 'value': {31: 10933.0, 5535: 4330.0, 11039: 42133.0}}
-                               )
+    expected_df = pd.DataFrame(
+        {
+            "area_name": {31: "Afghanistan", 5535: "Afghanistan", 11039: "Afghanistan"},
+            "area_id": {31: "AFG", 5535: "AFG", 11039: "AFG"},
+            "year": {31: 2021, 5535: 2021, 11039: 2021},
+            "indicator": {
+                31: "People living with HIV - All ages",
+                5535: "People living with HIV - All ages",
+                11039: "People living with HIV - All ages",
+            },
+            "dimension": {
+                31: "All ages estimate",
+                5535: "All ages lower estimate",
+                11039: "All ages upper estimate",
+            },
+            "value": {31: 10933.0, 5535: 4330.0, 11039: 42133.0},
+        }
+    )
 
-    df = unaids.concat_dataframes(mock_indicators(), ['People living with HIV - All ages'], ['country'])
+    df = unaids.concat_dataframes(
+        mock_indicators(), ["People living with HIV - All ages"], ["country"]
+    )
     pd.testing.assert_frame_equal(df, expected_df)
 
 
@@ -436,5 +481,4 @@ def test_check_area_grouping():
     assert "Invalid" in str(error.value)
 
     group_list = unaids.check_area_grouping("country")
-    assert(group_list == ["country"])
-
+    assert group_list == ["country"]
