@@ -106,14 +106,20 @@ def get_years(response: dict) -> list:
     return response["tableYear"]
 
 
-def extract_data(indicator: str, grouping: str) -> pd.DataFrame:
-    """Extract and clean aids data"""
+def response_params(group: str, indicator: str):
+    """Returns a list of parameters to be used in the response"""
 
-    group_name = AREA_CODES[grouping]["name"]
-    group_code = AREA_CODES[grouping]["code"]
-    category = get_category(indicator)
+    return {
+        "url": URL,
+        "indicator": indicator,
+        "category": get_category(indicator),
+        "area_name": AREA_CODES[group]["name"],
+        "area_code": AREA_CODES[group]["code"],
+    }
 
-    response = get_response(URL, indicator, category, group_name, group_code)
+
+def response_to_df(grouping: str, response: dict) -> pd.DataFrame:
+    """Convert response to dataframe"""
 
     dimensions = get_dimensions(response)
     years = get_years(response)
@@ -122,7 +128,16 @@ def extract_data(indicator: str, grouping: str) -> pd.DataFrame:
     if grouping == "region":
         df = pd.concat([df, parse_global_data(response, dimensions, years)])
 
-    return clean_data(df, indicator)
+    return df
+
+
+def extract_data(indicator: str, grouping: str):
+    """pipeline to extract data"""
+
+    params = response_params(grouping, indicator)
+    response = get_response(**params)
+    check_response(response)
+    return response_to_df(grouping, response).pipe(clean_data, indicator)
 
 
 def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
@@ -132,7 +147,7 @@ def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
         True if data is not downloaded, False if data is downloaded
 
     """
-    if os.path.exists(f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}"):
+    if os.path.exists(f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv"):
         return False
     else:
         return True
@@ -201,20 +216,20 @@ class Aids(ImportData):
         """
 
         if indicator not in list(self.available_indicators.indicator):
-            raise ValueError("Invalid indicator")
+            raise ValueError(f"Invalid indicator: {indicator}")
 
         for grouping in check_area_grouping(area_grouping):
 
             # check if either indicator for grouping has not been downloaded
             # or if update_data is True
             if check_if_not_downloaded(indicator, grouping) or self.update_data:
-
                 df = extract_data(indicator, grouping)
                 df.to_csv(
                     f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv",
                     index=False,
                 )
 
+            # load data from disk
             (
                 self.indicators[grouping].update(
                     {
@@ -241,7 +256,7 @@ class Aids(ImportData):
             The same object to allow chaining
         """
 
-        if len(self.indicators) == 0:
+        if len(self.indicators["country"]) == 0 and len(self.indicators["region"]) == 0:
             raise RuntimeError("No indicators loaded")
 
         for area_grouping in self.indicators:
@@ -272,7 +287,7 @@ class Aids(ImportData):
             A Pandas DataFrame with the requested indicator data
         """
 
-        if len(self.indicators) == 0:
+        if len(self.indicators["country"]) == 0 and len(self.indicators["region"]) == 0:
             raise RuntimeError(
                 "No indicators loaded. Use the load_indicators method to load indicators "
                 "into the object. To see a DataFrame of available indicators to load, call the class "
@@ -283,7 +298,6 @@ class Aids(ImportData):
             indicators = [indicators]
 
         if indicators is None:
-
             indicators = set(
                 list(self.indicators["country"]) + list(self.indicators["region"])
             )

@@ -379,6 +379,39 @@ def test_get_category():
     assert category == expected
 
 
+def test_response_params():
+    """test response_params"""
+
+    indicator = "People living with HIV - All ages"
+    group = "country"
+
+    expected = {
+        'url': unaids.URL,
+        'indicator': indicator,
+        'category': 'People living with HIV',
+        "area_name": 'world',
+        "area_code": 2
+    }
+
+    params = unaids.response_params(group, indicator)
+
+    assert params == expected
+
+
+def test_response_to_df():
+    """test response_to_df"""
+
+    grouping = "region"
+    response = _mock_unaids_response()
+
+    expected_df = pd.DataFrame({'All ages estimate': {0: 353.0, 1: 442.0, 2: 552.0, 3: 5.0, 4: 7.0, 5: 9.0, 6: 430.0, 7: 523.0, 8: 632.0, 9: 8515095.9837, 10: 10403722.7975, 11: 12432577.965599999}, 'All ages lower estimate': {0: 153.0, 1: 189.0, 2: 235.0, 3: 0.13893, 4: 0.4219, 5: 0.84501, 6: 348.0, 7: 432.0, 8: 529.0, 9: 7513899.143, 10: 9180464.83, 11: 10970768.63}, 'All ages upper estimate': {0: 593.0, 1: 742.0, 2: 922.0, 3: 16.0, 4: 19.0, 5: 23.0, 6: 569.0, 7: 669.0, 8: 770.0, 9: 9721730.721, 10: 11877988.42, 11: 14194342.56}, 'area_name': {0: 'Afghanistan', 1: 'Afghanistan', 2: 'Afghanistan', 3: 'Albania', 4: 'Albania', 5: 'Albania', 6: 'Algeria', 7: 'Algeria', 8: 'Algeria', 9: 'Global', 10: 'Global', 11: 'Global'}, 'area_id': {0: 'AFG', 1: 'AFG', 2: 'AFG', 3: 'ALB', 4: 'ALB', 5: 'ALB', 6: 'DZA', 7: 'DZA', 8: 'DZA', 9: '03M49WLD', 10: '03M49WLD', 11: '03M49WLD'}, 'year': {0: '2019', 1: '2020', 2: '2021', 3: '2019', 4: '2020', 5: '2021', 6: '2019', 7: '2020', 8: '2021', 9: '2019', 10: '2020', 11: '2021'}}
+                               )
+
+    df = unaids.response_to_df(grouping, response)
+    pd.testing.assert_frame_equal(df.reset_index(drop=True),
+                                         expected_df.reset_index(drop=True))
+
+
 def test_available_indicators():
     """test available_indicators"""
 
@@ -482,3 +515,32 @@ def test_check_area_grouping():
 
     group_list = unaids.check_area_grouping("country")
     assert group_list == ["country"]
+
+
+def test_load_indicator():
+    """test load_indicator"""
+
+    aids = unaids.Aids()
+
+    with pytest.raises(ValueError) as error:
+        aids.load_indicator("invalid_indicator")
+    assert "Invalid" in str(error.value)
+
+
+def test_get_data():
+    """test get_data"""
+
+    aids = unaids.Aids()
+
+    with pytest.raises(RuntimeError) as error:
+        aids.get_data()
+    assert "No indicators loaded" in str(error.value)
+
+
+def test_update():
+    """test update"""
+    aids = unaids.Aids()
+    with pytest.raises(RuntimeError) as error:
+        aids.update()
+    assert "No indicators loaded" in str(error.value)
+
