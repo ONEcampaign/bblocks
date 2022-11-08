@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import os
 from datetime import datetime
 import calendar
+from typing import Optional
 
 from bblocks.cleaning_tools.clean import clean_numeric_series
 from bblocks.import_tools.common import ImportData
@@ -116,6 +117,59 @@ def check_if_not_downloaded(date: str) -> bool:
         return False
     else:
         return True
+
+
+def __get_rate(rows: list, text: str):
+    """Returns currency value from SDR exchange rate table"""
+
+    for i in range(len(rows)):
+        if text in rows[i].text:
+            return float(rows[i + 1].text.strip().split("\r\n")[0])
+    else:
+        raise ValueError("Could not find exchange rate")
+
+
+def latest_sdr_exchange(currency: Optional | str = "USD") -> dict[str:str, str:float]:
+    """Extracts the latest SDR exchange rate and date
+
+    Args:
+        currency: exchange rate currency, either "USD" or "SDR". Defaults to "USD". If "USD" is selected
+                  the value returned is the value of SDRs equivalent to 1 USD
+
+    Returns:
+        dictionary with date and value
+    """
+
+    page = "https://www.imf.org/external/np/fin/data/rms_sdrv.aspx"
+    exchange_info = {}
+
+    try:
+        content = requests.get(page).content
+    except ConnectionError:
+        raise ConnectionError("Could not extract exchange rates")
+
+    soup = BeautifulSoup(content, "html.parser")
+    table = soup.find_all("table")[5]
+
+    date = table.find_all("th")[0].text.strip()
+    date = datetime.strptime(date, "%A, %B %d, %Y").strftime("%d %b %Y")
+    exchange_info.update({"date": date})
+
+    rows = table.find_all("td")
+
+    if currency == "USD":
+        exchange_info.update({"value": __get_rate(rows, "U.S.$1.00 = SDR")})
+    elif currency == "SDR":
+        exchange_info.update({"value": __get_rate(rows, "SDR1 = US$")})
+    else:
+        raise ValueError('Invalid currency. Please select from ["SDR", "USD]')
+
+    return exchange_info
+
+
+
+
+
 
 
 class SDR(ImportData):
