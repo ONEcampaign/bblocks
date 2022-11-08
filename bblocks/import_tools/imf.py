@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import pandas as pd
-import requests
-from datetime import datetime
 
 import weo.dates
-from bs4 import BeautifulSoup
 import os
 from typing import Optional
 
@@ -14,6 +11,32 @@ from weo import all_releases, download, WEO
 from bblocks.cleaning_tools.clean import clean_numeric_series
 
 from bblocks.import_tools.common import ImportData
+
+
+def _get_data(obj: ImportData, indicators: str | list) -> pd.DataFrame:
+    """Unpack dictionary of indicators into a dataframe"""
+    df = pd.DataFrame()
+
+    if indicators == "all":
+        indicators = obj.indicators.values()
+
+    if isinstance(indicators, str):
+        indicators = [indicators]
+
+    if isinstance(indicators, list):
+
+        for _ in indicators:
+            if _ not in obj.indicators:
+                raise ValueError(f"{_} has not been loaded or is an invalid indicator.")
+
+        indicators = [
+            obj.indicators[_] for _ in indicators if _ in list(obj.indicators)
+        ]
+
+    for _ in indicators:
+        df = pd.concat([df, _], ignore_index=True)
+
+    return df
 
 
 def _check_weo_parameters(

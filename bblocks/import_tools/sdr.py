@@ -157,10 +157,10 @@ def parse_exchange(response: bytes, currency: str):
 
 
 def get_latest_exchange_rate(currency: str = 'USD', only_value: bool = False) -> float | dict:
-    """ """
+    """"""
 
     if currency not in ["USD", "SDR"]:
-        raise ValueError("Currency must be USD or SDR")
+        raise ValueError("Invalid currency. Currency must be `USD` or `SDR`")
 
     response = get_response(EXCHANGE_URL)
     date, rate = parse_exchange(response.content, currency)
@@ -169,53 +169,6 @@ def get_latest_exchange_rate(currency: str = 'USD', only_value: bool = False) ->
         return rate
     else:
         return {'date': date, 'rate': rate}
-
-
-
-
-
-
-
-
-
-
-def latest_sdr_exchange(currency: Optional | str = "USD") -> dict[str:str, str:float]:
-    """Extracts the latest SDR exchange rate and date
-
-    Args:
-        currency: exchange rate currency, either "USD" or "SDR". Defaults to "USD". If "USD" is selected
-                  the value returned is the value of SDRs equivalent to 1 USD
-
-    Returns:
-        dictionary with date and value
-    """
-
-    exchange_info = {}
-
-    response = get_response(EXCHANGE_URL)
-
-    soup = BeautifulSoup(response.content, "html.parser")
-    table = soup.find_all("table")[5]
-
-    date = table.find_all("th")[0].text.strip()
-    date = datetime.strptime(date, "%A, %B %d, %Y").strftime("%d %b %Y")
-    exchange_info.update({"date": date})
-
-    rows = table.find_all("td")
-
-    if currency == "USD":
-        exchange_info.update({"value": __get_rate(rows, "U.S.$1.00 = SDR")})
-    elif currency == "SDR":
-        exchange_info.update({"value": __get_rate(rows, "SDR1 = US$")})
-    else:
-        raise ValueError('Invalid currency. Please select from ["SDR", "USD]')
-
-    return exchange_info
-
-
-
-
-
 
 
 class SDR(ImportData):
