@@ -33,10 +33,10 @@ def get_response(url: str) -> requests.models.Response:
         return response
 
 
-def parse_sdr_links(response: requests.models.Response) -> dict:
+def parse_sdr_links(response: bytes) -> dict:
     """Function to parse SDR tables. returns a dictionary of dates and links"""
 
-    soup = BeautifulSoup(response.content, "html.parser")
+    soup = BeautifulSoup(response, "html.parser")
     table = soup.find_all("table")[4]
     links = table.find_all("a")
 
@@ -47,10 +47,10 @@ def get_latest_date() -> str:
     """ """
 
     year_response = get_response(MAIN_PAGE_URL)
-    year_links = parse_sdr_links(year_response)
+    year_links = parse_sdr_links(year_response.content)
     year = list(year_links.keys())[0]
     month_response = get_response(year_links[year])
-    month_links = parse_sdr_links(month_response)
+    month_links = parse_sdr_links(month_response.content)
     month = list(month_links.keys())[0]
 
     return datetime.strptime(month, '%B %d, %Y').strftime('%Y-%m-%d')
@@ -97,11 +97,11 @@ def get_data(date: str) -> pd.DataFrame:
     return df
 
 
-def format_date(date: list | set) -> str:
+def format_date(date: list | tuple) -> str:
     """Format a date string containing year and month, and adds the last day for that month-year"""
 
     if len(date) != 2:
-        raise ValueError("Date must be a list or set containing year and month")
+        raise ValueError("Date must be a list or tuple containing year and month")
 
     last_day = calendar.monthrange(date[0], date[1])[1]
     return f"{date[0]}-{date[1]}-{last_day}"
@@ -216,12 +216,6 @@ class SDR(ImportData):
             df = df.loc[df.indicator == indicator]
 
         return df
-
-
-if __name__ == "__main__":
-    sdr = SDR()
-    sdr.load_indicator((2021, 6))
-    df = sdr.get_data()
 
 
 
