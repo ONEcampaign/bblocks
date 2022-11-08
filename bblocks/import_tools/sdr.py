@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -12,6 +14,7 @@ from bblocks.config import PATHS
 
 BASE_URL = 'https://www.imf.org/external/np/fin/tad/'
 MAIN_PAGE_URL = 'https://www.imf.org/external/np/fin/tad/extsdr1.aspx'
+EXCHANGE_URL = "https://www.imf.org/external/np/fin/data/rms_sdrv.aspx"
 
 
 def create_tsv_link(year: int, month: int, day: int) -> str:
@@ -119,14 +122,61 @@ def check_if_not_downloaded(date: str) -> bool:
         return True
 
 
-def __get_rate(rows: list, text: str):
+def __get_rate(table: BeautifulSoup, currency: str):
     """Returns currency value from SDR exchange rate table"""
 
+    exchange_dict = {'USD': "U.S.$1.00 = SDR", 'SDR': "SDR1 = US$"}
+
+    rows = table.find_all("td")
+
     for i in range(len(rows)):
-        if text in rows[i].text:
+        if exchange_dict[currency] in rows[i].text:
             return float(rows[i + 1].text.strip().split("\r\n")[0])
     else:
         raise ValueError("Could not find exchange rate")
+
+
+def __get_exchange_date(table: BeautifulSoup) -> str:
+    """Returns date of exchange rate table"""
+
+    date = table.find_all("th")[0].text.strip()
+    date = datetime.strptime(date, "%A, %B %d, %Y").strftime("%Y-%m-%d")
+    return date
+
+
+def parse_exchange(response: bytes, currency: str):
+    """ """
+
+    soup = BeautifulSoup(response, "html.parser")
+    table = soup.find_all("table")[5]
+
+    date = __get_exchange_date(table)
+    rate = __get_rate(table, currency)
+
+    return date, rate
+
+
+def get_latest_exchange_rate(currency: str = 'USD', only_value: bool = False) -> float | dict:
+    """ """
+
+    if currency not in ["USD", "SDR"]:
+        raise ValueError("Currency must be USD or SDR")
+
+    response = get_response(EXCHANGE_URL)
+    date, rate = parse_exchange(response.content, currency)
+
+    if only_value:
+        return rate
+    else:
+        return {'date': date, 'rate': rate}
+
+
+
+
+
+
+
+
 
 
 def latest_sdr_exchange(currency: Optional | str = "USD") -> dict[str:str, str:float]:
@@ -140,15 +190,11 @@ def latest_sdr_exchange(currency: Optional | str = "USD") -> dict[str:str, str:f
         dictionary with date and value
     """
 
-    page = "https://www.imf.org/external/np/fin/data/rms_sdrv.aspx"
     exchange_info = {}
 
-    try:
-        content = requests.get(page).content
-    except ConnectionError:
-        raise ConnectionError("Could not extract exchange rates")
+    response = get_response(EXCHANGE_URL)
 
-    soup = BeautifulSoup(content, "html.parser")
+    soup = BeautifulSoup(response.content, "html.parser")
     table = soup.find_all("table")[5]
 
     date = table.find_all("th")[0].text.strip()
