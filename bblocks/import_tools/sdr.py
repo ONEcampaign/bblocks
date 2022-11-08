@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 import os
 from datetime import datetime
 import calendar
-from typing import Optional
 
 from bblocks.cleaning_tools.clean import clean_numeric_series
 from bblocks.import_tools.common import ImportData
