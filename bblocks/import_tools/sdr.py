@@ -12,15 +12,15 @@ from bblocks.cleaning_tools.clean import clean_numeric_series
 from bblocks.import_tools.common import ImportData
 from bblocks.config import PATHS
 
-BASE_URL = 'https://www.imf.org/external/np/fin/tad/'
-MAIN_PAGE_URL = 'https://www.imf.org/external/np/fin/tad/extsdr1.aspx'
+BASE_URL = "https://www.imf.org/external/np/fin/tad/"
+MAIN_PAGE_URL = "https://www.imf.org/external/np/fin/tad/extsdr1.aspx"
 EXCHANGE_URL = "https://www.imf.org/external/np/fin/data/rms_sdrv.aspx"
 
 
 def create_tsv_link(year: int, month: int, day: int) -> str:
     """Generate a TSV download link for a specific date"""
 
-    flag = '&tsvflag=Y'
+    flag = "&tsvflag=Y"
     return f"{BASE_URL}extsdr2.aspx?date1key={year}-{month}-{day}{flag}"
 
 
@@ -57,27 +57,23 @@ def get_latest_date() -> str:
     month_links = parse_sdr_links(month_response.content)
     month = list(month_links.keys())[0]
 
-    return datetime.strptime(month, '%B %d, %Y').strftime('%Y-%m-%d')
+    return datetime.strptime(month, "%B %d, %Y").strftime("%Y-%m-%d")
 
 
 def clean_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
-    """clean the SDR dataframe
-    """
+    """clean the SDR dataframe"""
 
-    df = (df.loc[3:]
-          ["SDR Allocations and Holdings"]
-          .str.split("\t", expand=True)
-          )
+    df = df.loc[3:]["SDR Allocations and Holdings"].str.split("\t", expand=True)
     df.columns = ["entity", "holdings", "allocations"]
 
-    return (df
-            .melt(id_vars="entity", value_vars=["holdings", "allocations"])
-            .pipe(clean_numeric_series, series_columns="value")
-            .rename(columns={"variable": "indicator"})
-            .reset_index(drop=True)
-            .assign(date=date)
-            .assign(date= lambda d: pd.to_datetime(d.date))
-            )
+    return (
+        df.melt(id_vars="entity", value_vars=["holdings", "allocations"])
+        .pipe(clean_numeric_series, series_columns="value")
+        .rename(columns={"variable": "indicator"})
+        .reset_index(drop=True)
+        .assign(date=date)
+        .assign(date=lambda d: pd.to_datetime(d.date))
+    )
 
 
 def read_tsv(url: str) -> pd.DataFrame:
@@ -94,9 +90,7 @@ def get_data(date: str) -> pd.DataFrame:
     """Get the SDR data for a specific date"""
 
     tsv_link = f"{BASE_URL}extsdr2.aspx?date1key={date}&tsvflag=Y"
-    df = (read_tsv(tsv_link)
-          .pipe(clean_df, date)
-          )
+    df = read_tsv(tsv_link).pipe(clean_df, date)
 
     return df
 
@@ -125,7 +119,7 @@ def check_if_not_downloaded(date: str) -> bool:
 def __get_rate(table: BeautifulSoup, currency: str):
     """Returns currency value from SDR exchange rate table"""
 
-    exchange_dict = {'USD': "U.S.$1.00 = SDR", 'SDR': "SDR1 = US$"}
+    exchange_dict = {"USD": "U.S.$1.00 = SDR", "SDR": "SDR1 = US$"}
 
     rows = table.find_all("td")
 
@@ -145,7 +139,7 @@ def __get_exchange_date(table: BeautifulSoup) -> str:
 
 
 def parse_exchange(response: bytes, currency: str):
-    """ """
+    """Parse the exchange rate response"""
 
     soup = BeautifulSoup(response, "html.parser")
     table = soup.find_all("table")[5]
@@ -156,8 +150,19 @@ def parse_exchange(response: bytes, currency: str):
     return date, rate
 
 
-def get_latest_exchange_rate(currency: str = 'USD', only_value: bool = False) -> float | dict:
-    """"""
+def get_latest_exchange_rate(
+    currency: str = "USD", only_value: bool = False
+) -> float | dict:
+    """Get the latest exchange rate for a specific currency
+
+    Args:
+        currency: Currency to get exchange rate for. Default is USD. Choose from 'USD' or 'SDR'
+        only_value: If False, a dictionary containing the date and exchange rate is returned.
+                    If True, only the exchange rate is returned. Default is False.
+
+    Returns:
+        A dictionary containing the date and exchange rate, or only the exchange rate
+    """
 
     if currency not in ["USD", "SDR"]:
         raise ValueError("Invalid currency. Currency must be `USD` or `SDR`")
@@ -168,7 +173,7 @@ def get_latest_exchange_rate(currency: str = 'USD', only_value: bool = False) ->
     if only_value:
         return rate
     else:
-        return {'date': date, 'rate': rate}
+        return {"date": date, "rate": rate}
 
 
 class SDR(ImportData):
@@ -198,7 +203,7 @@ class SDR(ImportData):
             self.__latest_date = get_latest_date()
         return self.__latest_date
 
-    def load_indicator(self, date: tuple | list = 'latest') -> ImportData:
+    def load_indicator(self, date: tuple | list = "latest") -> ImportData:
         """Load the SDR data for a specific date
 
         Args:
@@ -209,7 +214,7 @@ class SDR(ImportData):
             the same object to allow chaining
         """
 
-        if date == 'latest':
+        if date == "latest":
             date = get_latest_date()
             self.__latest_date = date
         else:
@@ -219,8 +224,9 @@ class SDR(ImportData):
             df = get_data(date)
             df.to_csv(f"{PATHS.imported_data}/SDR_{date}.csv", index=False)
 
-        self.indicators[date]: pd.DataFrame = pd.read_csv(f"{PATHS.imported_data}/SDR_{date}.csv",
-                                                          parse_dates=["date"])
+        self.indicators[date]: pd.DataFrame = pd.read_csv(
+            f"{PATHS.imported_data}/SDR_{date}.csv", parse_dates=["date"]
+        )
         return self
 
     def update(self, reload: bool = True) -> ImportData:
@@ -256,7 +262,7 @@ class SDR(ImportData):
             a DataFrame containing the SDR data
         """
 
-        if date == 'latest':
+        if date == "latest":
             df = self.indicators[self.latest_date]
         elif date is None:
             df = pd.concat(self.indicators.values())
@@ -264,13 +270,8 @@ class SDR(ImportData):
             raise ValueError("Date must be 'latest' or None")
 
         if indicator is not None:
-            if indicator not in ['holdings', 'allocations']:
+            if indicator not in ["holdings", "allocations"]:
                 raise ValueError("Indicator must be 'holdings' or 'allocations'")
             df = df.loc[df.indicator == indicator]
 
         return df
-
-
-
-
-
