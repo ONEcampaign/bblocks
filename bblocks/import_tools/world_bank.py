@@ -13,11 +13,11 @@ from bblocks.import_tools.common import ImportData
 
 
 def _get_wb_data(
-    series: str,
-    series_name: str | None = None,
-    start_year: int | None = None,
-    end_year: int | None = None,
-    most_recent_only: bool = False,
+        series: str,
+        series_name: str | None = None,
+        start_year: int | None = None,
+        end_year: int | None = None,
+        most_recent_only: bool = False,
 ) -> pd.DataFrame:
     """Get data for an indicator, using wbgapi"""
 
@@ -41,8 +41,8 @@ def _get_wb_data(
             columns="series",
             timeColumns=True,
         )
-        .reset_index()
-        .rename(
+            .reset_index()
+            .rename(
             columns={
                 "economy": "iso_code",
                 "index": "iso_code",
@@ -51,14 +51,14 @@ def _get_wb_data(
                 f"{series}:T": "date",
             }
         )
-        .assign(
+            .assign(
             indicator=series_name if series_name is not None else series,
             indicator_code=series,
             date=lambda d: pd.to_datetime(d.date, format="%Y"),
         )
-        .sort_values(by=["iso_code", "date"])
-        .reset_index(drop=True)
-        .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
+            .sort_values(by=["iso_code", "date"])
+            .reset_index(drop=True)
+            .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
     )
 
 
@@ -74,12 +74,12 @@ class WorldBankData(ImportData):
     You can get a dataframe of the data by calling `get_data`."""
 
     def load_indicator(
-        self,
-        indicator_code: str,
-        indicator_name=None,
-        start_year: Optional | int = None,
-        end_year: Optional | int = None,
-        most_recent_only: bool = False,
+            self,
+            indicator_code: str,
+            indicator_name=None,
+            start_year: Optional | int = None,
+            end_year: Optional | int = None,
+            most_recent_only: bool = False,
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
 
@@ -178,43 +178,60 @@ class WorldBankData(ImportData):
         return self.data
 
 
-def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
+def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
     """clean, format, standardize pink sheet data"""
 
-    if sheet == "Monthly Prices":
-        df.columns = df.iloc[3]
-        df = (
-            df.rename(columns={np.nan: "period"})
+    df.columns = df.iloc[3]
+    unit_dict = (df.iloc[4]
+                 .str.replace('(', '', regex=True)
+                 .str.replace(')', '', regex=True)
+                 .dropna()
+                 .to_dict()
+                 )
+
+    df = (
+        df.rename(columns={np.nan: "period"})
             .iloc[6:]
-            .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
             .replace("..", np.nan)
             .reset_index(drop=True)
-        )
-
-    elif sheet == "Monthly Indices":
-        df = df.iloc[9:].replace("..", np.nan).reset_index(drop=True)
-        df.columns = [
-            "period",
-            "Energy",
-            "Non-energy",
-            "Agriculture",
-            "Beverages",
-            "Food",
-            "Oils & Meals",
-            "Grains",
-            "Other Food",
-            "Raw Materials",
-            "Timber",
-            "Other Raw Mat.",
-            "Fertilizers",
-            "Metals & Minerals",
-            "Base Metals (ex. iron ore)",
-            "Precious Metals",
-        ]
-        df["period"] = pd.to_datetime(df.period, format="%YM%m")
-    df = pd.melt(df, id_vars="period", var_name="indicator", value_name="value")
+            .melt(id_vars="period", var_name="indicator", value_name="value")
+            .assign(units=lambda d: d.indicator.map(unit_dict),
+                    period=lambda d: pd.to_datetime(d.period, format="%YM%m"),
+                    indicator=lambda d: d.indicator.str.replace('*', '', regex=True).str.strip(),
+                    value=lambda d: pd.to_numeric(d.value, errors='coerce'))
+    )
 
     return df
+
+
+def clean_index(df: pd.DataFrame):
+    """  
+    """
+    df.columns = [
+        "period",
+        "Energy",
+        "Non-energy",
+        "Agriculture",
+        "Beverages",
+        "Food",
+        "Oils & Meals",
+        "Grains",
+        "Other Food",
+        "Raw Materials",
+        "Timber",
+        "Other Raw Mat.",
+        "Fertilizers",
+        "Metals & Minerals",
+        "Base Metals (ex. iron ore)",
+        "Precious Metals"]
+
+    return (df.iloc[9:]
+            .replace("..", np.nan)
+            .reset_index(drop=True)
+            .assign(period= lambda d: pd.to_datetime(d.period, format="%YM%m"))
+            .melt(id_vars="period", var_name="indicator", value_name="value")
+            .assign(units="index",
+                    value=lambda d: pd.to_numeric(d.value, errors='coerce')))
 
 
 @dataclass
@@ -253,7 +270,7 @@ class PinkSheet(ImportData):
         """
 
         if not os.path.exists(f"{self.data_path}/{self.file_name}") or (
-            self.update_data and self.data is None
+                self.update_data and self.data is None
         ):
             self.update(reload_data=False)
 
@@ -295,8 +312,8 @@ class PinkSheet(ImportData):
 
         (
             pd.read_excel(url, sheet_name=self.sheet)
-            .pipe(_clean_pink_sheet, sheet=self.sheet)
-            .to_csv(f"{self.data_path}/{self.file_name}", index=False)
+                .pipe(_clean_pink_sheet, sheet=self.sheet)
+                .to_csv(f"{self.data_path}/{self.file_name}", index=False)
         )
 
         if reload_data:
@@ -305,10 +322,10 @@ class PinkSheet(ImportData):
         return self
 
     def get_data(
-        self,
-        indicators: Optional[str | list] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
+            self,
+            indicators: Optional[str | list] = None,
+            start_date: Optional[str] = None,
+            end_date: Optional[str] = None,
     ) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
