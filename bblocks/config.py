@@ -9,5 +9,9 @@ class Paths:
     def imported_data(self):
         return os.path.join(self.project_dir, "bblocks", "import_tools", "stored_data")
 
+    @property
+    def test_files(self):
+        return os.path.join(self.project_dir, "tests", "test_files")
+
 
 PATHS = Paths(os.path.dirname(os.path.dirname(__file__)))
