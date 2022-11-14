@@ -12,6 +12,10 @@ import wbgapi as wb
 from bblocks.import_tools.common import ImportData
 
 
+PINK_SHEET_URL = ("https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
+"-Historical-Data-Monthly.xlsx")
+
+
 def _get_wb_data(
         series: str,
         series_name: str | None = None,
@@ -205,8 +209,7 @@ def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_index(df: pd.DataFrame):
-    """  
-    """
+    """  """
     df.columns = [
         "period",
         "Energy",
@@ -234,7 +237,19 @@ def clean_index(df: pd.DataFrame):
                     value=lambda d: pd.to_numeric(d.value, errors='coerce')))
 
 
-@dataclass
+def read_pink_sheet(indicator: str):
+    """ """
+
+    if indicator == 'prices':
+        df = pd.read_excel(PINK_SHEET_URL, sheet_name="Monthly Prices")
+        return clean_prices(df)
+    elif indicator == "indices":
+        df = pd.read_excel(PINK_SHEET_URL, sheet_name="Monthly Indices")
+        return clean_index(df)
+    else:
+        raise ValueError("Invalid indicator. Choose from 'prices' or 'indices'")
+
+
 class PinkSheet(ImportData):
     """An object to help download data from World Bank Pink sheets.
 
@@ -249,47 +264,19 @@ class PinkSheet(ImportData):
 
     """
 
-    sheet: str = None
-
-    def __post_init__(self):
-        if self.sheet not in ["Monthly Indices", "Monthly Prices"]:
-            raise ValueError(
-                "Invalid sheet name. "
-                "Please specify 'Monthly Indices' or 'Monthly Prices'"
-            )
-
-    def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
+    def load_indicator(self, indicator: str) -> ImportData:
         """Load data for an indicator or list of indicators.
-
-        Args:
-            indicator: indicator to load, either. The default
-                is 'all' which loads both.
 
         Returns:
             The same object to allow chaining
         """
 
-        if not os.path.exists(f"{self.data_path}/{self.file_name}") or (
-                self.update_data and self.data is None
-        ):
-            self.update(reload_data=False)
+        if not os.path.exists(f"{self.data_path}/pink_sheet_{indicator}.csv") or self.update_data:
 
-        if self.data is None:
-            self.data = pd.read_csv(f"{self.data_path}/{self.file_name}")
+            df = read_pink_sheet(indicator)
+            df.to_csv(f"{self.data_path}/pink_sheet_{indicator}.csv", index=False)
 
-        if indicator == "all":
-            indicator = list(self.data.indicator.unique())
-        elif isinstance(indicator, str):
-            indicator = [indicator]
-
-        for i in indicator:
-            if i not in self.data.indicator.unique():
-                raise Warning(f"Indicator not found: {i}")
-            else:
-                self.indicators[i] = self.data[self.data.indicator == i].reset_index(
-                    drop=True
-                )
-
+        self.indicators[indicator] = pd.read_csv(f"{self.data_path}/pink_sheet_{indicator}.csv")
         return self
 
     def update(self, reload_data=True) -> ImportData:
@@ -305,68 +292,29 @@ class PinkSheet(ImportData):
             The same object to allow chaining
         """
 
-        url = (
-            "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
-            "-Historical-Data-Monthly.xlsx"
-        )
-
-        (
-            pd.read_excel(url, sheet_name=self.sheet)
-                .pipe(_clean_pink_sheet, sheet=self.sheet)
-                .to_csv(f"{self.data_path}/{self.file_name}", index=False)
-        )
-
-        if reload_data:
-            self.load_indicator(list(self.indicators))
+        for indicator in self.indicators:
+            df = read_pink_sheet(indicator)
+            df.to_csv(f"{self.data_path}/pink_sheet_{indicator}.csv", index=False)
+            if reload_data:
+                self.indicators[indicator] = df
 
         return self
 
-    def get_data(
-            self,
-            indicators: Optional[str | list] = None,
-            start_date: Optional[str] = None,
-            end_date: Optional[str] = None,
-    ) -> pd.DataFrame:
+    def get_data(self, indicator: str = None) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
         Args:
-            indicators: indicator to get. If 'all', both indicators will be returned
-            start_date: start date of the data (e.g. '2019-01-01')
-            end_date: end date of the data (e.g. '2019-12-31')
+            indicator: By default, all indicators are returned in a single DataFrame.
 
         Returns:
             Pandas DataFrame of the data
         """
 
-        if (start_date is not None) & (end_date is not None):
-            if start_date > end_date:
-                raise ValueError("start date cannot be earlier than end date")
-
-        df = pd.DataFrame()
-
-        if indicators is not None:
-            if isinstance(indicators, str):
-                indicators = [indicators]
-            for indicator in indicators:
-                if indicator not in self.indicators:
-                    warnings.warn(f"Indicator not found: {indicator}")
-                else:
-                    df = pd.concat([df, self.indicators[indicator]])
-
+        if indicator is None:
+            return pd.concat(self.indicators.values(), ignore_index=True)
+        elif indicator not in ['prices', 'indices']:
+            raise ValueError("Invalid indicator. Choose from 'prices' or 'indices'")
         else:
-            df = self.data
+            return self.indicators[indicator]
 
-        if start_date is not None:
-            df = df[df["period"] >= start_date]
-        if end_date is not None:
-            df = df[df["period"] <= end_date]
 
-        if len(df) == 0:
-            raise ValueError("No data available for current parameters")
-
-        return df.reset_index(drop=True)
-
-    @property
-    def file_name(self) -> str:
-        """Returns the name of the stored file"""
-        return f"World Bank Pink Sheet - {self.sheet}.csv"

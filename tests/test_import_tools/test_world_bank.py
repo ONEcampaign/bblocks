@@ -411,3 +411,21 @@ def test_clean_index():
 
     pd.testing.assert_frame_equal(result, expected_df)
 
+
+def test_read_pink_sheet():
+    """test read_pink_sheet"""
+
+    with pytest.raises(ValueError) as error:
+        world_bank.read_pink_sheet(indicator = 'invalid_indicator')
+    assert 'Invalid indicator' in str(error.value)
+
+
+def test_get_data():
+    """test get_data"""
+
+    pk = world_bank.get_data('NY.GDP.PCAP.CD', country = 'all', start = 2010, end = 2015)
+
+    with pytest.raises(ValueError) as error:
+        world_bank.get_data(indicator = 'invalid_indicator')
+    assert 'Invalid indicator' in str(error.value)
+
