@@ -423,9 +423,8 @@ def test_read_pink_sheet():
 def test_get_data():
     """test get_data"""
 
-    pk = world_bank.get_data('NY.GDP.PCAP.CD', country = 'all', start = 2010, end = 2015)
-
-    with pytest.raises(ValueError) as error:
-        world_bank.get_data(indicator = 'invalid_indicator')
-    assert 'Invalid indicator' in str(error.value)
+    pk = world_bank.PinkSheet()
+    with pytest.raises(ValueError) as error1:
+        pk.get_data()
+    assert 'No data loaded' in str(error1.value)
 

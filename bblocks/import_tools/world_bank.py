@@ -322,6 +322,9 @@ class PinkSheet(ImportData):
             Pandas DataFrame of the data
         """
 
+        if len(self.indicators) == 0:
+            raise ValueError("No data loaded. Call load_indicator first")
+
         if indicator is None:
             return pd.concat(self.indicators.values(), ignore_index=True)
         elif indicator not in ['prices', 'indices']:
