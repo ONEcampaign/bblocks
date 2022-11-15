@@ -183,7 +183,7 @@ class WorldBankData(ImportData):
 
 
 def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
-    """clean, format, standardize pink sheet data"""
+    """Clean Pink Sheet price data"""
 
     df.columns = df.iloc[3]
     unit_dict = (df.iloc[4]
@@ -208,8 +208,9 @@ def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def clean_index(df: pd.DataFrame):
-    """  """
+def clean_index(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean Pink Sheet Index index data"""
+
     df.columns = [
         "period",
         "Energy",
@@ -237,8 +238,16 @@ def clean_index(df: pd.DataFrame):
                     value=lambda d: pd.to_numeric(d.value, errors='coerce')))
 
 
-def read_pink_sheet(indicator: str):
-    """ """
+def read_pink_sheet(indicator: str) -> pd.DataFrame:
+    """Extracts and cleans data from the pink sheet excel file
+
+    Args:
+        indicator: the indicator to extract from the pink sheet. Either "prices" or "index"
+
+    Returns:
+        A clean pandas DataFrame with the data
+
+    """
 
     if indicator == 'prices':
         df = pd.read_excel(PINK_SHEET_URL, sheet_name="Monthly Prices")
@@ -264,8 +273,11 @@ class PinkSheet(ImportData):
 
     """
 
-    def load_indicator(self, indicator: str) -> ImportData:
+    def load_indicator(self, indicator: str = 'prices') -> ImportData:
         """Load data for an indicator or list of indicators.
+
+        Args:
+            indicator: The indicator to load. Choose from 'prices' or 'indices'. Default is 'prices'
 
         Returns:
             The same object to allow chaining
