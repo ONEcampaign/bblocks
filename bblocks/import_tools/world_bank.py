@@ -12,16 +12,18 @@ import wbgapi as wb
 from bblocks.import_tools.common import ImportData
 
 
-PINK_SHEET_URL = ("https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
-"-Historical-Data-Monthly.xlsx")
+PINK_SHEET_URL = (
+    "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
+    "-Historical-Data-Monthly.xlsx"
+)
 
 
 def _get_wb_data(
-        series: str,
-        series_name: str | None = None,
-        start_year: int | None = None,
-        end_year: int | None = None,
-        most_recent_only: bool = False,
+    series: str,
+    series_name: str | None = None,
+    start_year: int | None = None,
+    end_year: int | None = None,
+    most_recent_only: bool = False,
 ) -> pd.DataFrame:
     """Get data for an indicator, using wbgapi"""
 
@@ -45,8 +47,8 @@ def _get_wb_data(
             columns="series",
             timeColumns=True,
         )
-            .reset_index()
-            .rename(
+        .reset_index()
+        .rename(
             columns={
                 "economy": "iso_code",
                 "index": "iso_code",
@@ -55,14 +57,14 @@ def _get_wb_data(
                 f"{series}:T": "date",
             }
         )
-            .assign(
+        .assign(
             indicator=series_name if series_name is not None else series,
             indicator_code=series,
             date=lambda d: pd.to_datetime(d.date, format="%Y"),
         )
-            .sort_values(by=["iso_code", "date"])
-            .reset_index(drop=True)
-            .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
+        .sort_values(by=["iso_code", "date"])
+        .reset_index(drop=True)
+        .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
     )
 
 
@@ -78,12 +80,12 @@ class WorldBankData(ImportData):
     You can get a dataframe of the data by calling `get_data`."""
 
     def load_indicator(
-            self,
-            indicator_code: str,
-            indicator_name=None,
-            start_year: Optional | int = None,
-            end_year: Optional | int = None,
-            most_recent_only: bool = False,
+        self,
+        indicator_code: str,
+        indicator_name=None,
+        start_year: Optional | int = None,
+        end_year: Optional | int = None,
+        most_recent_only: bool = False,
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
 
@@ -186,23 +188,28 @@ def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
     """Clean Pink Sheet price data"""
 
     df.columns = df.iloc[3]
-    unit_dict = (df.iloc[4]
-                 .str.replace('(', '', regex=True)
-                 .str.replace(')', '', regex=True)
-                 .dropna()
-                 .to_dict()
-                 )
+    unit_dict = (
+        df.iloc[4]
+        .str.replace("(", "", regex=True)
+        .str.replace(")", "", regex=True)
+        .dropna()
+        .to_dict()
+    )
 
     df = (
         df.rename(columns={np.nan: "period"})
-            .iloc[6:]
-            .replace("..", np.nan)
-            .reset_index(drop=True)
-            .melt(id_vars="period", var_name="indicator", value_name="value")
-            .assign(units=lambda d: d.indicator.map(unit_dict),
-                    period=lambda d: pd.to_datetime(d.period, format="%YM%m"),
-                    indicator=lambda d: d.indicator.str.replace('*', '', regex=True).str.strip(),
-                    value=lambda d: pd.to_numeric(d.value, errors='coerce'))
+        .iloc[6:]
+        .replace("..", np.nan)
+        .reset_index(drop=True)
+        .melt(id_vars="period", var_name="indicator", value_name="value")
+        .assign(
+            units=lambda d: d.indicator.map(unit_dict),
+            period=lambda d: pd.to_datetime(d.period, format="%YM%m"),
+            indicator=lambda d: d.indicator.str.replace(
+                "*", "", regex=True
+            ).str.strip(),
+            value=lambda d: pd.to_numeric(d.value, errors="coerce"),
+        )
     )
 
     return df
@@ -227,15 +234,17 @@ def clean_index(df: pd.DataFrame) -> pd.DataFrame:
         "Fertilizers",
         "Metals & Minerals",
         "Base Metals (ex. iron ore)",
-        "Precious Metals"]
+        "Precious Metals",
+    ]
 
-    return (df.iloc[9:]
-            .replace("..", np.nan)
-            .reset_index(drop=True)
-            .assign(period= lambda d: pd.to_datetime(d.period, format="%YM%m"))
-            .melt(id_vars="period", var_name="indicator", value_name="value")
-            .assign(units="index",
-                    value=lambda d: pd.to_numeric(d.value, errors='coerce')))
+    return (
+        df.iloc[9:]
+        .replace("..", np.nan)
+        .reset_index(drop=True)
+        .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
+        .melt(id_vars="period", var_name="indicator", value_name="value")
+        .assign(units="index", value=lambda d: pd.to_numeric(d.value, errors="coerce"))
+    )
 
 
 def read_pink_sheet(indicator: str) -> pd.DataFrame:
@@ -249,7 +258,7 @@ def read_pink_sheet(indicator: str) -> pd.DataFrame:
 
     """
 
-    if indicator == 'prices':
+    if indicator == "prices":
         df = pd.read_excel(PINK_SHEET_URL, sheet_name="Monthly Prices")
         return clean_prices(df)
     elif indicator == "indices":
@@ -273,7 +282,7 @@ class PinkSheet(ImportData):
 
     """
 
-    def load_indicator(self, indicator: str = 'prices') -> ImportData:
+    def load_indicator(self, indicator: str = "prices") -> ImportData:
         """Load data for an indicator or list of indicators.
 
         Args:
@@ -283,12 +292,17 @@ class PinkSheet(ImportData):
             The same object to allow chaining
         """
 
-        if not os.path.exists(f"{self.data_path}/pink_sheet_{indicator}.csv") or self.update_data:
+        if (
+            not os.path.exists(f"{self.data_path}/pink_sheet_{indicator}.csv")
+            or self.update_data
+        ):
 
             df = read_pink_sheet(indicator)
             df.to_csv(f"{self.data_path}/pink_sheet_{indicator}.csv", index=False)
 
-        self.indicators[indicator] = pd.read_csv(f"{self.data_path}/pink_sheet_{indicator}.csv")
+        self.indicators[indicator] = pd.read_csv(
+            f"{self.data_path}/pink_sheet_{indicator}.csv"
+        )
         return self
 
     def update(self, reload_data=True) -> ImportData:
@@ -327,9 +341,7 @@ class PinkSheet(ImportData):
 
         if indicator is None:
             return pd.concat(self.indicators.values(), ignore_index=True)
-        elif indicator not in ['prices', 'indices']:
+        elif indicator not in ["prices", "indices"]:
             raise ValueError("Invalid indicator. Choose from 'prices' or 'indices'")
         else:
             return self.indicators[indicator]
-
-
