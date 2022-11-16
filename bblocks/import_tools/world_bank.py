@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-import warnings
-from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
@@ -10,7 +8,6 @@ import pandas as pd
 import wbgapi as wb
 
 from bblocks.import_tools.common import ImportData
-
 
 PINK_SHEET_URL = (
     "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
@@ -296,7 +293,6 @@ class PinkSheet(ImportData):
             not os.path.exists(f"{self.data_path}/pink_sheet_{indicator}.csv")
             or self.update_data
         ):
-
             df = read_pink_sheet(indicator)
             df.to_csv(f"{self.data_path}/pink_sheet_{indicator}.csv", index=False)
 
