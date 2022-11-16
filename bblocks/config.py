@@ -10,6 +10,10 @@ class Paths:
         return os.path.join(self.project_dir, "bblocks", "import_tools", "stored_data")
 
     @property
+    def test_files(self):
+        return os.path.join(self.project_dir, "tests", "test_files")
+    
+    @property
     def import_tools(self):
         return os.path.join(self.project_dir, "bblocks", "import_tools")
 
