@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-import warnings
-from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
@@ -10,6 +8,11 @@ import pandas as pd
 import wbgapi as wb
 
 from bblocks.import_tools.common import ImportData
+
+PINK_SHEET_URL = (
+    "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
+    "-Historical-Data-Monthly.xlsx"
+)
 
 
 def _get_wb_data(
@@ -178,46 +181,90 @@ class WorldBankData(ImportData):
         return self.data
 
 
-def _clean_pink_sheet(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
-    """clean, format, standardize pink sheet data"""
+def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean Pink Sheet price data"""
 
-    if sheet == "Monthly Prices":
-        df.columns = df.iloc[3]
-        df = (
-            df.rename(columns={np.nan: "period"})
-            .iloc[6:]
-            .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
-            .replace("..", np.nan)
-            .reset_index(drop=True)
+    df.columns = df.iloc[3]
+    unit_dict = (
+        df.iloc[4]
+        .str.replace("(", "", regex=True)
+        .str.replace(")", "", regex=True)
+        .dropna()
+        .to_dict()
+    )
+
+    df = (
+        df.rename(columns={np.nan: "period"})
+        .iloc[6:]
+        .replace("..", np.nan)
+        .reset_index(drop=True)
+        .melt(id_vars="period", var_name="indicator", value_name="value")
+        .assign(
+            units=lambda d: d.indicator.map(unit_dict),
+            period=lambda d: pd.to_datetime(d.period, format="%YM%m"),
+            indicator=lambda d: d.indicator.str.replace(
+                "*", "", regex=True
+            ).str.strip(),
+            value=lambda d: pd.to_numeric(d.value, errors="coerce"),
         )
-
-    elif sheet == "Monthly Indices":
-        df = df.iloc[9:].replace("..", np.nan).reset_index(drop=True)
-        df.columns = [
-            "period",
-            "Energy",
-            "Non-energy",
-            "Agriculture",
-            "Beverages",
-            "Food",
-            "Oils & Meals",
-            "Grains",
-            "Other Food",
-            "Raw Materials",
-            "Timber",
-            "Other Raw Mat.",
-            "Fertilizers",
-            "Metals & Minerals",
-            "Base Metals (ex. iron ore)",
-            "Precious Metals",
-        ]
-        df["period"] = pd.to_datetime(df.period, format="%YM%m")
-    df = pd.melt(df, id_vars="period", var_name="indicator", value_name="value")
+    )
 
     return df
 
 
-@dataclass
+def clean_index(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean Pink Sheet Index index data"""
+
+    df.columns = [
+        "period",
+        "Energy",
+        "Non-energy",
+        "Agriculture",
+        "Beverages",
+        "Food",
+        "Oils & Meals",
+        "Grains",
+        "Other Food",
+        "Raw Materials",
+        "Timber",
+        "Other Raw Mat.",
+        "Fertilizers",
+        "Metals & Minerals",
+        "Base Metals (ex. iron ore)",
+        "Precious Metals",
+    ]
+
+    return (
+        df.iloc[9:]
+        .replace("..", np.nan)
+        .reset_index(drop=True)
+        .assign(period=lambda d: pd.to_datetime(d.period, format="%YM%m"))
+        .melt(id_vars="period", var_name="indicator", value_name="value")
+        .assign(units="index", value=lambda d: pd.to_numeric(d.value, errors="coerce"))
+    )
+
+
+def read_pink_sheet(indicator: str) -> pd.DataFrame:
+    """Extracts and cleans data from the pink sheet excel file
+
+    Args:
+        indicator: the indicator to extract from the pink sheet. Either "prices" or "index"
+
+    Returns:
+        A clean pandas DataFrame with the data
+
+    """
+
+    if indicator == "prices":
+        df = pd.read_excel(PINK_SHEET_URL, sheet_name="Monthly Prices")
+        return clean_prices(df)
+    elif indicator == "indices":
+        df = pd.read_excel(PINK_SHEET_URL, sheet_name="Monthly Indices")
+        return clean_index(df)
+    else:
+        raise ValueError("Invalid indicator. Choose from 'prices' or 'indices'")
+
+
 class PinkSheet(ImportData):
     """An object to help download data from World Bank Pink sheets.
 
@@ -232,47 +279,26 @@ class PinkSheet(ImportData):
 
     """
 
-    sheet: str = None
-
-    def __post_init__(self):
-        if self.sheet not in ["Monthly Indices", "Monthly Prices"]:
-            raise ValueError(
-                "Invalid sheet name. "
-                "Please specify 'Monthly Indices' or 'Monthly Prices'"
-            )
-
-    def load_indicator(self, indicator: Optional[str | list] = "all") -> ImportData:
+    def load_indicator(self, indicator: str = "prices") -> ImportData:
         """Load data for an indicator or list of indicators.
 
         Args:
-            indicator: indicator to load, either. The default
-                is 'all' which loads both.
+            indicator: The indicator to load. Choose from 'prices' or 'indices'. Default is 'prices'
 
         Returns:
             The same object to allow chaining
         """
 
-        if not os.path.exists(f"{self.data_path}/{self.file_name}") or (
-            self.update_data and self.data is None
+        if (
+            not os.path.exists(f"{self.data_path}/pink_sheet_{indicator}.csv")
+            or self.update_data
         ):
-            self.update(reload_data=False)
+            df = read_pink_sheet(indicator)
+            df.to_csv(f"{self.data_path}/pink_sheet_{indicator}.csv", index=False)
 
-        if self.data is None:
-            self.data = pd.read_csv(f"{self.data_path}/{self.file_name}")
-
-        if indicator == "all":
-            indicator = list(self.data.indicator.unique())
-        elif isinstance(indicator, str):
-            indicator = [indicator]
-
-        for i in indicator:
-            if i not in self.data.indicator.unique():
-                raise Warning(f"Indicator not found: {i}")
-            else:
-                self.indicators[i] = self.data[self.data.indicator == i].reset_index(
-                    drop=True
-                )
-
+        self.indicators[indicator] = pd.read_csv(
+            f"{self.data_path}/pink_sheet_{indicator}.csv"
+        )
         return self
 
     def update(self, reload_data=True) -> ImportData:
@@ -288,68 +314,30 @@ class PinkSheet(ImportData):
             The same object to allow chaining
         """
 
-        url = (
-            "https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-0350012021/related/CMO"
-            "-Historical-Data-Monthly.xlsx"
-        )
-
-        (
-            pd.read_excel(url, sheet_name=self.sheet)
-            .pipe(_clean_pink_sheet, sheet=self.sheet)
-            .to_csv(f"{self.data_path}/{self.file_name}", index=False)
-        )
-
-        if reload_data:
-            self.load_indicator(list(self.indicators))
+        for indicator in self.indicators:
+            df = read_pink_sheet(indicator)
+            df.to_csv(f"{self.data_path}/pink_sheet_{indicator}.csv", index=False)
+            if reload_data:
+                self.indicators[indicator] = df
 
         return self
 
-    def get_data(
-        self,
-        indicators: Optional[str | list] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-    ) -> pd.DataFrame:
+    def get_data(self, indicator: str = None) -> pd.DataFrame:
         """Get the data as a Pandas DataFrame
 
         Args:
-            indicators: indicator to get. If 'all', both indicators will be returned
-            start_date: start date of the data (e.g. '2019-01-01')
-            end_date: end date of the data (e.g. '2019-12-31')
+            indicator: By default, all indicators are returned in a single DataFrame.
 
         Returns:
             Pandas DataFrame of the data
         """
 
-        if (start_date is not None) & (end_date is not None):
-            if start_date > end_date:
-                raise ValueError("start date cannot be earlier than end date")
+        if len(self.indicators) == 0:
+            raise ValueError("No data loaded. Call load_indicator first")
 
-        df = pd.DataFrame()
-
-        if indicators is not None:
-            if isinstance(indicators, str):
-                indicators = [indicators]
-            for indicator in indicators:
-                if indicator not in self.indicators:
-                    warnings.warn(f"Indicator not found: {indicator}")
-                else:
-                    df = pd.concat([df, self.indicators[indicator]])
-
+        if indicator is None:
+            return pd.concat(self.indicators.values(), ignore_index=True)
+        elif indicator not in ["prices", "indices"]:
+            raise ValueError("Invalid indicator. Choose from 'prices' or 'indices'")
         else:
-            df = self.data
-
-        if start_date is not None:
-            df = df[df["period"] >= start_date]
-        if end_date is not None:
-            df = df[df["period"] <= end_date]
-
-        if len(df) == 0:
-            raise ValueError("No data available for current parameters")
-
-        return df.reset_index(drop=True)
-
-    @property
-    def file_name(self) -> str:
-        """Returns the name of the stored file"""
-        return f"World Bank Pink Sheet - {self.sheet}.csv"
+            return self.indicators[indicator]
