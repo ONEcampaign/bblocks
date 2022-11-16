@@ -1,13 +1,10 @@
-import os.path
-
 import pandas as pd
 import pytest
+from numpy import nan
 
 from bblocks.config import PATHS
-from bblocks.import_tools.world_bank import WorldBankData
 from bblocks.import_tools import world_bank
-
-from numpy import nan
+from bblocks.import_tools.world_bank import WorldBankData
 
 
 def test_world_bank_data_load_indicator():
