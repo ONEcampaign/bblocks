@@ -124,7 +124,7 @@ def __get_rate(table: BeautifulSoup, currency: str):
 
     for i in range(len(rows)):
         if exchange_dict[currency] in rows[i].text:
-            return float(rows[i + 1].text.strip().split("\r\n")[0])
+            return float(rows[i + 1].text.strip().split("\n")[0])
     else:
         raise ValueError("Could not find exchange rate")
 

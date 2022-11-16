@@ -202,11 +202,11 @@ def test_parse_exchange():
     with open(f"{PATHS.test_files}/sdr_exchange_rate.html", "rb") as f:
         response = f.read()
 
-        parsed_usd = sdr.parse_exchange(response, "USD")
-        parsed_sdr = sdr.parse_exchange(response, "SDR")
+    parsed_usd = sdr.parse_exchange(response, "USD")
+    parsed_sdr = sdr.parse_exchange(response, "SDR")
 
-        assert parsed_usd == ("2022-11-11", 0.763884)
-        assert parsed_sdr == ("2022-11-11", 1.309100)
+    assert parsed_usd == ("2022-11-11", 0.763884)
+    assert parsed_sdr == ("2022-11-11", 1.309100)
 
 
 def test_get_latest_exchange_rate():
