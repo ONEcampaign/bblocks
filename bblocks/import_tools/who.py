@@ -23,42 +23,50 @@ def extract_ghed_data() -> bytes:
 def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
     """Clean GHED codes"""
 
-    return (df.rename(columns={'Indicator short code': 'indicator_code',
-                               'Indicator name': 'indicator_name',
-                               'Category 1': 'category_1',
-                               'Category 2': 'category_2',
-                               'Indicator units': 'indicator_units',
-                               'Indicator currency': 'indicator_currency',
-                               })
-            .replace({'-': np.nan}))
+    return df.rename(
+        columns={
+            "Indicator short code": "indicator_code",
+            "Indicator name": "indicator_name",
+            "Category 1": "category_1",
+            "Category 2": "category_2",
+            "Indicator units": "indicator_units",
+            "Indicator currency": "indicator_currency",
+        }
+    ).replace({"-": np.nan})
 
 
 def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
-    """ Clean GHED data dataframe"""
+    """Clean GHED data dataframe"""
 
-    return (df.melt(id_vars=['country', 'country code', 'region (WHO)', 'income group', 'year'],
-                    var_name='indicator_code')
-            .rename(columns={'country': 'country_name',
-                             'country code': 'country_code',
-                             'region (WHO)': 'region',
-                             'income group': 'income_group',
-                             }))
+    return df.melt(
+        id_vars=["country", "country code", "region (WHO)", "income group", "year"],
+        var_name="indicator_code",
+    ).rename(
+        columns={
+            "country": "country_name",
+            "country code": "country_code",
+            "region (WHO)": "region",
+            "income group": "income_group",
+        }
+    )
 
 
 def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
     """Clean GHED metadata"""
 
-    return (df.drop(columns=['country', 'region (WHO)', 'Income group', 'Indicator name'])
-            .rename(columns={'country code': 'country_code',
-                             'Indicator short code': 'indicator_code',
-                             'Sources': 'source',
-                             'Comments': 'comments',
-                             'Methods of estimation': 'methods_of_estimation',
-                             'Data type': 'data_type',
-                             'Footnote': 'footnote'
-
-                             })
-            )
+    return df.drop(
+        columns=["country", "region (WHO)", "Income group", "Indicator name"]
+    ).rename(
+        columns={
+            "country code": "country_code",
+            "Indicator short code": "indicator_code",
+            "Sources": "source",
+            "Comments": "comments",
+            "Methods of estimation": "methods_of_estimation",
+            "Data type": "data_type",
+            "Footnote": "footnote",
+        }
+    )
 
 
 def download_ghed(path: str) -> None:
@@ -69,12 +77,16 @@ def download_ghed(path: str) -> None:
     # data
     data = pd.read_excel(ghed_content, sheet_name="Data").pipe(_clean_ghed_data)
     codes = pd.read_excel(ghed_content, sheet_name="Codebook").pipe(_clean_ghed_codes)
-    pd.merge(data, codes, on='indicator_code', how='left').to_feather(os.path.join(path, 'ghed_data.feather'))
+    pd.merge(data, codes, on="indicator_code", how="left").to_feather(
+        os.path.join(path, "ghed_data.feather")
+    )
 
     # metadata
-    (pd.read_excel(ghed_content, sheet_name="Metadata")
-     .pipe(_clean_metadata).to_feather(os.path.join(path, 'ghed_metadata.feather'))
-     )
+    (
+        pd.read_excel(ghed_content, sheet_name="Metadata")
+        .pipe(_clean_metadata)
+        .to_feather(os.path.join(path, "ghed_metadata.feather"))
+    )
 
 
 class GHED(ImportData):
@@ -97,11 +109,14 @@ class GHED(ImportData):
             The same object to allow chaining
         """
 
-        if not os.path.exists(f'{self.data_path}\ghed_data.feather') or self.update_data:
+        if (
+            not os.path.exists(f"{self.data_path}/ghed_data.feather")
+            or self.update_data
+        ):
             download_ghed(self.data_path)
 
-        self.data = pd.read_feather(f'{self.data_path}\ghed_data.feather')
-        self.metadata = pd.read_feather(f'{self.data_path}\ghed_metadata.feather')
+        self.data = pd.read_feather(f"{self.data_path}/ghed_data.feather")
+        self.metadata = pd.read_feather(f"{self.data_path}/ghed_metadata.feather")
 
         return self
 
@@ -117,8 +132,8 @@ class GHED(ImportData):
 
         download_ghed(self.data_path)
         if reload_data:
-            self.data = pd.read_feather(f'{self.data_path}\ghed_data.feather')
-            self.metadata = pd.read_feather(f'{self.data_path}\ghed_metadata.feather')
+            self.data = pd.read_feather(f"{self.data_path}/ghed_data.feather")
+            self.metadata = pd.read_feather(f"{self.data_path}/ghed_metadata.feather")
         return self
 
     def get_data(self) -> pd.DataFrame:
