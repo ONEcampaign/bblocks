@@ -10,16 +10,12 @@ from bblocks.import_tools.common import ImportData
 GHED_URL = "https://apps.who.int/nha/database/Home/IndicatorsDownload/en"
 
 
-def extract_ghed_data() -> dict[str:pd.DataFrame]:
+def extract_ghed_data() -> bytes:
     """Extract GHED dataset"""
 
     try:
-        req = requests.get(GHED_URL)
-        data = pd.read_excel(req.content, sheet_name="Data")
-        code_book = pd.read_excel(req.content, sheet_name="Codebook")
-        metadata = pd.read_excel(req.content, sheet_name="Metadata")
+        return requests.get(GHED_URL).content
 
-        return {'data': data, 'code_book': code_book, 'metadata': metadata}
     except ConnectionError:
         raise ConnectionError("Could not connect to WHO GHED database")
 
@@ -62,22 +58,23 @@ def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
                              'Footnote': 'footnote'
 
                              })
-
             )
 
 
 def download_ghed(path: str) -> None:
     """Download GHED dataset to disk"""
 
-    ghed_data = extract_ghed_data()
-    df = _clean_ghed_data(ghed_data['data'])
-    labels = _clean_ghed_codes(ghed_data['code_book'])
-    metadata = _clean_metadata(ghed_data['metadata'])
+    ghed_content = extract_ghed_data()
 
-    df = pd.merge(df, labels, on='indicator_code', how='left')  # add lables to data
-    df = pd.merge(df, metadata, on=['country_code', 'indicator_code'], how='left')  # add metadata to data
+    # data
+    data = pd.read_excel(ghed_content, sheet_name="Data").pipe(_clean_ghed_data)
+    codes = pd.read_excel(ghed_content, sheet_name="Codebook").pipe(_clean_ghed_codes)
+    pd.merge(data, codes, on='indicator_code', how='left').to_feather(os.path.join(path, 'ghed_data.feather'))
 
-    df.to_csv(f'{path}\ghed_data.csv', index=False)
+    # metadata
+    (pd.read_excel(ghed_content, sheet_name="Metadata")
+     .pipe(_clean_metadata).to_feather(os.path.join(path, 'ghed_metadata.feather'))
+     )
 
 
 class GHED(ImportData):
@@ -87,8 +84,11 @@ class GHED(ImportData):
     If the data is already downloaded, it will be loaded from disk. If not, it will be downloaded.
     If `update_data` is set to True, the data will be downloaded regardless of whether it is already on disk.
     To force an update, call the update method.
-    To get the data, call the get_data method. If `include_metadata` is set to True, the metadata will be included.
+    To get the data, call the get_data method.
+    To get the metadata, call the get_metadata method.
     """
+
+    metadata: pd.DataFrame = None
 
     def load_indicator(self) -> ImportData:
         """Load GHED data
@@ -97,10 +97,12 @@ class GHED(ImportData):
             The same object to allow chaining
         """
 
-        if not os.path.exists(f'{self.data_path}\ghed_data.csv') or self.update_data:
+        if not os.path.exists(f'{self.data_path}\ghed_data.feather') or self.update_data:
             download_ghed(self.data_path)
 
-        self.data = pd.read_csv(f'{self.data_path}\ghed_data.csv',low_memory=False)
+        self.data = pd.read_feather(f'{self.data_path}\ghed_data.feather')
+        self.metadata = pd.read_feather(f'{self.data_path}\ghed_metadata.feather')
+
         return self
 
     def update(self, reload_data: bool = True) -> ImportData:
@@ -115,21 +117,23 @@ class GHED(ImportData):
 
         download_ghed(self.data_path)
         if reload_data:
-            self.data = pd.read_csv(f'{self.data_path}\ghed_data.csv', low_memory=False)
+            self.data = pd.read_feather(f'{self.data_path}\ghed_data.feather')
+            self.metadata = pd.read_feather(f'{self.data_path}\ghed_metadata.feather')
         return self
 
-    def get_data(self, include_metadata=False):
+    def get_data(self) -> pd.DataFrame:
         """Get GHED data as a pandas dataframe
-
-        Args:
-            include_metadata: Whether to include the metadata in the dataframe. Default is False.
 
         Returns:
             A pandas dataframe with the data
         """
+        return self.data
 
-        if include_metadata:
-            return self.data
-        else:
-            return self.data[['country_name', 'country_code', 'region', 'income_group', 'year',
-                              'indicator_code', 'indicator_name', 'indicator_units', 'indicator_currency', 'value']]
+    def get_metadata(self) -> pd.DataFrame:
+        """Get GHED metadata as a pandas dataframe
+
+        Returns:
+            A pandas dataframe with the metadata
+        """
+
+        return self.metadata
