@@ -10,7 +10,7 @@ from bblocks.import_tools.common import ImportData
 GHED_URL = "https://apps.who.int/nha/database/Home/IndicatorsDownload/en"
 
 
-def extract_ghed() -> dict[str:pd.DataFrame]:
+def extract_ghed_data() -> dict[str:pd.DataFrame]:
     """Extract GHED dataset"""
 
     try:
@@ -24,8 +24,8 @@ def extract_ghed() -> dict[str:pd.DataFrame]:
         raise ConnectionError("Could not connect to WHO GHED database")
 
 
-def _clean_codes(df: pd.DataFrame) -> pd.DataFrame:
-    """Clean codes"""
+def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean GHED codes"""
 
     return (df.rename(columns={'Indicator short code': 'indicator_code',
                                'Indicator name': 'indicator_name',
@@ -37,7 +37,7 @@ def _clean_codes(df: pd.DataFrame) -> pd.DataFrame:
             .replace({'-': np.nan}))
 
 
-def _clean_data(df: pd.DataFrame) -> pd.DataFrame:
+def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
     """ Clean GHED data dataframe"""
 
     return (df.melt(id_vars=['country', 'country code', 'region (WHO)', 'income group', 'year'],
@@ -69,15 +69,15 @@ def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
 def download_ghed(path: str) -> None:
     """Download GHED dataset to disk"""
 
-    ghed_data = extract_ghed()
-    df = _clean_data(ghed_data['data'])
-    labels = _clean_codes(ghed_data['code_book'])
+    ghed_data = extract_ghed_data()
+    df = _clean_ghed_data(ghed_data['data'])
+    labels = _clean_ghed_codes(ghed_data['code_book'])
     metadata = _clean_metadata(ghed_data['metadata'])
 
     df = pd.merge(df, labels, on='indicator_code', how='left')  # add lables to data
     df = pd.merge(df, metadata, on=['country_code', 'indicator_code'], how='left')  # add metadata to data
 
-    df.to_csv(f'{path}_ghed.csv', index=False)
+    df.to_csv(f'{path}\ghed_data.csv', index=False)
 
 
 class GHED(ImportData):
@@ -97,10 +97,10 @@ class GHED(ImportData):
             The same object to allow chaining
         """
 
-        if not os.path.exists(f'{self.data_path}_ghed.csv') or self.update_data:
+        if not os.path.exists(f'{self.data_path}\ghed_data.csv') or self.update_data:
             download_ghed(self.data_path)
 
-        self.data = pd.read_csv(f'{self.data_path}_ghed.csv')
+        self.data = pd.read_csv(f'{self.data_path}\ghed_data.csv',low_memory=False)
         return self
 
     def update(self, reload_data: bool = True) -> ImportData:
@@ -115,7 +115,7 @@ class GHED(ImportData):
 
         download_ghed(self.data_path)
         if reload_data:
-            self.data = pd.read_csv(f'{self.data_path}_ghed.csv')
+            self.data = pd.read_csv(f'{self.data_path}\ghed_data.csv', low_memory=False)
         return self
 
     def get_data(self, include_metadata=False):

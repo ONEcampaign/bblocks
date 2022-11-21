@@ -7,8 +7,8 @@ import pytest
 from bblocks.import_tools import who
 
 
-def test_clean_codes():
-    """Test _clean_codes()"""
+def test_clean_ghed_codes():
+    """Test _clean_ghed_codes()"""
 
     raw = pd.DataFrame({'Category 1': {0: 'INDICATORS', 1: 'INDICATORS', 2: 'INDICATORS'},
                         'Category 2': {0: 'AGGREGATES', 1: 'AGGREGATES', 2: 'AGGREGATES'},
@@ -28,11 +28,11 @@ def test_clean_codes():
                              'indicator_units': {0: 'Percentage', 1: 'Ones', 2: 'Ones'},
                              'indicator_currency': {0: nan, 1: 'US$', 2: 'Int$ (PPP)'}})
 
-    pd.testing.assert_frame_equal(who._clean_codes(raw), expected)
+    pd.testing.assert_frame_equal(who._clean_ghed_codes(raw), expected)
 
 
-def test_clean_data():
-    """ """
+def test_clean_ghed_data():
+    """test clean_ghed_data()"""
 
     raw = pd.DataFrame({'country': {0: 'Algeria', 1: 'Algeria', 2: 'Algeria'},
                         'country code': {0: 'DZA', 1: 'DZA', 2: 'DZA'},
@@ -72,11 +72,11 @@ def test_clean_data():
                                        4: 66.80211639000001,
                                        5: 66.46335601999999}})
 
-    pd.testing.assert_frame_equal(who._clean_data(raw), expected)
+    pd.testing.assert_frame_equal(who._clean_ghed_data(raw), expected)
 
 
-def test_clean_metadata():
-    """Test _clean_metadata()"""
+def test_clean_ghed_metadata():
+    """Test _clean_ghed_metadata()"""
 
     raw = pd.DataFrame({'country': {0: 'Algeria', 1: 'Algeria', 2: 'Algeria'},
                         'country code': {0: 'DZA', 1: 'DZA', 2: 'DZA'},
