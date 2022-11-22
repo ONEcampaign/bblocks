@@ -1,5 +1,10 @@
 Changelog
 =========
+
+[0.4.1] - 2022-11-22
+--------------------
+-  Improved the pink_sheets and sdr scripts.
+
 [0.4.0] - 2022-11-07
 --------------------
 -  Added a new feature: can now import data from UNAIDS.
