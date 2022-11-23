@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[0.5.0] - 2022-11-23
+--------------------
+- Added a new feature: `who` module in `import_tools` with an object 
+  to extract data from GHED dataset.
+
 [0.4.1] - 2022-11-22
 --------------------
 -  Improved the pink_sheets and sdr scripts.
