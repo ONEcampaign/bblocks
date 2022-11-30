@@ -11,14 +11,28 @@ from bs4 import BeautifulSoup
 BASE = 'https://www.imf.org/'
 
 
-def convert_month(month: int | str) -> str:
-    """ """
-    pass
+def convert_month(month: int) -> str:
+    """Converts a month number to a string"""
+    if month == 1:
+        return 'April'
+    elif month == 2:
+        return 'October'
+    else:
+        raise ValueError('invalid month. Must be 1 or 2, or "April" or "October"')
 
 
-def validate_date(year: int, month: str):
+def validate_date(year: int, month: str | int) -> tuple[int, str]:
     """ """
-    pass
+
+    if isinstance(month, int):
+        month = convert_month(month)
+    elif month not in ['April', 'October']:
+        raise ValueError('invalid month. Must be 1 or 2, or "April" or "October"')
+
+    if year < 2017:
+        raise ValueError('invalid year. Must be 2017 or later')
+
+    return year, month
 
 
 def get_sdmx_href(year: int, month: str):
@@ -51,6 +65,7 @@ def get_root(folder):
 
 
 def parse_xml(root) -> pd.DataFrame:
+    """Parse the xml file"""
     rows = []
     for series in root[1].findall('./'):
         for obs in series.findall('./'):
