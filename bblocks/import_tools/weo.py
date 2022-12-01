@@ -35,8 +35,21 @@ def validate_date(year: int, month: str | int) -> tuple[int, str]:
     return year, month
 
 
-def get_sdmx_href(year: int, month: str):
-    """Retrieve the href of the SDMX file for a given year and month."""
+####################################################################################################
+# Extract data
+####################################################################################################
+
+
+def get_sdmx_href(year: int, month: str) -> str:
+    """Retrieve the href of the SDMX file for a given year and month.
+
+    Args:
+        year (int): year of the WEO data
+        month (str): month of the WEO data. Must be 'April' or 'October'
+
+    Returns:
+        str: href of the SDMX file
+    """
 
     url = f'https://www.imf.org/en/Publications/WEO/weo-database/{year}/{month}/download-entire-database'
     try:
@@ -48,7 +61,14 @@ def get_sdmx_href(year: int, month: str):
 
 
 def get_folder(url: str) -> ZipFile:
-    """Request a url and unzip the file"""
+    """Request a url and unzip the file
+
+    Args:
+        url (str): url to request
+
+    Returns:
+        ZipFile: ZipFile object containing the WEO data and schema files
+    """
 
     try:
         resp = requests.get(url)
@@ -57,15 +77,34 @@ def get_folder(url: str) -> ZipFile:
         raise ConnectionError("invalid url")
 
 
-def get_root(folder):
-    """Get the root of the xml file"""
+############################################################################################################
+# XML file parsing
+############################################################################################################
+
+def get_xml_data_root(folder: ZipFile) -> xml.etree.ElementTree.Element:
+    """Get the root of the xml data file
+
+    Args:
+        folder (ZipFile): ZipFile object containing the WEO data and schema files
+
+    Returns:
+        xml.etree.ElementTree.Element: root of the xml data file
+
+    """
 
     tree = ET.parse(folder.open(folder.namelist()[0]))
     return tree.getroot()
 
 
-def parse_xml(root) -> pd.DataFrame:
-    """Parse the xml file"""
+def parse_xml_data(root: xml.etree.ElementTree.Element) -> pd.DataFrame:
+    """Parse the xml data file
+
+    Args:
+        root (xml.etree.ElementTree.Element): root of the xml data file
+
+    Returns:
+        pd.DataFrame: dataframe containing the WEO data
+    """
     rows = []
     for series in root[1].findall('./'):
         for obs in series.findall('./'):
@@ -74,33 +113,51 @@ def parse_xml(root) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def get_schema_root(folder):
-    """Get the root of the xml file"""
+def get_schema_root(folder: ZipFile) -> xml.etree.ElementTree.Element:
+    """Get the root of the xml file
+
+    Args:
+        folder (ZipFile): ZipFile object containing the WEO data and schema files
+
+    Returns:
+        xml.etree.ElementTree.Element: root of the xml file
+
+    """
 
     tree = ET.parse(folder.open(folder.namelist()[1]))
     return tree.getroot()
 
 
-def _get_mapper(root: xml.etree.ElementTree.Element, lookup_value: str):
-    """get mapper for a column"""
+def convert_series_codes(root: xml.etree.ElementTree.Element, series: pd.Series, lookup_value: str) -> pd.Series:
+    """Converts a series of codes to a series of labels
+
+    Args:
+        root (xml.etree.ElementTree.Element): root of the xml file
+        series (pd.Series): series of codes
+        lookup_value (str): value to look up in the xml file
+
+    Returns:
+        pd.Series: series of labels
+    """
 
     query = root.findall('./{http://www.w3.org/2001/XMLSchema}simpleType[@name='
                          + f'"{lookup_value}"'
                          + ']/')[0].findall('./')
-    return {elem.attrib['value']: elem[0][0].text for elem in query}
+    return series.map({elem.attrib['value']: elem[0][0].text for elem in query})
 
 
-def convert_series_codes(root: xml.etree.ElementTree.Element,
-                         series: pd.Series,
-                         lookup_value: str) -> pd.Series:
-    """Convert codes to values in a series"""
+def convert_columns(root: xml.etree.ElementTree.Element, df: pd.DataFrame) -> pd.DataFrame:
+    """"Convert codes in columns to labels
 
-    mapper = _get_mapper(root, lookup_value)
-    return series.map(mapper)
+    This function converts the codes in the columns of the WEO dataframe to labels into a new column.
 
+    Args:
+        root (xml.etree.ElementTree.Element): root of the xml file
+        df (pd.DataFrame): dataframe containing the WEO data
 
-def convert_codes(root: xml.etree.ElementTree.Element, df: pd.DataFrame) -> pd.DataFrame:
-    """" """
+    Returns:
+        pd.DataFrame: dataframe containing the WEO data with columns containing converted codes
+    """
 
     column_mapper = {'UNIT': 'IMF.CL_WEO_UNIT.1.0',
                      'CONCEPT': 'IMF.CL_WEO_CONCEPT.1.0',
@@ -127,8 +184,8 @@ def extract_weo(year: int, month: str) -> ZipFile:
 def read_weo(folder):
     """ """
 
-    root = get_root(folder)
-    return parse_xml(root)
+    root = get_xml_data_root(folder)
+    return parse_xml_data(root)
 
 
 def get_weo(year: int, month: str):
@@ -137,6 +194,6 @@ def get_weo(year: int, month: str):
     folder = extract_weo(year, month)
     df = read_weo(folder)
     schema_root = get_schema_root(folder)
-    return convert_codes(schema_root, df)
+    return convert_columns(schema_root, df)
 
 
