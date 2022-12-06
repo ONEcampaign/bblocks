@@ -1,7 +1,7 @@
 Changelog
 =========
 
-[0.5.0] - 2022-11-23
+[0.4.2] - 2022-12-06
 --------------------
 - Added a new feature: `who` module in `import_tools` with an object 
   to extract data from GHED dataset.
