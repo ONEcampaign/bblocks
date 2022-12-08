@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[0.4.3] - 2022-12-08
+--------------------
+- Fixed the `GHED` importer given changes in the underlying data structure
+
+
 [0.4.2] - 2022-12-06
 --------------------
 - Added a new feature: `who` module in `import_tools` with an object 
