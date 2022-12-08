@@ -31,6 +31,7 @@ opencv-python = "^4.6.0"
 beautifulsoup4 = "^4.11.1"
 weo = "^0.7.4"
 pyjstat = "^2.3.0"
+pyarrow = "^10.0.1"
 
 
 [tool.poetry.dev-dependencies]

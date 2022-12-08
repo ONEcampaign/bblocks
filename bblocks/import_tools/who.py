@@ -25,8 +25,8 @@ def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
 
     return df.rename(
         columns={
-            "Indicator short code": "indicator_code",
-            "Indicator name": "indicator_name",
+            "variable code": "indicator_code",
+            "variable name": "indicator_name",
             "Category 1": "category_1",
             "Category 2": "category_2",
             "Indicator units": "indicator_units",
@@ -38,28 +38,25 @@ def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
 def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean GHED data dataframe"""
 
-    return df.melt(
-        id_vars=["country", "country code", "region (WHO)", "income group", "year"],
-        var_name="indicator_code",
-    ).rename(
-        columns={
+    return (df.rename(columns={
             "country": "country_name",
-            "country code": "country_code",
-            "region (WHO)": "region",
-            "income group": "income_group",
-        }
-    )
+            "code": "country_code",
+            "region": "region",
+            "income": "income_group"})
+    .melt(
+        id_vars=["country_name", "country_code", "region", "income_group", "year"],
+        var_name="indicator_code"))
 
 
 def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
     """Clean GHED metadata"""
 
     return df.drop(
-        columns=["country", "region (WHO)", "Income group", "Indicator name"]
+        columns=["country", "region (WHO)", "Income group", "Variable name"]
     ).rename(
         columns={
-            "country code": "country_code",
-            "Indicator short code": "indicator_code",
+            "code": "country_code",
+            "Variable code": "indicator_code",
             "Sources": "source",
             "Comments": "comments",
             "Methods of estimation": "methods_of_estimation",
@@ -110,8 +107,8 @@ class GHED(ImportData):
         """
 
         if (
-            not os.path.exists(f"{self.data_path}/ghed_data.feather")
-            or self.update_data
+                not os.path.exists(f"{self.data_path}/ghed_data.feather")
+                or self.update_data
         ):
             download_ghed(self.data_path)
 
@@ -152,3 +149,4 @@ class GHED(ImportData):
         """
 
         return self.metadata
+
