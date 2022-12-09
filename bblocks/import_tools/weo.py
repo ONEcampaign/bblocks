@@ -11,15 +11,15 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import country_converter as coco
 
-BASE = 'https://www.imf.org/'
+BASE = "https://www.imf.org/"
 
 
 def _convert_month(month: int) -> str:
     """Converts a month number to a string"""
     if month == 1:
-        return 'April'
+        return "April"
     elif month == 2:
-        return 'October'
+        return "October"
     else:
         raise ValueError('invalid month. Must be 1 or 2, or "April" or "October"')
 
@@ -31,11 +31,11 @@ def validate_date(year: int, month: str | int) -> tuple[int, str]:
 
     if isinstance(month, int):
         month = _convert_month(month)
-    elif month not in ['April', 'October']:
+    elif month not in ["April", "October"]:
         raise ValueError('invalid month. Must be 1 or 2, or "April" or "October"')
 
     if year < 2017:
-        raise ValueError('invalid year. Must be 2017 or later')
+        raise ValueError("invalid year. Must be 2017 or later")
 
     return year, month
 
@@ -47,13 +47,13 @@ def latest_version():
 
     if month < 4:
         year -= 1
-        return year, 'October'
+        return year, "October"
 
     elif month < 10:
-        return year, 'April'
+        return year, "April"
 
     else:
-        return year, 'October'
+        return year, "October"
 
 
 def get_root(folder: ZipFile, file: str) -> xml.etree.ElementTree.Element:
@@ -71,7 +71,9 @@ def get_root(folder: ZipFile, file: str) -> xml.etree.ElementTree.Element:
     return tree.getroot()
 
 
-def convert_series_codes(root: xml.etree.ElementTree.Element, series: pd.Series, lookup_value: str) -> pd.Series:
+def convert_series_codes(
+    root: xml.etree.ElementTree.Element, series: pd.Series, lookup_value: str
+) -> pd.Series:
     """Converts a series of codes to a series of labels
 
     Args:
@@ -83,10 +85,12 @@ def convert_series_codes(root: xml.etree.ElementTree.Element, series: pd.Series,
         pd.Series: series of labels
     """
 
-    query = root.findall('./{http://www.w3.org/2001/XMLSchema}simpleType[@name='
-                         + f'"{lookup_value}"'
-                         + ']/')[0].findall('./')
-    return series.map({elem.attrib['value']: elem[0][0].text for elem in query})
+    query = root.findall(
+        "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
+        + f'"{lookup_value}"'
+        + "]/"
+    )[0].findall("./")
+    return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
 
 
 class WEODownloader:
@@ -101,7 +105,7 @@ class WEODownloader:
     def __init__(self, version: tuple[int, str] | None = None):
 
         if version is not None:
-            self.version = validate_date(*version) #check if version is valid
+            self.version = validate_date(*version)  # check if version is valid
             self._latest = False
         else:
             self.version = latest_version()
@@ -113,31 +117,34 @@ class WEODownloader:
         self.schema_file = None
         self.data = None
 
-        self.column_mapper = {'UNIT': 'IMF.CL_WEO_UNIT.1.0',
-                              'CONCEPT': 'IMF.CL_WEO_CONCEPT.1.0',
-                              'REF_AREA': 'IMF.CL_WEO_REF_AREA.1.0',
-                              'FREQ': 'IMF.CL_FREQ.1.0',
-                              'SCALE': 'IMF.CL_WEO_SCALE.1.0'
-                              }
+        self.column_mapper = {
+            "UNIT": "IMF.CL_WEO_UNIT.1.0",
+            "CONCEPT": "IMF.CL_WEO_CONCEPT.1.0",
+            "REF_AREA": "IMF.CL_WEO_REF_AREA.1.0",
+            "FREQ": "IMF.CL_FREQ.1.0",
+            "SCALE": "IMF.CL_WEO_SCALE.1.0",
+        }
 
     def roll_back_version(self):
         """Roll back the month and year to a previous version"""
 
-        if self.version[1] == 'October':
-            self.version = (self.version[0], 'April')
+        if self.version[1] == "October":
+            self.version = (self.version[0], "April")
         else:
-            self.version = (self.version[0] - 1, 'October')
+            self.version = (self.version[0] - 1, "October")
 
     def _parse_href(self) -> str | bool:
         """Retrieve the href of the SDMX file"""
 
-        url = (f'{BASE}/en/Publications/WEO/weo-database/'
-               f'{self.version[0]}/{self.version[1]}/download-entire-database')
+        url = (
+            f"{BASE}/en/Publications/WEO/weo-database/"
+            f"{self.version[0]}/{self.version[1]}/download-entire-database"
+        )
         try:
             content = requests.get(url).content
-            soup = BeautifulSoup(content, 'html.parser')
-            if soup.find('a', text='SDMX Data'):
-                return soup.find_all('a', text='SDMX Data')[0].get('href')
+            soup = BeautifulSoup(content, "html.parser")
+            if soup.find("a", text="SDMX Data"):
+                return soup.find_all("a", text="SDMX Data")[0].get("href")
             else:
                 return False
         except ConnectionError:
@@ -157,10 +164,10 @@ class WEODownloader:
 
                 # if previous version hasn't been released, raise error
                 if href is False:
-                    raise ValueError('No valid version found')
+                    raise ValueError("No valid version found")
         else:
             if self.href is False:
-                raise ValueError('Version is not available')
+                raise ValueError("Version is not available")
 
     def get_folder(self):
         """Get the folder containing the data and schema files"""
@@ -177,14 +184,14 @@ class WEODownloader:
         """
 
         if len(self.folder.namelist()) > 2:
-            raise ValueError('More than one file in zip file')
+            raise ValueError("More than one file in zip file")
         for file in self.folder.namelist():
-            if file.endswith('.xml'):
+            if file.endswith(".xml"):
                 self.data_file = file
-            if file.endswith('.xsd'):
+            if file.endswith(".xsd"):
                 self.schema_file = file
         if self.data_file is None or self.schema_file is None:
-            raise ValueError('No data or schema file found')
+            raise ValueError("No data or schema file found")
 
     def parse_data(self):
         """Parse the data file"""
@@ -192,8 +199,8 @@ class WEODownloader:
         root = get_root(self.folder, self.data_file)
 
         rows = []
-        for series in root[1].findall('./'):
-            for obs in series.findall('./'):
+        for series in root[1].findall("./"):
+            for obs in series.findall("./"):
                 rows.append({**series.attrib, **obs.attrib})
 
         self.data = pd.DataFrame(rows)
@@ -203,8 +210,10 @@ class WEODownloader:
 
         schema_root = get_root(self.folder, self.schema_file)
         for col, value in self.column_mapper.items():
-            self.data = self.data.rename(columns={col: f'{col}_CODE'})
-            self.data[col] = convert_series_codes(schema_root, self.data[f'{col}_CODE'], value)
+            self.data = self.data.rename(columns={col: f"{col}_CODE"})
+            self.data[col] = convert_series_codes(
+                schema_root, self.data[f"{col}_CODE"], value
+            )
 
     def get_data(self):
         """Extract weo data"""
@@ -220,18 +229,20 @@ class WEODownloader:
     def make_weo_format(self):
         """Temporary function to make the data in the same format as the weo package data"""
 
-        col_mapper = {'REF_AREA_CODE': 'WEO Country Code',
-                      'CONCEPT_CODE': 'WEO Subject Code',
-                      'REF_AREA': 'Country',
-                      'CONCEPT': 'Subject Descriptor',
-                      'UNIT': 'Units',
-                      'SCALE': 'Scale',
-                      'LASTACTUALDATE': 'Estimates Start After'}
+        col_mapper = {
+            "REF_AREA_CODE": "WEO Country Code",
+            "CONCEPT_CODE": "WEO Subject Code",
+            "REF_AREA": "Country",
+            "CONCEPT": "Subject Descriptor",
+            "UNIT": "Units",
+            "SCALE": "Scale",
+            "LASTACTUALDATE": "Estimates Start After",
+        }
 
-        return (self.data.rename(columns=col_mapper)
-                .loc[:, list(col_mapper.values()) + ['TIME_PERIOD', 'OBS_VALUE']]
-                .pivot(index=col_mapper.values(), columns='TIME_PERIOD', values='OBS_VALUE')
-                .reset_index()
-                .assign(ISO=lambda d: coco.convert(d.Country, to='ISO3', not_found=None))
-                )
-
+        return (
+            self.data.rename(columns=col_mapper)
+            .loc[:, list(col_mapper.values()) + ["TIME_PERIOD", "OBS_VALUE"]]
+            .pivot(index=col_mapper.values(), columns="TIME_PERIOD", values="OBS_VALUE")
+            .reset_index()
+            .assign(ISO=lambda d: coco.convert(d.Country, to="ISO3", not_found=None))
+        )
