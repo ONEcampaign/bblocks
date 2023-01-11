@@ -1,5 +1,6 @@
 anyio==3.6.2; python_version >= "3.7" and python_full_version >= "3.7.13"
 beautifulsoup4==4.11.1; python_full_version >= "3.6.0"
+pypdf2==2.11.2; python_version >= "3.6"
 camelot-py==0.10.1
 certifi==2022.12.7; python_version >= "3.7" and python_version < "4" and python_full_version >= "3.7.13"
 cffi==1.15.1; python_version >= "3.6"
@@ -23,7 +24,6 @@ pdfminer.six==20221105; python_version >= "3.6"
 pyarrow==10.0.1; python_version >= "3.7"
 pycparser==2.21; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
 pyjstat==2.3.0
-pypdf2==2.11.2; python_version >= "3.6"
 python-dateutil==2.8.2; python_full_version >= "3.7.13" and python_version >= "3.8"
 pytz==2022.6; python_version >= "3.8" and python_full_version >= "3.7.13"
 pyyaml==6.0; python_version >= "3.6"
