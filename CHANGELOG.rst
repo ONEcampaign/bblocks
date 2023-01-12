@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[0.4.4] - 2023-01-12
+--------------------
+- Fixed bugs in `unaids` module preventing instantiation of the parent class `ImportData` 
+  and handling json responses for regional data.
+
 [0.4.3] - 2022-12-08
 --------------------
 - Fixed the `GHED` importer given changes in the underlying data structure
