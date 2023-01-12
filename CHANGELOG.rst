@@ -1,10 +1,11 @@
 Changelog
 =========
 
-[0.4.4] - 2023-01-12
+[0.5.0] - 2023-01-12
 --------------------
 - Fixed bugs in `unaids` module preventing instantiation of the parent class `ImportData` 
   and handling json responses for regional data.
+- Updated the requirements
 
 [0.4.3] - 2022-12-08
 --------------------
