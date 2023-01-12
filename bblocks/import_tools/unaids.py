@@ -118,15 +118,17 @@ def response_params(group: str, indicator: str):
     }
 
 
-def response_to_df(grouping: str, response: dict) -> pd.DataFrame:
+def response_to_df(grouping: str, response: dict, indicator: str) -> pd.DataFrame:
     """Convert response to dataframe"""
 
     dimensions = get_dimensions(response)
     years = get_years(response)
 
-    df = parse_data_table(response, dimensions, years)
+    df = parse_data_table(response, dimensions, years).pipe(clean_data, indicator)
     if grouping == "region":
-        df = pd.concat([df, parse_global_data(response, dimensions, years)])
+        df_global = (parse_global_data(response, dimensions, years)
+                     .pipe(clean_data, indicator))
+        return pd.concat([df, df_global])
 
     return df
 
@@ -137,7 +139,7 @@ def extract_data(indicator: str, grouping: str):
     params = response_params(grouping, indicator)
     response = get_response(**params)
     check_response(response)
-    return response_to_df(grouping, response).pipe(clean_data, indicator)
+    return response_to_df(grouping, response, indicator)
 
 
 def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
@@ -199,8 +201,8 @@ class Aids(ImportData):
 
     available_indicators: pd.DataFrame = AVAILABLE_INDICATORS
 
-    def __init__(self):
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.indicators = {"country": {}, "region": {}}
 
     def load_indicator(self, indicator: str, area_grouping: str = "all") -> ImportData:
@@ -225,7 +227,7 @@ class Aids(ImportData):
             if check_if_not_downloaded(indicator, grouping) or self.update_data:
                 df = extract_data(indicator, grouping)
                 df.to_csv(
-                    f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv",
+                    f"{self.data_path}/aids_{grouping}_{indicator}.csv",
                     index=False,
                 )
 
@@ -234,7 +236,7 @@ class Aids(ImportData):
                 self.indicators[grouping].update(
                     {
                         indicator: pd.read_csv(
-                            f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv"
+                            f"{self.data_path}/aids_{grouping}_{indicator}.csv"
                         )
                     }
                 )
@@ -263,7 +265,7 @@ class Aids(ImportData):
             for indicator in self.indicators[area_grouping]:
                 df = extract_data(indicator, area_grouping)
                 df.to_csv(
-                    f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv",
+                    f"{self.data_path}/aids_{area_grouping}_{indicator}.csv",
                     index=False,
                 )
                 if reload_data:
