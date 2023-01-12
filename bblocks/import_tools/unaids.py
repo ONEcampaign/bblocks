@@ -201,8 +201,8 @@ class Aids(ImportData):
 
     available_indicators: pd.DataFrame = AVAILABLE_INDICATORS
 
-    def __init__(self):
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.indicators = {"country": {}, "region": {}}
 
     def load_indicator(self, indicator: str, area_grouping: str = "all") -> ImportData:
@@ -227,7 +227,7 @@ class Aids(ImportData):
             if check_if_not_downloaded(indicator, grouping) or self.update_data:
                 df = extract_data(indicator, grouping)
                 df.to_csv(
-                    f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv",
+                    f"{self.data_path}/aids_{grouping}_{indicator}.csv",
                     index=False,
                 )
 
@@ -236,7 +236,7 @@ class Aids(ImportData):
                 self.indicators[grouping].update(
                     {
                         indicator: pd.read_csv(
-                            f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv"
+                            f"{self.data_path}/aids_{grouping}_{indicator}.csv"
                         )
                     }
                 )
@@ -265,7 +265,7 @@ class Aids(ImportData):
             for indicator in self.indicators[area_grouping]:
                 df = extract_data(indicator, area_grouping)
                 df.to_csv(
-                    f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv",
+                    f"{self.data_path}/aids_{area_grouping}_{indicator}.csv",
                     index=False,
                 )
                 if reload_data:
