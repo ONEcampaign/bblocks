@@ -1,6 +1,10 @@
 Changelog
 =========
 
+[0.5.1] - 2023-01-12
+--------------------
+- Updated requirements
+
 [0.5.0] - 2023-01-12
 --------------------
 - Fixed bugs in `unaids` module preventing instantiation of the parent class `ImportData` 

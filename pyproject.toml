@@ -24,7 +24,6 @@ pandas = "^1.5.2"
 numpy = "^1.24.1"
 country-converter = "^0.8.0"
 openpyxl = "^3.0.10"
-wbgapi = "^1.1.2"
 requests = "^2.28.1"
 opencv-python = "^4.7.0"
 weo = "^0.7.4"
@@ -33,6 +32,7 @@ pyjstat = "^2.3.0"
 pyarrow = "^10.0.1"
 camelot-py = "^0.10.1"
 PyPDF2 = "^2.11.2"
+wbgapi = "<1.1"
 
 
 [tool.poetry.dev-dependencies]
