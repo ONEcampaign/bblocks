@@ -17,6 +17,7 @@ PINK_SHEET_URL = (
 
 def _get_wb_data(
     series: str,
+    db: int,
     series_name: str | None = None,
     start_year: int | None = None,
     end_year: int | None = None,
@@ -43,6 +44,7 @@ def _get_wb_data(
             labels=False,
             columns="series",
             timeColumns=True,
+            db=db
         )
         .reset_index()
         .rename(
@@ -83,6 +85,7 @@ class WorldBankData(ImportData):
         start_year: Optional | int = None,
         end_year: Optional | int = None,
         most_recent_only: bool = False,
+        db: int= 2 # by default use WDI database
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
 
@@ -92,6 +95,7 @@ class WorldBankData(ImportData):
             start_year: The first year to include in the data
             end_year: The last year to include in the data
             most_recent_only: If True, only get the most recent non-empty value for each country
+            db: The database to use. By default, use the WDI database (2)
 
         Returns:
             The same object to allow chaining
@@ -113,6 +117,7 @@ class WorldBankData(ImportData):
             "start_year": start_year,
             "end_year": end_year,
             "most_recent_only": most_recent_only,
+            "db": db,
         }
 
         # get the indicator data if it's not saved on disk.
