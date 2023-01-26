@@ -44,7 +44,7 @@ def _get_wb_data(
             labels=False,
             columns="series",
             timeColumns=True,
-            db=db
+            db=db,
         )
         .reset_index()
         .rename(
@@ -85,7 +85,7 @@ class WorldBankData(ImportData):
         start_year: Optional | int = None,
         end_year: Optional | int = None,
         most_recent_only: bool = False,
-        db: int= 2 # by default use WDI database
+        db: int = 2,  # by default use WDI database
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
 
