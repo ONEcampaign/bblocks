@@ -13,16 +13,16 @@ import os
 from bblocks.import_tools.common import ImportData
 
 
-BASE_URL: str = 'https://hdr.undp.org/data-center/documentation-and-downloads'
+BASE_URL: str = "https://hdr.undp.org/data-center/documentation-and-downloads"
 
 
 def _parse_html(soup: BeautifulSoup) -> tuple[str, str]:
     """Parses html for data and metadata links"""
 
-    data_section = soup.find_all('div', {'class': 'section data-links-files'})
-    links = data_section[1].find_all('a')
+    data_section = soup.find_all("div", {"class": "section data-links-files"})
+    links = data_section[1].find_all("a")
 
-    return links[0].get('href'), links[1].get('href')
+    return links[0].get("href"), links[1].get("href")
 
 
 def get_data_links() -> dict[str, str]:
@@ -30,12 +30,12 @@ def get_data_links() -> dict[str, str]:
 
     try:
         response = requests.get(BASE_URL)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        soup = BeautifulSoup(response.content, "html.parser")
         data_url, metadata_url = _parse_html(soup)
-        return {'data_url': data_url, 'metadata_url': metadata_url}
+        return {"data_url": data_url, "metadata_url": metadata_url}
 
     except ConnectionError:
-        raise ConnectionError(f'Could not read data from {BASE_URL}')
+        raise ConnectionError(f"Could not read data from {BASE_URL}")
 
 
 def read_data(url: str) -> pd.DataFrame:
@@ -51,20 +51,22 @@ def read_data(url: str) -> pd.DataFrame:
     try:
         response = requests.get(url)
         if response.status_code != 200:
-            raise ValueError(f'Could not read data from {url}')
+            raise ValueError(f"Could not read data from {url}")
 
         # check content type, use read_csv for csv and read_excel for xlsx
-        if response.headers['Content-Type'] == 'text/csv':
+        if response.headers["Content-Type"] == "text/csv":
             return pd.read_csv(io.BytesIO(response.content))
 
-        if response.headers[
-            'Content-Type'] == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        if (
+            response.headers["Content-Type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ):
             return pd.read_excel(response.content, sheet_name="codebook")
 
         return pd.read_csv(io.BytesIO(response.content))
 
     except ConnectionError:
-        raise ValueError(f'Could not read data from {url}')
+        raise ValueError(f"Could not read data from {url}")
 
 
 def create_code_dict(metadata_df: pd.DataFrame) -> dict[str, str]:
@@ -77,13 +79,13 @@ def create_code_dict(metadata_df: pd.DataFrame) -> dict[str, str]:
         metadata_df (pd.DataFrame): Metadata dataframe.
     """
 
-    return (metadata_df
-            .dropna()
-            .loc[:, ['Full name', 'Short name']]
-            .set_index('Short name')
-            .loc[:, 'Full name']
-            .to_dict()
-            )
+    return (
+        metadata_df.dropna()
+        .loc[:, ["Full name", "Short name"]]
+        .set_index("Short name")
+        .loc[:, "Full name"]
+        .to_dict()
+    )
 
 
 def format_data(data_df: pd.DataFrame, code_dict: dict[str, str]) -> pd.DataFrame:
@@ -100,12 +102,11 @@ def format_data(data_df: pd.DataFrame, code_dict: dict[str, str]) -> pd.DataFram
         code_dict (dict): Dictionary of variable codes and names.
     """
 
-    return (data_df
-            .melt(id_vars=['iso3', 'country', 'hdicode', 'region'])
-            .assign(year=lambda d: d['variable'].str.rsplit("_", n=1).str[-1].astype(int),
-                    variable=lambda d: d['variable'].str.rsplit("_", n=1).str[0],
-                    variable_name=lambda d: d['variable'].map(code_dict))
-            )
+    return data_df.melt(id_vars=["iso3", "country", "hdicode", "region"]).assign(
+        year=lambda d: d["variable"].str.rsplit("_", n=1).str[-1].astype(int),
+        variable=lambda d: d["variable"].str.rsplit("_", n=1).str[0],
+        variable_name=lambda d: d["variable"].map(code_dict),
+    )
 
 
 def get_hdr_data() -> pd.DataFrame:
@@ -117,28 +118,46 @@ def get_hdr_data() -> pd.DataFrame:
     links = get_data_links()  # get links to data and metadata
 
     # read metadata and create dictionary
-    code_dict = (read_data(links['metadata_url'])
-                 .pipe(create_code_dict)
-                 )
+    code_dict = read_data(links["metadata_url"]).pipe(create_code_dict)
 
     # read data and format it
-    data_df = read_data(links['data_url']).pipe(format_data, code_dict)
+    data_df = read_data(links["data_url"]).pipe(format_data, code_dict)
 
     return data_df
 
 
 # dictionary of composite indices with their variables
-hdr_indicators: dict[str, list] = {'hdi': ['hdi_rank', 'hdi', 'le', 'eys', 'mys', 'gnipc'],
-                                   'gdi': ['gdi_group', 'gdi', 'hdi_f', 'le_f', 'eys_f', 'mys_f',
-                                           'gni_pc_f',
-                                           'hdi_m', 'le_m', 'eys_m', 'mys_m', 'gni_pc_m'],
-                                   'ihdi': ['ihdi', 'coef_ineq', 'loss', 'ineq_le', 'ineq_edu',
-                                            'ineq_inc'],
-                                   'gii': ['gii_rank', 'gii', 'mmr', 'abr', 'se_f', 'se_m', 'pr_f',
-                                           'pr_m', 'lfpr_f', 'lfpr_m'],
-                                   'phdi': ['rankdiff_hdi_phdi', 'phdi', 'diff_hdi_phdi',
-                                            'co2_prod', 'mf']
-                                   }
+hdr_indicators: dict[str, list] = {
+    "hdi": ["hdi_rank", "hdi", "le", "eys", "mys", "gnipc"],
+    "gdi": [
+        "gdi_group",
+        "gdi",
+        "hdi_f",
+        "le_f",
+        "eys_f",
+        "mys_f",
+        "gni_pc_f",
+        "hdi_m",
+        "le_m",
+        "eys_m",
+        "mys_m",
+        "gni_pc_m",
+    ],
+    "ihdi": ["ihdi", "coef_ineq", "loss", "ineq_le", "ineq_edu", "ineq_inc"],
+    "gii": [
+        "gii_rank",
+        "gii",
+        "mmr",
+        "abr",
+        "se_f",
+        "se_m",
+        "pr_f",
+        "pr_m",
+        "lfpr_f",
+        "lfpr_m",
+    ],
+    "phdi": ["rankdiff_hdi_phdi", "phdi", "diff_hdi_phdi", "co2_prod", "mf"],
+}
 
 
 class HDR(ImportData):
@@ -174,7 +193,7 @@ class HDR(ImportData):
             return [val for sublist in hdr_indicators.values() for val in sublist]
 
         if composite_index not in self.indicators:
-            raise ValueError(f'Composite index {composite_index} not found')
+            raise ValueError(f"Composite index {composite_index} not found")
 
         return self.indicators[composite_index]
 
@@ -202,7 +221,9 @@ class HDR(ImportData):
         self.data = hdr_data
         hdr_data.to_csv(f"{self.data_path}/HDR.csv", index=False)
 
-    def get_data(self, composite_index: str = None, indicator: str = None) -> pd.DataFrame:
+    def get_data(
+        self, composite_index: str = None, indicator: str = None
+    ) -> pd.DataFrame:
         """Get HDR data as a pandas dataframe
 
         Specify either a composite index or an indicator. If both are specified, an error will be
@@ -226,17 +247,15 @@ class HDR(ImportData):
         if composite_index is not None:
             if composite_index not in self.indicators.keys():
                 raise ValueError(f"Composite index {composite_index} not found.")
-            return (self.data[self.data['variable'].isin(self.indicators[composite_index])]
-                    .reset_index(drop=True)
-                    )
+            return self.data[
+                self.data["variable"].isin(self.indicators[composite_index])
+            ].reset_index(drop=True)
 
         # return single indicator data
         if indicator is not None:
-            if indicator not in self.data['variable'].unique():
+            if indicator not in self.data["variable"].unique():
                 raise ValueError(f"Indicator {indicator} not found.")
-            return (self.data[self.data['variable'] == indicator]
-                    .reset_index(drop=True)
-                    )
+            return self.data[self.data["variable"] == indicator].reset_index(drop=True)
 
         # return all data
         return self.data
