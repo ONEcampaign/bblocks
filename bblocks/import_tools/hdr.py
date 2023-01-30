@@ -1,4 +1,8 @@
-"""Tools to import UNDP Human Development Report data."""
+"""Tools to import UNDP Human Development Report data.
+
+`get_hdr_data` returns a dataframe with all HDR data.
+Use the `HDR` object to extract and interact with the data
+"""
 
 import pandas as pd
 import requests
@@ -7,9 +11,9 @@ from bs4 import BeautifulSoup
 import os
 
 from bblocks.import_tools.common import ImportData
-from bblocks.config import PATHS
 
-BASE_URL = 'https://hdr.undp.org/data-center/documentation-and-downloads'
+
+BASE_URL: str = 'https://hdr.undp.org/data-center/documentation-and-downloads'
 
 
 def _parse_html(soup: BeautifulSoup) -> tuple[str, str]:
@@ -123,42 +127,93 @@ def get_hdr_data() -> pd.DataFrame:
     return data_df
 
 
-hdr_indicators = {'hdi': ['hdi_rank', 'hdi', 'le', 'eys', 'mys', 'gnipc'],
-                  'gdi': ['gdi_group', 'gdi', 'hdi_f', 'le_f', 'eys_f', 'mys_f', 'gni_pc_f',
-                          'hdi_m', 'le_m', 'eys_m', 'mys_m', 'gni_pc_m'],
-                  'ihdi': ['ihdi', 'coef_ineq', 'loss', 'ineq_le', 'ineq_edu', 'ineq_inc'],
-                  'gii': ['gii_rank', 'gii', 'mmr', 'abr', 'se_f', 'se_m', 'pr_f',
-                          'pr_m', 'lfpr_f', 'lfpr_m'],
-                  'phdi': ['rankdiff_hdi_phdi', 'phdi', 'diff_hdi_phdi', 'co2_prod', 'mf']
-                  }
+# dictionary of composite indices with their variables
+hdr_indicators: dict[str, list] = {'hdi': ['hdi_rank', 'hdi', 'le', 'eys', 'mys', 'gnipc'],
+                                   'gdi': ['gdi_group', 'gdi', 'hdi_f', 'le_f', 'eys_f', 'mys_f',
+                                           'gni_pc_f',
+                                           'hdi_m', 'le_m', 'eys_m', 'mys_m', 'gni_pc_m'],
+                                   'ihdi': ['ihdi', 'coef_ineq', 'loss', 'ineq_le', 'ineq_edu',
+                                            'ineq_inc'],
+                                   'gii': ['gii_rank', 'gii', 'mmr', 'abr', 'se_f', 'se_m', 'pr_f',
+                                           'pr_m', 'lfpr_f', 'lfpr_m'],
+                                   'phdi': ['rankdiff_hdi_phdi', 'phdi', 'diff_hdi_phdi',
+                                            'co2_prod', 'mf']
+                                   }
 
 
 class HDR(ImportData):
-    """Import UNDP Human Development Report data."""
+    """Import UNDP Human Development Report data.
+
+    To use, instantiate the class. Call the `load_indicator` method to load the data
+    to the object. If the data has already been downloaded, it will be read from disk, otherwise
+    it will be downloaded from the UNDP website. Optionally set the attribute `update_data` to
+    True to force the data to be downloaded. To force an update of the data, call the `update`
+    method. To get the data, call the `get_data` method. To see a list of avilable composite indices,
+    call the `available_composite_indices` method. To see a list of available indicators, call the
+    `available_indicators` method.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.indicators = hdr_indicators # set indicators
+        self.indicators = hdr_indicators  # set indicators
+
+    def available_composite_indices(self) -> list[str]:
+        """See available composite indices"""
+
+        return list(self.indicators.keys())
+
+    def available_indicators(self, composite_index: str = None) -> list[str]:
+        """See available indicators
+
+        Args:
+            composite_index (str): Composite index to see available indicators for. If None, all
+        """
+
+        if composite_index is None:
+            return [val for sublist in hdr_indicators.values() for val in sublist]
+
+        if composite_index not in self.indicators:
+            raise ValueError(f'Composite index {composite_index} not found')
+
+        return self.indicators[composite_index]
 
     def load_indicator(self) -> ImportData:
-        """ """
-        if not os.path.exists(f"{PATHS.imported_data}/HDR.csv") or self.update_data:
+        """Load HDR data to the object
+
+        If the data has not been downloaded or if `update_data` is True, the data will be
+        downloaded from the UNDP website. Otherwise, the data will be read from disk.
+
+        Returns:
+            Same object to allow chaining
+        """
+
+        # check is data does not exist or if `update_data` is True. Update if condition passes.
+        if not os.path.exists(f"{self.data_path}/HDR.csv") or self.update_data:
             self.update()
 
-        self.data = pd.read_csv(f"{PATHS.imported_data}/HDR.csv")
+        self.data = pd.read_csv(f"{self.data_path}/HDR.csv")
         return self
 
     def update(self) -> None:
-        """Update HDR data"""
+        """Force an update to the HDR data in the object and on disk."""
 
-        if self.data is None:
-            raise ValueError("No data loaded. Please load data first.")
+        hdr_data = get_hdr_data()
+        self.data = hdr_data
+        hdr_data.to_csv(f"{self.data_path}/HDR.csv", index=False)
 
-        get_hdr_data().to_csv(f"{PATHS.imported_data}/HDR.csv", index=False)
+    def get_data(self, composite_index: str = None, indicator: str = None) -> pd.DataFrame:
+        """Get HDR data as a pandas dataframe
 
-    def get_data(self, composite_index: str, indicator: str) -> pd.DataFrame:
-        """Get HDR data
+        Specify either a composite index or an indicator. If both are specified, an error will be
+        raised. If neither are specified, all data will be returned.
+
+        Args:
+            composite_index (str): Composite index to get data for.
+            indicator (str): Indicator to get data for.
+
+        Returns:
+            pd.DataFrame: Dataframe with HDR data.
 
 
         """
