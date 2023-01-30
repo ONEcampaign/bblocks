@@ -4,6 +4,10 @@ import pandas as pd
 import requests
 import io
 from bs4 import BeautifulSoup
+import os
+
+from bblocks.import_tools.common import ImportData
+from bblocks.config import PATHS
 
 BASE_URL = 'https://hdr.undp.org/data-center/documentation-and-downloads'
 
@@ -119,9 +123,65 @@ def get_hdr_data() -> pd.DataFrame:
     return data_df
 
 
+hdr_indicators = {'hdi': ['hdi_rank', 'hdi', 'le', 'eys', 'mys', 'gnipc'],
+                  'gdi': ['gdi_group', 'gdi', 'hdi_f', 'le_f', 'eys_f', 'mys_f', 'gni_pc_f',
+                          'hdi_m', 'le_m', 'eys_m', 'mys_m', 'gni_pc_m'],
+                  'ihdi': ['ihdi', 'coef_ineq', 'loss', 'ineq_le', 'ineq_edu', 'ineq_inc'],
+                  'gii': ['gii_rank', 'gii', 'mmr', 'abr', 'se_f', 'se_m', 'pr_f',
+                          'pr_m', 'lfpr_f', 'lfpr_m'],
+                  'phdi': ['rankdiff_hdi_phdi', 'phdi', 'diff_hdi_phdi', 'co2_prod', 'mf']
+                  }
 
 
+class HDR(ImportData):
+    """Import UNDP Human Development Report data."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.indicators = hdr_indicators # set indicators
+
+    def load_indicator(self) -> ImportData:
+        """ """
+        if not os.path.exists(f"{PATHS.imported_data}/HDR.csv") or self.update_data:
+            self.update()
+
+        self.data = pd.read_csv(f"{PATHS.imported_data}/HDR.csv")
+        return self
+
+    def update(self) -> None:
+        """Update HDR data"""
+
+        if self.data is None:
+            raise ValueError("No data loaded. Please load data first.")
+
+        get_hdr_data().to_csv(f"{PATHS.imported_data}/HDR.csv", index=False)
+
+    def get_data(self, composite_index: str, indicator: str) -> pd.DataFrame:
+        """Get HDR data
 
 
+        """
 
+        # check if composite index and indicator is both specified
+        if composite_index is not None and indicator is not None:
+            raise ValueError("Please specify either index or indicator, not both.")
 
+        # return composite index data
+        if composite_index is not None:
+            if composite_index not in self.indicators.keys():
+                raise ValueError(f"Composite index {composite_index} not found.")
+            return (self.data[self.data['variable'].isin(self.indicators[composite_index])]
+                    .reset_index(drop=True)
+                    )
+
+        # return single indicator data
+        if indicator is not None:
+            if indicator not in self.data['variable'].unique():
+                raise ValueError(f"Indicator {indicator} not found.")
+            return (self.data[self.data['variable'] == indicator]
+                    .reset_index(drop=True)
+                    )
+
+        # return all data
+        return self.data
