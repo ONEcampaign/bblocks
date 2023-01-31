@@ -74,14 +74,14 @@ def download_ids_codes() -> None:
         pd.DataFrame.from_dict(d, orient="index")
         .reset_index()
         .rename(columns={"index": "code", 0: "name"})
-        .to_csv("./ids_codes.csv", index=False)
+        .to_csv("../../.raw_data/ids_codes.csv", index=False)
     )
 
 
 def ids_codes() -> dict:
     """Return a dataframe of World Bank 3-letter country codes and their names"""
 
-    path = pathlib.Path("./ids_codes.csv").resolve()
+    path = pathlib.Path("../../.raw_data/ids_codes.csv").resolve()
 
     if not pathlib.Path.exists(path):
         download_ids_codes()

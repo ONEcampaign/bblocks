@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from country_converter import convert
 
-from bblocks.config import PATHS
+from bblocks.config import BBPaths
 from bblocks.import_tools.world_bank import WorldBankData
 from bblocks.other_tools.common import Dict
 
@@ -21,13 +21,13 @@ def __download_income_levels():
 
     df = df.dropna(subset=["Income group"])
 
-    df.to_csv(PATHS.imported_data + r"/income_levels.csv", index=False)
+    df.to_csv(BBPaths.imported_data + r"/income_levels.csv", index=False)
     print("Downloaded income levels")
 
 
 def __get_income_levels() -> dict:
     """Return income level dictionary"""
-    file = PATHS.imported_data + r"/income_levels.csv"
+    file = BBPaths.imported_data + r"/income_levels.csv"
     if not os.path.exists(file):
         __download_income_levels()
 
@@ -45,14 +45,14 @@ __wb = WorldBankData()
 
 def __get_dac_codes() -> dict:
     """Return dac codes dictionary"""
-    file = PATHS.imported_data + r"/oecd_codes.csv"
+    file = BBPaths.imported_data + r"/oecd_codes.csv"
 
     return pd.read_csv(file, na_values=None, index_col="code")["iso_code"].to_dict()
 
 
 def __read_flourish_geometries() -> dict:
     """Reads flourish geometries"""
-    file = f"{PATHS.imported_data}/flourish_geometries.csv"
+    file = f"{BBPaths.imported_data}/flourish_geometries.csv"
     return pd.read_csv(file, na_values=None, index_col="3-letter ISO code")[
         "geometry"
     ].to_dict()

@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from numpy import nan
 
-from bblocks.config import PATHS
+from bblocks.config import BBPaths
 
 URL: str = "https://www.imf.org/external/Pubs/ft/dsa/dsalist.pdf"
 
@@ -61,7 +61,7 @@ def __clean_dsa(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_dsa(
-    update=False, local_path: str = f"{PATHS.imported_data}/dsa_list.pdf"
+    update=False, local_path: str = f"{BBPaths.imported_data}/dsa_list.pdf"
 ) -> pd.DataFrame:
     """Extract DSA data from the
 

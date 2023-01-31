@@ -1,21 +1,16 @@
-import os
+from pathlib import Path
 
 
-class Paths:
-    def __init__(self, project_dir):
-        self.project_dir = project_dir
+class BBPaths:
+    """Class to store the paths to the data and output folders."""
 
-    @property
-    def imported_data(self):
-        return os.path.join(self.project_dir, "bblocks", "import_tools", "stored_data")
-
-    @property
-    def test_files(self):
-        return os.path.join(self.project_dir, "tests", "test_files")
-    
-    @property
-    def import_tools(self):
-        return os.path.join(self.project_dir, "bblocks", "import_tools")
-
-
-PATHS = Paths(os.path.dirname(os.path.dirname(__file__)))
+    project = Path(__file__).resolve().parent.parent
+    scripts = project / "bblocks"
+    raw_data = scripts / ".raw_data"
+    imported_data = raw_data
+    pydeflate_data = raw_data / ".pydeflate"
+    wfp_data = raw_data / "wfp_raw"
+    import_settings = scripts / "import_tools/settings"
+    tests = project / "tests"
+    test_files = tests / "files"
+    import_tools = scripts / "import_tools"
