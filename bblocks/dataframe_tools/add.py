@@ -70,7 +70,6 @@ def add_population_column(
     date_column: str | None = None,
     target_column: str = "population",
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add population column to a dataframe
 
@@ -86,7 +85,6 @@ def add_population_column(
             the world bank is used.
         target_column: the column where the population data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the population data.
@@ -103,7 +101,6 @@ def add_population_column(
     pop_df = get_population_df(
         most_recent_only=True if date_column is None else False,
         update_population_data=update_data,
-        data_path=data_path,
     ).rename(
         columns={"iso_code": "id_", "year": "merge_year", "population": target_column}
     )
@@ -127,7 +124,6 @@ def add_poverty_ratio_column(
     date_column: str | None = None,
     target_column: str = "poverty_ratio",
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add poverty headcount column to a dataframe
 
@@ -142,7 +138,6 @@ def add_poverty_ratio_column(
             column as well. If the data isn't specified, the most recent data is used.
         target_column: the column where the population data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the poverty data.
@@ -159,7 +154,6 @@ def add_poverty_ratio_column(
     pov_df = get_poverty_ratio_df(
         most_recent_only=True if date_column is None else False,
         update_poverty_data=update_data,
-        data_path=data_path,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -187,7 +181,6 @@ def add_population_density_column(
     date_column: str | None = None,
     target_column: str = "population_density",
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add population density column to a dataframe
 
@@ -202,8 +195,6 @@ def add_population_density_column(
             column as well. If the data isn't specified, the most recent data is used.
         target_column: the column where the population data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
-
     Returns:
         DataFrame: the original DataFrame with a new column containing the population
             density data.
@@ -220,7 +211,6 @@ def add_population_density_column(
     pod_df = get_population_density_df(
         most_recent_only=True if date_column is None else False,
         update_population_data=update_data,
-        data_path=data_path,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -249,7 +239,6 @@ def add_gdp_column(
     usd: bool = True,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add GDP column to a dataframe
 
@@ -267,7 +256,6 @@ def add_gdp_column(
         usd: Whether to add the data as US dollars or Local Currency Units.
         target_column: the column where the gdp data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the gdp data from
@@ -287,7 +275,6 @@ def add_gdp_column(
         most_recent_only=True if date_column is None else False,
         include_estimates=include_estimates,
         update_gdp_data=update_data,
-        data_path=data_path,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -316,7 +303,6 @@ def add_gov_expenditure_column(
     usd: bool = True,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add Government Expenditure column to a dataframe
 
@@ -334,7 +320,6 @@ def add_gov_expenditure_column(
         usd: Whether to add the data as US dollars or Local Currency Units.
         target_column: the column where the expenditure data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the expenditure data from
@@ -349,13 +334,9 @@ def add_gov_expenditure_column(
         date_column=date_column,
     )
 
-    gov_df = get_gov_expenditure_df(
-        usd=usd,
-        most_recent_only=True if date_column is None else False,
-        include_estimates=include_estimates,
-        update_data=update_data,
-        data_path=data_path,
-    ).rename(
+    gov_df = get_gov_expenditure_df(usd=usd,
+                                    most_recent_only=True if date_column is None else False,
+                                    update_data=update_data, include_estimates=include_estimates).rename(
         columns={
             "iso_code": "id_",
             "year": "merge_year",
@@ -385,7 +366,6 @@ def add_gdp_share_column(
     usd: bool = False,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add value as share of GDP column to a dataframe
 
@@ -405,7 +385,7 @@ def add_gdp_share_column(
         usd: Whether to add the data as US dollars or Local Currency Units.
         target_column: the column where the gdp data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the data as a share
@@ -436,7 +416,6 @@ def add_population_share_column(
     target_column: str = "population_share",
     decimals: int = 2,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add population share column to a dataframe
 
@@ -454,7 +433,6 @@ def add_population_share_column(
         target_column: the column where the population data will be stored.
         decimals: the number of decimals to use in the returned column.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing value as share of
@@ -487,7 +465,6 @@ def add_gov_exp_share_column(
     usd: bool = False,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add value as share of Government Expenditure column to a dataframe
 
@@ -506,7 +483,6 @@ def add_gov_exp_share_column(
         usd: Whether to add the data as US dollars or Local Currency Units.
         target_column: the column where the expenditure data will be stored.
         update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the data as a share
@@ -724,7 +700,6 @@ def add_value_as_share(
     target_col: str | None = None,
     decimals: int = 2,
 ) -> pd.DataFrame:
-
     # Copy the dataframe to avoid modifying the original one
     df = df.copy(deep=True)
 

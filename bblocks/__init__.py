@@ -33,7 +33,7 @@ from bblocks.cleaning_tools.filter import (
 )
 
 
-def set_data_path(path):
+def set_bblocks_data_path(path):
     from pathlib import Path
     from bblocks.config import BBPaths
 
