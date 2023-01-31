@@ -1,13 +1,13 @@
 """Tools to extract _data from WHO"""
 
+import numpy as np
 import pandas as pd
 import requests
-import numpy as np
-import os
 
+from bblocks.config import BBPaths
 from bblocks.import_tools.common import ImportData
 
-GHED_URL = "https://apps.who.int/nha/database/Home/IndicatorsDownload/en"
+GHED_URL: str = "https://apps.who.int/nha/database/Home/IndicatorsDownload/en"
 
 
 def extract_ghed_data() -> bytes:
@@ -38,14 +38,17 @@ def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
 def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean GHED _data dataframe"""
 
-    return (df.rename(columns={
+    return df.rename(
+        columns={
             "country": "country_name",
             "code": "country_code",
             "region": "region",
-            "income": "income_group"})
-    .melt(
+            "income": "income_group",
+        }
+    ).melt(
         id_vars=["country_name", "country_code", "region", "income_group", "year"],
-        var_name="indicator_code"))
+        var_name="indicator_code",
+    )
 
 
 def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
@@ -66,7 +69,7 @@ def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def download_ghed(path: str) -> None:
+def download_ghed() -> None:
     """Download GHED dataset to disk"""
 
     ghed_content = extract_ghed_data()
@@ -75,14 +78,14 @@ def download_ghed(path: str) -> None:
     data = pd.read_excel(ghed_content, sheet_name="Data").pipe(_clean_ghed_data)
     codes = pd.read_excel(ghed_content, sheet_name="Codebook").pipe(_clean_ghed_codes)
     pd.merge(data, codes, on="indicator_code", how="left").to_feather(
-        os.path.join(path, "ghed_data.feather")
+        BBPaths.raw_data / "ghed_data.feather"
     )
 
     # metadata
     (
         pd.read_excel(ghed_content, sheet_name="Metadata")
         .pipe(_clean_metadata)
-        .to_feather(os.path.join(path, "ghed_metadata.feather"))
+        .to_feather(BBPaths.raw_data / "ghed_metadata.feather")
     )
 
 
@@ -97,46 +100,43 @@ class GHED(ImportData):
     To get the metadata, call the get_metadata method.
     """
 
-    metadata: pd.DataFrame = None
+    _metadata: pd.DataFrame = None
 
     def load_data(self) -> ImportData:
-        """Load GHED _data
+        """Load GHED data
 
         Returns:
             The same object to allow chaining
         """
 
-        if (
-                not os.path.exists(f"{self.data_path}/ghed_data.feather")
-                or self.update_data
-        ):
-            download_ghed(self.data_path)
+        if not (BBPaths.raw_data / "ghed_data.feather").exists():
+            download_ghed()
 
-        self.data = pd.read_feather(f"{self.data_path}/ghed_data.feather")
-        self.metadata = pd.read_feather(f"{self.data_path}/ghed_metadata.feather")
+        self._raw_data = pd.read_feather(BBPaths.raw_data / "ghed_data.feather")
+        self._metadata = pd.read_feather(BBPaths.raw_data / "ghed_metadata.feather")
+
+        # Load all data
+        self._data["all"] = self._raw_data
 
         return self
 
-    def update_data(self, **kwargs: bool) -> ImportData:
+    def update_data(self, reload_data: bool) -> ImportData:
         """Update GHED _data
 
         Returns:
             The same object to allow chaining
         """
 
-        download_ghed(self.data_path)
+        download_ghed()
+
         if reload_data:
-            self.data = pd.read_feather(f"{self.data_path}/ghed_data.feather")
-            self.metadata = pd.read_feather(f"{self.data_path}/ghed_metadata.feather")
+            self._raw_data = pd.read_feather(BBPaths.raw_data / "ghed_data.feather")
+            self._metadata = pd.read_feather(BBPaths.raw_data / "ghed_metadata.feather")
+
+            # Load all data
+            self._data["all"] = self._raw_data
+
         return self
-
-    def get_data(self) -> pd.DataFrame:
-        """Get GHED _data as a pandas dataframe
-
-        Returns:
-            A pandas dataframe with the _data
-        """
-        return self.data
 
     def get_metadata(self) -> pd.DataFrame:
         """Get GHED metadata as a pandas dataframe
@@ -145,5 +145,4 @@ class GHED(ImportData):
             A pandas dataframe with the metadata
         """
 
-        return self.metadata
-
+        return self._metadata
