@@ -32,11 +32,11 @@ class ImportData(ABC):
         df = pd.DataFrame()
         indicators_ = []
 
+        if isinstance(indicators, str) and indicators != "all":
+            indicators = [indicators]
+
         if indicators == "all":
             indicators_ = self._data.values()
-
-        if isinstance(indicators, str):
-            indicators = [indicators]
 
         if isinstance(indicators, list):
 
