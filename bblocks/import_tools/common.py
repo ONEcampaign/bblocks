@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from bblocks.logger import logger
+
 
 @dataclass(repr=False)
 class ImportData(ABC):
@@ -24,10 +26,14 @@ class ImportData(ABC):
 
     def get_data(self, indicators: str | list = "all", **kwargs) -> pd.DataFrame:
         """Get the _data as a Pandas DataFrame"""
+        if self._data is None:
+            raise RuntimeError("No data or indicators have been loaded")
+
         df = pd.DataFrame()
+        indicators_ = []
 
         if indicators == "all":
-            indicators = self._data.values()
+            indicators_ = self._data.values()
 
         if isinstance(indicators, str):
             indicators = [indicators]
@@ -36,13 +42,14 @@ class ImportData(ABC):
 
             for _ in indicators:
                 if _ not in self._data:
-                    raise ValueError(
-                        f"{_} has not been loaded or is an invalid indicator."
-                    )
+                    logger.warning(f"{_} not loaded or is an invalid indicator.")
 
-            indicators = [self._data[_] for _ in indicators if _ in list(self._data)]
+            indicators_ = [self._data[_] for _ in indicators if _ in list(self._data)]
 
-        for _ in indicators:
+        if len(indicators_) == 0:
+            logger.warning("No indicators were loaded. Returning empty dataframe.")
+
+        for _ in indicators_:
             df = pd.concat([df, _], ignore_index=True)
 
         return df
