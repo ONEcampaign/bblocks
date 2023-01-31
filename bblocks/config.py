@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 class BBPaths:
-    """Class to store the paths to the data and output folders."""
+    """Class to store the paths to the _data and output folders."""
 
     project = Path(__file__).resolve().parent.parent
     scripts = project / "bblocks"

@@ -86,7 +86,7 @@ def test_ids_api_url():
     expected_url = (
         "https://api.worldbank.org/v2/sources/6/country/"
         "all/series/DT.AMT.BLAT.CD/time/yr2015;yr2016/"
-        "data?format=jsonstat"
+        "_data?format=jsonstat"
     )
 
     test_url = ids.ids_api_url("DT.AMT.BLAT.CD", "all", 2015, 2016, 6)

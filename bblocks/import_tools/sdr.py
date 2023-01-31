@@ -82,11 +82,11 @@ def read_tsv(url: str) -> pd.DataFrame:
         return pd.read_csv(url, delimiter="/t", engine="python")
 
     except pd.errors.ParserError:
-        raise ValueError("SDR data not available for this date")
+        raise ValueError("SDR _data not available for this date")
 
 
 def get_data(date: str) -> pd.DataFrame:
-    """Get the SDR data for a specific date"""
+    """Get the SDR _data for a specific date"""
 
     tsv_link = f"{BASE_URL}extsdr2.aspx?date1key={date}&tsvflag=Y"
     df = read_tsv(tsv_link).pipe(clean_df, date)
@@ -105,9 +105,9 @@ def format_date(date: list | tuple) -> str:
 
 
 def check_if_not_downloaded(date: str) -> bool:
-    """Checks if data is already downloaded for an indicator and area grouping
+    """Checks if _data is already downloaded for an indicator and area grouping
     Returns:
-        True if data is not downloaded, False if data is downloaded
+        True if _data is not downloaded, False if _data is downloaded
     """
     if os.path.exists(f"{PATHS.imported_data}/SDR_{date}.csv"):
         return False
@@ -176,20 +176,20 @@ def get_latest_exchange_rate(
 
 
 class SDR(ImportData):
-    """An object to import SDR data
+    """An object to import SDR _data
 
     An object to help extract and store the latest Special Drawing Rights (SDR)
-    data from the IMF website: https://www.imf.org/external/np/fin/tad/extsdr1.aspx
+    _data from the IMF website: https://www.imf.org/external/np/fin/tad/extsdr1.aspx
 
     In order to use, create an instance of this class.
-    Then, call the `load_indicator` method to load SDR data for a specific date. If no date is provided,
+    Then, call the `load_indicator` method to load SDR _data for a specific date. If no date is provided,
     the latest date will be found and loaded.
     Call `latest_date` to get the latest date available.
-    If the data for a specific date has never been downloaded, it will be downloaded. If it has been downloaded,
-    it will be loaded from disk. If `update_data` is set to True when creating the object, the data will be updated each time
+    If the _data for a specific date has never been downloaded, it will be downloaded. If it has been downloaded,
+    it will be loaded from disk. If `update_data` is set to True when creating the object, the _data will be updated each time
     `load_indicators is called`. You can force an update by calling `update` if you
-    want to refresh the data stored on disk and in the object.
-    Call `get_data` to get the data as a DataFrame.
+    want to refresh the _data stored on disk and in the object.
+    Call `get_data` to get the _data as a DataFrame.
 
     """
 
@@ -197,16 +197,14 @@ class SDR(ImportData):
 
     @property
     def latest_date(self):
-        """return the latest date of the data"""
+        """return the latest date of the _data"""
         if self.__latest_date is None:
             self.__latest_date = get_latest_date()
         return self.__latest_date
 
-    def load_indicator(self, date: tuple | list = "latest") -> ImportData:
-        """Load the SDR data for a specific date
+    def load_data(self, **kwargs: tuple | list) -> ImportData:
+        """Load the SDR _data for a specific date
 
-        Args:
-            date: a list or set containing the year and month for which to load the data. If no date is provided,
             the latest date will be found and loaded.
 
         Returns:
@@ -228,12 +226,8 @@ class SDR(ImportData):
         )
         return self
 
-    def update(self, reload: bool = True) -> ImportData:
-        """Update the data stored on disk and in the object
-
-        Args:
-            reload: if True, the updated data will be reloaded to the object.
-                    If False, the data will be only be updated on disk.
+    def update_data(self, **kwargs: bool) -> ImportData:
+        """Update the _data stored on disk and in the object
 
         Returns:
             the same object to allow chaining
@@ -248,17 +242,17 @@ class SDR(ImportData):
         return self
 
     def get_data(self, date: str = None, indicator: str = None) -> pd.DataFrame:
-        """Get SDR data as a DataFrame
+        """Get SDR _data as a DataFrame
 
         Args:
-            date: the date of the data to be retrieved. If no date is provided, data for all dates will be retrieved
-                  If 'latest' is provided, all the data will be returned.
+            date: the date of the _data to be retrieved. If no date is provided, _data for all dates will be retrieved
+                  If 'latest' is provided, all the _data will be returned.
 
             indicator: the indicator to be retrieved, choose from ['holdings', 'allocations].
                        If no indicator is provided, all the indicators will be returned.
 
         Returns:
-            a DataFrame containing the SDR data
+            a DataFrame containing the SDR _data
         """
 
         if date == "latest":

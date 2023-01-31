@@ -11,44 +11,30 @@ def test_world_bank_data_load_indicator():
     wb_obj = WorldBankData()
 
     # Load indicator
-    wb_obj.load_indicator(
-        indicator_code="SP.POP.TOTL",
-        indicator_name="Population",
-        start_year=None,
-        end_year=None,
-        most_recent_only=True,
-    )
+    wb_obj.load_data(indicator_code="SP.POP.TOTL", indicator_name="Population", start_year=None,
+                     end_year=None, most_recent_only=True)
     # Check that the indicator was loaded
     assert "SP.POP.TOTL" in wb_obj.indicators
-    # Check that the indicator data was downloaded
+    # Check that the indicator _data was downloaded
     assert wb_obj.indicators["SP.POP.TOTL"] is not None
     # Check that the `most_recent_only` parameter was respected
     assert wb_obj.indicators["SP.POP.TOTL"][0].iso_code.duplicated().sum() == 0
 
-    wb_obj.load_indicator(
-        indicator_code="NY.GDP.MKTP.CD",
-        indicator_name="GDP",
-        start_year=2015,
-        end_year=2018,
-        most_recent_only=False,
-    )
+    wb_obj.load_data(indicator_code="NY.GDP.MKTP.CD", indicator_name="GDP", start_year=2015,
+                     end_year=2018, most_recent_only=False)
 
     # Check that the second indicator was appended to the list
     assert len(wb_obj.indicators) == 2
-    # Check that the starting year in the data is indeed the start_year parameter
+    # Check that the starting year in the _data is indeed the start_year parameter
     assert wb_obj.indicators["NY.GDP.MKTP.CD"][0].date.dt.year.min() == 2015
-    # Check that the ending year in the data is indeed the end_year parameter
+    # Check that the ending year in the _data is indeed the end_year parameter
     assert wb_obj.indicators["NY.GDP.MKTP.CD"][0].date.dt.year.max() == 2018
 
     # Check that both start and end date have to be provided
 
     with pytest.raises(ValueError) as error:
-        wb_obj.load_indicator(
-            indicator_code="NY.GDP.MKTP.CD",
-            indicator_name="GDP",
-            start_year=2015,
-            most_recent_only=False,
-        )
+        wb_obj.load_data(indicator_code="NY.GDP.MKTP.CD", indicator_name="GDP", start_year=2015,
+                         most_recent_only=False)
     assert "both" in str(error.value)
 
 
@@ -59,18 +45,13 @@ def test__world_bank_data_update():
 
     # Check that it raises an error if no indicators have been loaded
     with pytest.raises(RuntimeError) as error:
-        wb_obj.update()
+        wb_obj.update_data()
 
     assert "loaded" in str(error.value)
 
     # Load indicator
-    wb_obj.load_indicator(
-        indicator_code="SP.POP.TOTL",
-        indicator_name="Population",
-        start_year=None,
-        end_year=None,
-        most_recent_only=True,
-    )
+    wb_obj.load_data(indicator_code="SP.POP.TOTL", indicator_name="Population", start_year=None,
+                     end_year=None, most_recent_only=True)
 
     # Get the filename and time
     file_name = (
@@ -79,7 +60,7 @@ def test__world_bank_data_update():
     time = os.path.getmtime(file_name)
 
     # Update the indicator
-    wb_obj.update()
+    wb_obj.update_data()
 
     # Check that the underlying file has been modified
     assert os.path.getmtime(file_name) > time
@@ -89,31 +70,21 @@ def test__world_bank_data_get_data():
     wb_obj = WorldBankData()
 
     # Load indicator
-    wb_obj.load_indicator(
-        indicator_code="SP.POP.TOTL",
-        indicator_name="Population",
-        start_year=None,
-        end_year=None,
-        most_recent_only=True,
-    )
+    wb_obj.load_data(indicator_code="SP.POP.TOTL", indicator_name="Population", start_year=None,
+                     end_year=None, most_recent_only=True)
 
-    # Get the data for the indicator
+    # Get the _data for the indicator
     df = wb_obj.get_data()
 
     assert isinstance(df, pd.DataFrame)
 
     # Load a second indicator
-    wb_obj.load_indicator(
-        indicator_code="NY.GDP.MKTP.CD",
-        indicator_name="GDP",
-        start_year=2015,
-        end_year=2018,
-        most_recent_only=False,
-    )
+    wb_obj.load_data(indicator_code="NY.GDP.MKTP.CD", indicator_name="GDP", start_year=2015,
+                     end_year=2018, most_recent_only=False)
 
     df = wb_obj.get_data()
 
-    # Check that the data for the second indicator is included
+    # Check that the _data for the second indicator is included
     assert df.indicator.nunique() == 2
 
     # Check that it is possible to get only one of the indicators
@@ -485,4 +456,4 @@ def test_get_data():
     pk = world_bank.PinkSheet()
     with pytest.raises(ValueError) as error1:
         pk.get_data()
-    assert "No data loaded" in str(error1.value)
+    assert "No _data loaded" in str(error1.value)

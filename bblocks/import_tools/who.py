@@ -1,4 +1,4 @@
-"""Tools to extract data from WHO"""
+"""Tools to extract _data from WHO"""
 
 import pandas as pd
 import requests
@@ -36,7 +36,7 @@ def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Clean GHED data dataframe"""
+    """Clean GHED _data dataframe"""
 
     return (df.rename(columns={
             "country": "country_name",
@@ -71,7 +71,7 @@ def download_ghed(path: str) -> None:
 
     ghed_content = extract_ghed_data()
 
-    # data
+    # _data
     data = pd.read_excel(ghed_content, sheet_name="Data").pipe(_clean_ghed_data)
     codes = pd.read_excel(ghed_content, sheet_name="Codebook").pipe(_clean_ghed_codes)
     pd.merge(data, codes, on="indicator_code", how="left").to_feather(
@@ -87,20 +87,20 @@ def download_ghed(path: str) -> None:
 
 
 class GHED(ImportData):
-    """An object to extract GHED data
+    """An object to extract GHED _data
 
     To use, create an instance of the class and call the load_indicator method.
-    If the data is already downloaded, it will be loaded from disk. If not, it will be downloaded.
-    If `update_data` is set to True, the data will be downloaded regardless of whether it is already on disk.
+    If the _data is already downloaded, it will be loaded from disk. If not, it will be downloaded.
+    If `update_data` is set to True, the _data will be downloaded regardless of whether it is already on disk.
     To force an update, call the update method.
-    To get the data, call the get_data method.
+    To get the _data, call the get_data method.
     To get the metadata, call the get_metadata method.
     """
 
     metadata: pd.DataFrame = None
 
-    def load_indicator(self) -> ImportData:
-        """Load GHED data
+    def load_data(self) -> ImportData:
+        """Load GHED _data
 
         Returns:
             The same object to allow chaining
@@ -117,11 +117,8 @@ class GHED(ImportData):
 
         return self
 
-    def update(self, reload_data: bool = True) -> ImportData:
-        """Update GHED data
-
-        Args:
-            reload_data: Whether to reload the data to the object after updating it. Default is True.
+    def update_data(self, **kwargs: bool) -> ImportData:
+        """Update GHED _data
 
         Returns:
             The same object to allow chaining
@@ -134,10 +131,10 @@ class GHED(ImportData):
         return self
 
     def get_data(self) -> pd.DataFrame:
-        """Get GHED data as a pandas dataframe
+        """Get GHED _data as a pandas dataframe
 
         Returns:
-            A pandas dataframe with the data
+            A pandas dataframe with the _data
         """
         return self.data
 

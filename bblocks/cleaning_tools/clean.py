@@ -44,14 +44,14 @@ def clean_numeric_series(
     Args:
         data: it accepts a series or a dataframe. If a dataframe is passed, the column(s)
             to clean must be specified
-        series_columns: optionally declared (only when data is a dataframe). To apply to
+        series_columns: optionally declared (only when _data is a dataframe). To apply to
             one or more columns.
         to: the type to convert to (int or float)
 
     """
 
     if isinstance(data, pd.DataFrame) and (series_columns is None):
-        raise ValueError("series_column must be specified when data is a DataFrame")
+        raise ValueError("series_column must be specified when _data is a DataFrame")
 
     if isinstance(data, pd.DataFrame):
         if isinstance(series_columns, str):

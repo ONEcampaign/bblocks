@@ -35,14 +35,14 @@ def test_available_indicators():
 def test_load_indicator():
     test_obj = wfp.WFPData()
 
-    test_obj.load_indicator("inflation")
+    test_obj.load_data()
 
     assert len(test_obj.indicators) > 0
     assert list(test_obj.indicators.keys())[0] == "inflation"
 
     # test that an error is raised when wrong indicator passed
     with pytest.raises(ValueError) as error:
-        test_obj.load_indicator("nonsense")
+        test_obj.load_data()
 
     assert str(error.value) == "Indicator nonsense not available"
 
@@ -54,19 +54,19 @@ def test_update_inflation():
 
     # Check that it raises an error if no indicators have been loaded
     with pytest.raises(RuntimeError) as error:
-        test_obj.update()
+        test_obj.update_data()
 
     assert "loaded" in str(error.value)
 
     # Load indicator
-    test_obj.load_indicator("inflation")
+    test_obj.load_data()
 
     # Get the filename and time
     folder_name = f"{PATHS.imported_data}/wfp_raw/AGO_inflation.csv"
     time = os.path.getmtime(folder_name)
 
     # Update the indicator
-    test_obj.update()
+    test_obj.update_data()
 
     # Check that the underlying file has been modified
     assert os.path.getmtime(folder_name) > time
@@ -78,14 +78,14 @@ def test_update_insufficient():
     wfp.__dict__['_CODES']= {'AFG': 1, 'ALB': 3, 'DZA': 4, 'AND': 7, 'AGO': 8}
 
     # Load indicator
-    test_obj.load_indicator("insufficient_food")
+    test_obj.load_data()
 
     # Get the filename and time
     file_name = f"{PATHS.imported_data}/wfp_raw/AGO_insufficient_food.csv"
     time = os.path.getmtime(file_name)
 
     # Update the indicator
-    test_obj.update()
+    test_obj.update_data()
 
     # Check that the underlying file has been modified
     assert os.path.getmtime(file_name) > time
@@ -96,14 +96,14 @@ def test_get_data():
 
     assert len(test_obj.get_data()) == 0
 
-    test_obj.load_indicator("inflation")
+    test_obj.load_data()
 
     with pytest.raises(ValueError):
         test_obj.get_data("insufficient_food")
 
     assert len(test_obj.get_data()) > 0
 
-    test_obj.load_indicator("insufficient_food")
+    test_obj.load_data()
 
     df = test_obj.get_data(["insufficient_food", "inflation"])
 

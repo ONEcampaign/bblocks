@@ -41,7 +41,7 @@ def _ids_countries_url(page: int) -> str:
 
 
 def _get_ids_countries_dict(response: json) -> dict:
-    # If there is only one page, return a dictionary, if not, loop to get all data
+    # If there is only one page, return a dictionary, if not, loop to get all _data
     if response[0]["pages"] == 1:
         return {c["id"]: c["name"] for c in response[1]}
 
@@ -63,7 +63,7 @@ def download_ids_codes() -> None:
     # Countries list URL
     url = _ids_countries_url(page=1)
 
-    # Fetch data
+    # Fetch _data
     response = requests.get(url).json()
 
     # Get dictionary of country codes and names
@@ -108,7 +108,7 @@ def ids_api_url(
         source: the database number (see World Bank IDS documentation)
 
     Returns:
-        A string with the URL to be used to get the data from the World Bank IDS API
+        A string with the URL to be used to get the _data from the World Bank IDS API
 
     """
     if not isinstance(indicator, str):
@@ -121,7 +121,7 @@ def ids_api_url(
         "https://api.worldbank.org/v2/"
         f"sources/{source}/country/{countries}/"
         f"series/{indicator}/time/{time_period}/"
-        f"data?format=jsonstat"
+        f"_data?format=jsonstat"
     )
 
 
@@ -133,8 +133,8 @@ def get_indicator_data(
     source: int = 6,
 ) -> pd.DataFrame:
     """
-    Query the World Bank IDS API and return the data as a pandas DataFrame.
-    The data is requested from the World Bank as a pyjstat dataset, which is
+    Query the World Bank IDS API and return the _data as a pandas DataFrame.
+    The _data is requested from the World Bank as a pyjstat dataset, which is
     converted to a pandas DataFrame.
 
     Args:
@@ -146,7 +146,7 @@ def get_indicator_data(
         source: the database number (see World Bank IDS documentation)
 
     Returns:
-        A dataframe with the data from the World Bank IDS API
+        A dataframe with the _data from the World Bank IDS API
 
     """
     # Get API url
@@ -158,16 +158,16 @@ def get_indicator_data(
         source=source,
     )
 
-    # Get data
+    # Get _data
     try:
         data = _fetch_ids_indicator(url=url)
         return data.pipe(_clean_ids_response, indicator=indicator)
 
     except requests.exceptions.HTTPError:
-        print(f"Failed to get data for {indicator}")
+        print(f"Failed to get _data for {indicator}")
 
     except requests.exceptions.JSONDecodeError:
-        print(f"Failed to get data for {indicator}")
+        print(f"Failed to get _data for {indicator}")
 
     except Exception as e:
         print("Ran into other trouble: ", e)

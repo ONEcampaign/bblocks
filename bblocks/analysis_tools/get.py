@@ -25,7 +25,7 @@ def __validate_cols(
 
     for col in [date_col, *value_col]:
         if col not in d.columns:
-            raise ValueError(f"{col} not found in data")
+            raise ValueError(f"{col} not found in _data")
 
     if grouper is None:
         grouper = [c for c in d.columns if c not in value_col]
@@ -39,7 +39,7 @@ def __validate_cols(
 
     for col in grouper:
         if col not in d.columns:
-            raise ValueError(f"{col} not found in data")
+            raise ValueError(f"{col} not found in _data")
 
     if not pd.api.types.is_datetime64_any_dtype(sdate):
         sdate = pd.to_datetime(sdate, infer_datetime_format=True)
@@ -102,7 +102,7 @@ def change_from_date(
     group_by: str | list | None = None,
     percentage: bool = False,
 ) -> pd.DataFrame:
-    """Calculate the change in value from a start to and end data (in #)"""
+    """Calculate the change in value from a start to and end _data (in #)"""
 
     # Create a copy of the dataframe to avoid modifying the original
     data = data.copy(deep=True)

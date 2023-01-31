@@ -36,10 +36,7 @@ def __get_income_levels() -> dict:
 
 __wb = WorldBankData()
 (
-    __wb.load_indicator("SP.DYN.LE00.IN", most_recent_only=True)
-    .load_indicator("EN.POP.DNST", most_recent_only=True)
-    .load_indicator("SP.POP.TOTL", most_recent_only=True)
-    .load_indicator("SI.POV.DDAY", most_recent_only=True)
+    __wb.load_data(most_recent_only=True)
 )
 
 
@@ -60,7 +57,7 @@ def __read_flourish_geometries() -> dict:
 
 def update_dictionaries() -> None:
     """Updates dictionaries"""
-    __wb.update()
+    __wb.update_data()
     __download_income_levels()
 
 

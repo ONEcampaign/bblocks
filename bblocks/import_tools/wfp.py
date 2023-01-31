@@ -37,7 +37,7 @@ def _read_wfp_country_codes() -> dict:
 
 
 def _get_inflation(country_iso: str, data_path: str) -> None:
-    """Get inflation data from VAM for a single country based on iso code"""
+    """Get inflation _data from VAM for a single country based on iso code"""
 
     if data_path[-1] == "/":
         data_path = data_path[:-1]
@@ -72,7 +72,7 @@ def _get_inflation(country_iso: str, data_path: str) -> None:
 
 
 def _get_insufficient_food(code: int, iso: str, data_path: str) -> None:
-    """Get food consumption data from WFP"""
+    """Get food consumption _data from WFP"""
 
     if data_path[-1] == "/":
         data_path = data_path[:-1]
@@ -80,7 +80,7 @@ def _get_insufficient_food(code: int, iso: str, data_path: str) -> None:
     # API URL
     url = (
         "https://5763353767114258.eu-central-1.fc.aliyuncs.com/2016-08-15/"
-        f"proxy/wfp-data-api.36/map-data/adm0/{code}/countryData.json"
+        f"proxy/wfp-_data-api.36/map-_data/adm0/{code}/countryData.json"
     )
 
     # Get the json file from WFP website. If empty return None
@@ -93,11 +93,11 @@ def _get_insufficient_food(code: int, iso: str, data_path: str) -> None:
     # Create dataframe
     data = pd.DataFrame(r.json()["fcsGraph"])
 
-    # Code may be valid but data may be empty. If so, return None
+    # Code may be valid but _data may be empty. If so, return None
     if len(data) == 0:
         return None
 
-    # If data is valid, clean it and save to munged
+    # If _data is valid, clean it and save to munged
     data = (
         data.rename(
             columns=(
@@ -129,7 +129,7 @@ def _read_files(iso_code: str, file_name: str, data_path: str) -> pd.DataFrame:
 
 
 def _read_insufficient_food(iso_codes: list, data_path: str) -> pd.DataFrame:
-    """Read and merge the data for the given iso codes."""
+    """Read and merge the _data for the given iso codes."""
 
     data = pd.DataFrame()
 
@@ -140,7 +140,7 @@ def _read_insufficient_food(iso_codes: list, data_path: str) -> pd.DataFrame:
         )
 
     if len(data) == 0:
-        print("No insufficient food data available. Run update to download data")
+        print("No insufficient food _data available. Run update to download _data")
         return data
 
     return (
@@ -151,7 +151,7 @@ def _read_insufficient_food(iso_codes: list, data_path: str) -> pd.DataFrame:
 
 
 def _read_inflation(iso_codes: list, data_path: str) -> pd.DataFrame:
-    """Read and merge the data for the given iso codes."""
+    """Read and merge the _data for the given iso codes."""
 
     data = pd.DataFrame()
 
@@ -162,7 +162,7 @@ def _read_inflation(iso_codes: list, data_path: str) -> pd.DataFrame:
         )
 
     if len(data) == 0:
-        print("No inflation data available. Run update to download data")
+        print("No inflation _data available. Run update to download _data")
         return data
 
     return data.sort_values(by=["iso_code", "date"]).reset_index(drop=True)
@@ -178,14 +178,14 @@ _CODES: dict = _read_wfp_country_codes()
 
 @dataclass
 class WFPData(ImportData):
-    """Class to download and read WFP inflation and insufficient food data"""
+    """Class to download and read WFP inflation and insufficient food _data"""
 
     @property
     def available_indicators(self) -> KeysView:
         """View the available indicators from WFP"""
         return _AVAILABLE_INDICATORS.keys()
 
-    def load_indicator(self, indicator: str, **kwargs) -> None:
+    def load_data(self, **kwargs: str) -> None:
         """Load an indicator into the WFPData object"""
         try:
             self.indicators[indicator] = _AVAILABLE_INDICATORS[indicator](
@@ -194,8 +194,8 @@ class WFPData(ImportData):
         except KeyError:
             raise ValueError(f"Indicator {indicator} not available")
 
-    def update(self, **kwargs) -> None:
-        """Update the data for all the indicators currently loaded"""
+    def update_data(self, **kwargs) -> None:
+        """Update the _data for all the indicators currently loaded"""
 
         if len(self.indicators) == 0:
             raise RuntimeError("No indicators loaded. Load indicators before updating")
@@ -209,14 +209,14 @@ class WFPData(ImportData):
                     for iso, code in _CODES.items()
                 ]
 
-        print("Data correctly updated. Run `load_indicator` to load the new data")
+        print("Data correctly updated. Run `load_indicator` to load the new _data")
 
     def get_data(
         self,
         indicators: str | list = "all",
     ) -> pd.DataFrame:
         """
-        Get the data for the given indicators as a Pandas DataFrame
+        Get the _data for the given indicators as a Pandas DataFrame
 
         Args:
             indicators: 'all', or one or more indicators.

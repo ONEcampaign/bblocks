@@ -425,7 +425,7 @@ def test_check_response():
     response = {"tableData": []}
     with pytest.raises(ValueError) as error:
         unaids.check_response(response)
-    assert "No data available for this indicator" in str(error.value)
+    assert "No _data available for this indicator" in str(error.value)
 
 
 def mock_indicators():
@@ -523,7 +523,7 @@ def test_load_indicator():
     aids = unaids.Aids()
 
     with pytest.raises(ValueError) as error:
-        aids.load_indicator("invalid_indicator")
+        aids.load_data()
     assert "Invalid" in str(error.value)
 
 
@@ -541,6 +541,6 @@ def test_update():
     """test update"""
     aids = unaids.Aids()
     with pytest.raises(RuntimeError) as error:
-        aids.update()
+        aids.update_data()
     assert "No indicators loaded" in str(error.value)
 

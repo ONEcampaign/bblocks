@@ -1,4 +1,4 @@
-"""Tools to retrieve data from UNAIDS"""
+"""Tools to retrieve _data from UNAIDS"""
 
 import pandas as pd
 import requests
@@ -35,11 +35,11 @@ def get_response(
         return json.loads(response.content)
 
     except ConnectionError:
-        raise ConnectionError(f"Could not extract data for indicator: {indicator}")
+        raise ConnectionError(f"Could not extract _data for indicator: {indicator}")
 
 
 def parse_data_table(response: dict, dimensions: list, years: list) -> pd.DataFrame:
-    """parses data table in json response and returns a formatted dataframe"""
+    """parses _data table in json response and returns a formatted dataframe"""
 
     records = []
 
@@ -59,7 +59,7 @@ def parse_data_table(response: dict, dimensions: list, years: list) -> pd.DataFr
 
 
 def parse_global_data(response: dict, dimensions: list, years: list) -> pd.DataFrame:
-    """parses global data in json response and returns a formatted dataframe"""
+    """parses global _data in json response and returns a formatted dataframe"""
 
     global_data = [i[0] for i in response["Global_Numbers"][0]["Data_Val"]]
     return pd.DataFrame.from_records(global_data, columns=dimensions).assign(
@@ -91,9 +91,9 @@ def get_category(indicator: str) -> str:
 
 
 def check_response(response: dict) -> None:
-    """checks if response has data"""
+    """checks if response has _data"""
     if len(response["tableData"]) == 0:
-        raise ValueError("No data available for this indicator")
+        raise ValueError("No _data available for this indicator")
 
 
 def get_dimensions(response: dict) -> list:
@@ -134,7 +134,7 @@ def response_to_df(grouping: str, response: dict, indicator: str) -> pd.DataFram
 
 
 def extract_data(indicator: str, grouping: str):
-    """pipeline to extract data"""
+    """pipeline to extract _data"""
 
     params = response_params(grouping, indicator)
     response = get_response(**params)
@@ -143,10 +143,10 @@ def extract_data(indicator: str, grouping: str):
 
 
 def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
-    """Checks if data is already downloaded for an indicator and area grouping
+    """Checks if _data is already downloaded for an indicator and area grouping
 
     Returns:
-        True if data is not downloaded, False if data is downloaded
+        True if _data is not downloaded, False if _data is downloaded
 
     """
     if os.path.exists(f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv"):
@@ -178,7 +178,7 @@ def concat_dataframes(
         for indicator in indicators:
             if indicator not in indicator_dict[grouping].keys():
                 warnings.warn(
-                    f"No {grouping} data available for indicator: {indicator}"
+                    f"No {grouping} _data available for indicator: {indicator}"
                 )
             else:
                 df = pd.concat([df, indicator_dict[grouping][indicator]])
@@ -186,14 +186,14 @@ def concat_dataframes(
 
 
 class Aids(ImportData):
-    """An object to extract data from UNAIDS.
+    """An object to extract _data from UNAIDS.
 
     To use, create an instance of the class.
     The load indicators using the load_indicators method. This can be done multiple times.
     To return a dataframe of all available indicators to load, use the available_indicators class attribute.
-    If the data for an indicator has never been downloaded, it will be downloaded.
+    If the _data for an indicator has never been downloaded, it will be downloaded.
     If it has been downloaded, it will be loaded from disk. If update_data is set to true,
-    the data will be downloaded each time an indicator is loaded.
+    the _data will be downloaded each time an indicator is loaded.
     You can force an update by calling 'update', and all indicators will be reloaded into the object.
     You can get a dataframe by calling 'get_data' and passing the indicator name(s)
     (or None and this will return all indicators) and passing the area grouping(s) ('all' by default)
@@ -205,13 +205,10 @@ class Aids(ImportData):
         super().__init__(*args, **kwargs)
         self.indicators = {"country": {}, "region": {}}
 
-    def load_indicator(self, indicator: str, area_grouping: str = "all") -> ImportData:
+    def load_data(self, **kwargs: str) -> ImportData:
         """Load an indicator to the object
 
         Args:
-            indicator (str): The name of the indicator to load. To see a DataFrame of available indicators,
-             use the available_indicators method.
-            area_grouping (str): The grouping to use. Choose from ["country", "region", "all"].
 
         Returns:
             The same object to allow chaining
@@ -231,28 +228,18 @@ class Aids(ImportData):
                     index=False,
                 )
 
-            # load data from disk
+            # load _data from disk
             (
-                self.indicators[grouping].update(
-                    {
-                        indicator: pd.read_csv(
-                            f"{self.data_path}/aids_{grouping}_{indicator}.csv"
-                        )
-                    }
-                )
+                self.indicators[grouping].update_data()
             )
 
         return self
 
-    def update(self, reload_data: bool = True):
+    def update_data(self, **kwargs: bool):
         """Update all loaded indicators saved on the disk
 
         When called, it will go through each loaded indicator/area grouping combination
-        and update the data saved on disk.
-
-        Args:
-            reload_data (bool): If True, the updated data will be reloaded
-             into the object.
+        and update the _data saved on disk.
 
         Returns:
             The same object to allow chaining
@@ -276,7 +263,7 @@ class Aids(ImportData):
     def get_data(
         self, indicators: Optional[str | list] = None, area_grouping: str = "all"
     ) -> pd.DataFrame:
-        """Get the data as a Pandas DataFrame
+        """Get the _data as a Pandas DataFrame
 
         Args:
             indicators:  By default, all indicators are returned in a single DataFrame.
@@ -286,7 +273,7 @@ class Aids(ImportData):
                 Default is "all".
 
         Returns:
-            A Pandas DataFrame with the requested indicator data
+            A Pandas DataFrame with the requested indicator _data
         """
 
         if len(self.indicators["country"]) == 0 and len(self.indicators["region"]) == 0:

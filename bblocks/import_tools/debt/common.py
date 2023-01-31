@@ -63,17 +63,17 @@ def __clean_dsa(df: pd.DataFrame) -> pd.DataFrame:
 def get_dsa(
     update=False, local_path: str = f"{BBPaths.imported_data}/dsa_list.pdf"
 ) -> pd.DataFrame:
-    """Extract DSA data from the
+    """Extract DSA _data from the
 
-    Extract the most recent Debt Sustainability Assessment (DSA) data
+    Extract the most recent Debt Sustainability Assessment (DSA) _data
     for PRGT-Eligible Countries from the IMF website.
     URL = https://www.imf.org/external/Pubs/ft/dsa/DSAlist.pdf
 
     Args:
         local_path: where the downloaded PDF will be stored
-        update (bool): if True, updates the data from the IMF website. Otherwise
-            it loads the data from the local file. If a local file does not exist,
-            the data will be extracted from the website.
+        update (bool): if True, updates the _data from the IMF website. Otherwise
+            it loads the _data from the local file. If a local file does not exist,
+            the _data will be extracted from the website.
 
     Returns:
         pandas dataframe with country, latest publication date, and risk of debt distress
