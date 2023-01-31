@@ -42,14 +42,14 @@ __wb = WorldBankData().load_data(
 
 def __get_dac_codes() -> dict:
     """Return dac codes dictionary"""
-    file = BBPaths.imported_data / "oecd_codes.csv"
+    file = BBPaths.import_settings / "oecd_codes.csv"
 
     return pd.read_csv(file, na_values=None, index_col="code")["iso_code"].to_dict()
 
 
 def __read_flourish_geometries() -> dict:
     """Reads flourish geometries"""
-    file = BBPaths.imported_data / "flourish_geometries.csv"
+    file = BBPaths.import_settings / "flourish_geometries.csv"
     return pd.read_csv(file, na_values=None, index_col="3-letter ISO code")[
         "geometry"
     ].to_dict()
