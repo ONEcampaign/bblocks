@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 
 from bblocks.analysis_tools.get import __validate_cols
@@ -10,8 +8,8 @@ from bblocks.cleaning_tools.clean import convert_id
 def filter_latest_by(
     data: pd.DataFrame,
     date_column: str,
-    value_columns: str | list = None,
-    group_by: Optional[str | list] = None,
+    value_columns: str | list | None = None,
+    group_by: str | list | None = None,
 ) -> pd.DataFrame:
     """
     Calculate the latest value of (a) column(s) over a period of time.

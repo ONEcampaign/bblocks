@@ -5,11 +5,11 @@ import pandas as pd
 
 def __validate_cols(
     d: pd.DataFrame,
-    sdate: str,
-    edate: str,
+    sdate: str | None,
+    edate: str | None,
     date_col: str,
     value_col: str,
-    grouper: list[str],
+    grouper: list[str] | None,
 ) -> tuple:
     # If value column is None, set to 'value'
     if value_col is None:
