@@ -512,7 +512,7 @@ def add_income_level_column(
     id_column: str,
     id_type: str | None = None,
     target_column: str = "income_level",
-    update_income_level_data: bool = False,
+    update_data: bool = False,
 ) -> pd.DataFrame:
     """Add an income levels column to a dataframe
 
@@ -523,7 +523,7 @@ def add_income_level_column(
             using the rules from the 'country_converter' package. For the DAC codes,
             "DACcode" must be passed.
         target_column: the column where the income level _data will be stored.
-        update_income_level_data: whether to update the underlying _data or not.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing the income level _data.
@@ -538,11 +538,11 @@ def add_income_level_column(
         date_column=None,
     )
 
-    if update_income_level_data:
+    if update_data:
         __download_income_levels()
         print("Downloaded income levels _data")
 
-    df[target_column] = df_["id_"].map(income_levels)
+    df[target_column] = df_["id_"].map(income_levels())
 
     return df
 
@@ -691,7 +691,7 @@ def add_flourish_geometries(
         df=df.copy(deep=True), id_column=id_column, id_type=id_type, date_column=None
     )
 
-    df[target_column] = df_.id_.map(flourish_geometries)
+    df[target_column] = df_.id_.map(flourish_geometries())
 
     return df
 

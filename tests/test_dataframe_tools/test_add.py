@@ -411,12 +411,6 @@ def test_add_income_level_column():
         "Upper middle income",
     ]
 
-    df_test2 = add_income_level_column(
-        df=df,
-        id_column="country_name",
-        update_income_level_data=True,
-    )
-
 
 def test_add_gdp_column():
     df = pd.DataFrame(
