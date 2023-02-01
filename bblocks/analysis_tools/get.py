@@ -2,6 +2,8 @@ from operator import xor
 
 import pandas as pd
 
+from bblocks.logger import logger
+
 
 def __validate_cols(
     d: pd.DataFrame,
@@ -77,6 +79,13 @@ def period_avg(
     # Create a copy of the dataframe to avoid modifying the original
     data = data.copy(deep=True)
 
+    # Check that date column is date and if not convert it
+    if not pd.api.types.is_datetime64_any_dtype(data[date_column]):
+        data[date_column] = pd.to_datetime(
+            data[date_column], infer_datetime_format=True
+        )
+        logger.info(f"Converted {date_column} to datetime")
+
     # Validate args
     start_date, end_date, date_column, value_columns, group_by = __validate_cols(
         data,
@@ -128,7 +137,7 @@ def change_from_date(
     return (
         data.loc[lambda d: d[date_column].isin([start_date, end_date])]
         .sort_values(by=[date_column] + group_by)
-        .groupby(by=group_by)[value_columns]
+        .groupby(by=group_by, group_keys=False)[value_columns]
         .apply(__range_diff if not percentage else __pct_diff)
         .reset_index()
         .filter(cols, axis=1)

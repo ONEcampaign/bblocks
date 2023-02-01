@@ -100,7 +100,7 @@ def add_population_column(
 
     pop_df = get_population_df(
         most_recent_only=True if date_column is None else False,
-        update_population_data=update_data,
+        update=update_data,
     ).rename(
         columns={"iso_code": "id_", "year": "merge_year", "population": target_column}
     )
@@ -153,7 +153,7 @@ def add_poverty_ratio_column(
 
     pov_df = get_poverty_ratio_df(
         most_recent_only=True if date_column is None else False,
-        update_poverty_data=update_data,
+        update=update_data,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -210,7 +210,7 @@ def add_population_density_column(
 
     pod_df = get_population_density_df(
         most_recent_only=True if date_column is None else False,
-        update_population_data=update_data,
+        update=update_data,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -274,7 +274,7 @@ def add_gdp_column(
         usd=usd,
         most_recent_only=True if date_column is None else False,
         include_estimates=include_estimates,
-        update_gdp_data=update_data,
+        update_data=update_data,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -334,9 +334,12 @@ def add_gov_expenditure_column(
         date_column=date_column,
     )
 
-    gov_df = get_gov_expenditure_df(usd=usd,
-                                    most_recent_only=True if date_column is None else False,
-                                    update_data=update_data, include_estimates=include_estimates).rename(
+    gov_df = get_gov_expenditure_df(
+        usd=usd,
+        most_recent_only=True if date_column is None else False,
+        update_data=update_data,
+        include_estimates=include_estimates,
+    ).rename(
         columns={
             "iso_code": "id_",
             "year": "merge_year",

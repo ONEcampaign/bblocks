@@ -8,12 +8,21 @@ from bblocks.import_tools.world_bank import WorldBankData
 
 
 def __get_wb_ind(
-    ind_code: str, ind_name: str, update: bool, mrnev: bool
+    ind_code: str, ind_name: str, update: bool, most_recent_only: bool = False, **kwargs
 ) -> pd.DataFrame:
     """Get a simplified DataFrame for a World Bank indicator"""
+    if "mrnev" in kwargs:
+        most_recent_only = kwargs["mrnev"]
+
+    wb = WorldBankData().load_data(
+        indicator=ind_code, most_recent_only=most_recent_only
+    )
+
+    if update:
+        wb.update_data(reload_data=True)
+
     return (
-        WorldBankData(update_data=update)
-        .get_data()
+        wb.get_data()
         .assign(year=lambda d: d.date.dt.year)
         .filter(["year", "iso_code", "value"], axis=1)
         .rename(columns={"value": ind_name})
@@ -40,13 +49,15 @@ def _get_weo_indicator(
 ) -> pd.DataFrame:
 
     # Create a World Economic Outlook object
-    weo = WorldEconomicOutlook(update_data=update)
+    weo = WorldEconomicOutlook().load_data(indicator=indicator)
+
+    # Update the data if needed
+    if update:
+        weo.update_data(reload_data=True)
 
     # Get the _data
-    data = (
-        weo.load_data()
-        .get_data(keep_metadata=True)
-        .assign(year=lambda d: pd.to_datetime(d.year, format="%Y"))
+    data = weo.get_data(keep_metadata=True).assign(
+        year=lambda d: pd.to_datetime(d.year, format="%Y")
     )
 
     # Filter the _data to keep only non-estimates if needed
@@ -71,7 +82,7 @@ def get_gdp_df(
     *,
     usd: bool = True,
     most_recent_only: bool,
-    update_gdp_data: bool,
+    update_data: bool,
     include_estimates: bool = True,
 ) -> pd.DataFrame:
     """Get a population DataFrame"""
@@ -82,7 +93,7 @@ def get_gdp_df(
     return _get_weo_indicator(
         indicator,
         most_recent_only=most_recent_only,
-        update=update_gdp_data,
+        update=update_data,
         include_estimates=include_estimates,
     ).assign(
         value=lambda d: d.value * 1e9,
@@ -108,7 +119,7 @@ def get_gov_expenditure_df(
     gdp = get_gdp_df(
         usd=usd,
         most_recent_only=most_recent_only,
-        update_gdp_data=update_data,
+        update_data=update_data,
         include_estimates=include_estimates,
     )
 

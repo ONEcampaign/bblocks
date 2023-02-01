@@ -191,7 +191,9 @@ class WorldEconomicOutlook(ImportData):
 
         return self
 
-    def update_data(self, year: int | None, release: int | None) -> None:
+    def update_data(
+        self, year: int | None, release: int | None, reload_data: bool = True
+    ) -> None:
         """Update the stored WEO _data, using WEO package.
 
         Args:
@@ -202,7 +204,10 @@ class WorldEconomicOutlook(ImportData):
         self._raw_data = None
         self._data = {}
 
-        logger.info("WEO data updated. Please reload indicators")
+        logger.info("WEO data updated.")
+
+        if reload_data:
+            self.load_data(indicator=list(self._data.keys()))
 
     def available_indicators(self) -> None:
         """Print the available indicators in the dataset"""

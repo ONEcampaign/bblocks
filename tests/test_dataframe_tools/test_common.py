@@ -1,4 +1,7 @@
 from bblocks.dataframe_tools.common import __get_wb_ind, get_population_df
+from bblocks import set_bblocks_data_path, config
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 
 def test__get_wb_ind():
@@ -21,7 +24,7 @@ def test__get_wb_ind():
 
 def test_get_population_df():
 
-    data = get_population_df(most_recent_only=True, update_population_data=False)
+    data = get_population_df(most_recent_only=True, update=False)
 
     assert list(data.columns) == ["year", "iso_code", "population"]
     assert len(data) > 0

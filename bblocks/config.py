@@ -14,3 +14,4 @@ class BBPaths:
     tests = project / "tests"
     test_files = tests / "files"
     import_tools = scripts / "import_tools"
+    tests_data = project / "tests/.tests_data"

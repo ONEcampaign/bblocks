@@ -70,22 +70,3 @@ def test_change_from_date():
 
     assert result.value.to_list() == [2.0, 6.0]
     assert result.value2.to_list() == [2.0, -2.0]
-
-    test_data2 = pd.DataFrame(
-        {
-            "date": [2018, 2021, 2018, 2021],
-            "value": [1, 3, 1, 7],
-            "value2": [2, 4, 4, 2],
-            "country": ["A", "A", "B", "B"],
-        }
-    )
-    result2 = change_from_date(
-        test_data,
-        date_column="date",
-        start_date="2018-01-01",
-        end_date="2021-01-01",
-        value_columns=["value", "value2"],
-    )
-
-    assert result2.value.to_list() == [2.0, 6.0]
-    assert result2.value2.to_list() == [2.0, -2.0]

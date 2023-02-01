@@ -181,8 +181,6 @@ _AVAILABLE_INDICATORS: dict = {
     "insufficient_food": _read_insufficient_food,
 }
 
-_CODES: dict = _read_wfp_country_codes()
-
 
 @dataclass
 class WFPData(ImportData):
@@ -193,6 +191,9 @@ class WFPData(ImportData):
         """View the available indicators from WFP"""
         return _AVAILABLE_INDICATORS.keys()
 
+    def _country_codes(self) -> dict:
+        return _read_wfp_country_codes()
+
     def load_data(self, indicator: str | list) -> None:
         """Load an indicator into the WFPData object"""
         if isinstance(indicator, str):
@@ -200,7 +201,7 @@ class WFPData(ImportData):
 
         for ind_ in indicator:
             try:
-                self._data[ind_] = _AVAILABLE_INDICATORS[ind_](_CODES)
+                self._data[ind_] = _AVAILABLE_INDICATORS[ind_](self._country_codes())
             except KeyError:
                 raise ValueError(f"Indicator {ind_} not available")
 
@@ -212,8 +213,11 @@ class WFPData(ImportData):
 
         for indicator in self._data.keys():
             if indicator == "inflation":
-                _ = [_get_inflation(iso) for iso in _CODES]
+                _ = [_get_inflation(iso) for iso in self._country_codes()]
             elif indicator == "insufficient_food":
-                _ = [_get_insufficient_food(code, iso) for iso, code in _CODES.items()]
+                _ = [
+                    _get_insufficient_food(code, iso)
+                    for iso, code in self._country_codes().items()
+                ]
 
         logger.info("Data correctly updated. Run `load_indicator` to load the new data")
