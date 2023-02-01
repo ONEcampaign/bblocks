@@ -17,6 +17,7 @@ PINK_SHEET_URL = (
 
 def _get_wb_data(
     series: str,
+    db: int,
     start_year: int | None = None,
     end_year: int | None = None,
     most_recent_only: bool = False,
@@ -42,6 +43,7 @@ def _get_wb_data(
             labels=False,
             columns="series",
             timeColumns=True,
+            db=db,
         )
         .reset_index()
         .rename(
@@ -82,6 +84,7 @@ class WorldBankData(ImportData):
         start_year: int | None = None,
         end_year: int | None = None,
         most_recent_only: bool = False,
+        db: int = 2,  # by default use WDI database
         **kwargs,
     ) -> WorldBankData:
         """Get an indicator from the World Bank API
@@ -91,6 +94,7 @@ class WorldBankData(ImportData):
             start_year: The first year to include in the data
             end_year: The last year to include in the data
             most_recent_only: If True, only get the most recent non-empty value for each country
+            db: The database to use. By default, use the WDI database (2)
 
         Returns:
             The same object to allow chaining
@@ -113,6 +117,7 @@ class WorldBankData(ImportData):
                 "start_year": start_year,
                 "end_year": end_year,
                 "most_recent_only": most_recent_only,
+                "db": db,
             }
 
             # get the indicator _data if it's not saved on disk.
@@ -251,14 +256,20 @@ def read_pink_sheet(indicator: str) -> pd.DataFrame:
 class PinkSheet(ImportData):
     """An object to help download _data from World Bank Pink sheets.
 
-    In order to use, create an instance of this class, specifying the sheet name - 'Monthly Prices', 'Monthly Indices'.
-    Then, call the load_indicator method to load an indicator, optionally specifying in indicator or
-    list of indicators. This can be done multiple times. If the _data has never been downloaded,
-    it will be downloaded. If it has been downloaded, it will be loaded from disk.
-    If `update_data` is set to True when creating the object, the full dataset will be downloaded to disk
+    In order to use, create an instance of this class, specifying the sheet name -
+    'Monthly Prices', 'Monthly Indices'.
+    Then, call the load_indicator method to load an indicator,
+    optionally specifying in indicator or
+    list of indicators. This can be done multiple times. If the _data has never
+    been downloaded,
+    it will be downloaded. If it has been downloaded, it will be
+    loaded from disk.
+    If `update_data` is set to True when creating the object, the full dataset
+    will be downloaded to disk
     when `load_indicator` is called for the first time.
-    You can force an update by calling `update` if you want to refresh the _data stored on disk.
-    You can get a dataframe of the _data by calling `get_data`
+    You can force an update by calling `update` if you want to refresh the
+    data stored on disk.
+    You can get a dataframe of the data by calling `get_data`
 
     """
 
