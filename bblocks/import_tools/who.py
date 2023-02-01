@@ -26,7 +26,9 @@ def _clean_ghed_codes(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(
         columns={
             "variable code": "indicator_code",
+            "Indicator short code": "indicator_code",
             "variable name": "indicator_name",
+            "Indicator name": "indicator_name",
             "Category 1": "category_1",
             "Category 2": "category_2",
             "Indicator units": "indicator_units",
@@ -42,6 +44,9 @@ def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
         columns={
             "country": "country_name",
             "code": "country_code",
+            "country code": "country_code",
+            "income group": "income_group",
+            "region (WHO)": "region",
             "region": "region",
             "income": "income_group",
         }
@@ -53,13 +58,21 @@ def _clean_ghed_data(df: pd.DataFrame) -> pd.DataFrame:
 
 def _clean_metadata(df: pd.DataFrame) -> pd.DataFrame:
     """Clean GHED metadata"""
+    to_drop = [
+        "country",
+        "region (WHO)",
+        "Income group",
+        "Variable name",
+        "Indicator name",
+    ]
+    keep = [col for col in df.columns if col not in to_drop]
 
-    return df.drop(
-        columns=["country", "region (WHO)", "Income group", "Variable name"]
-    ).rename(
+    return df.filter(keep, axis=1).rename(
         columns={
             "code": "country_code",
+            "country code": "country_code",
             "Variable code": "indicator_code",
+            "Indicator short code": "indicator_code",
             "Sources": "source",
             "Comments": "comments",
             "Methods of estimation": "methods_of_estimation",

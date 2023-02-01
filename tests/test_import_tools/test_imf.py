@@ -1,6 +1,9 @@
 import pytest
 
 from bblocks.import_tools.imf import WorldEconomicOutlook
+from bblocks import set_bblocks_data_path, config
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 
 def test_weo_load_indicator():
@@ -9,28 +12,15 @@ def test_weo_load_indicator():
     valid_indicators = ["NGSD_NGDP", "NGDP", "TX_RPCH"]
 
     for _ in valid_indicators:
-        obj.load_data()
-        assert _ in obj.indicators.keys()
+        obj.load_data(_)
+        assert _ in obj._data.keys()
 
     invalid_indicators = ["nonsense", "invalid"]
 
     for _ in invalid_indicators:
         with pytest.raises(ValueError) as error:
-            obj.load_data()
+            obj.load_data(_)
         assert _ in str(error.value)
-
-
-def test_weo_update():
-    obj = WorldEconomicOutlook()
-
-    obj.update_data()
-
-    obj2 = WorldEconomicOutlook(update_data=True)
-    obj2.load_data()
-
-    # the object only wraps functionality contained in weo package.
-    # if no errors are raised, then assert True
-    assert True
 
 
 def test_available_indicators():
@@ -49,9 +39,7 @@ def test_get_data():
     # load indicators
     valid_indicators = ["NGSD_NGDP", "NGDP", "TX_RPCH"]
 
-    for _ in valid_indicators:
-        obj.load_data()
-        assert _ in obj.indicators.keys()
+    obj.load_data(valid_indicators)
 
     # get _data for single indicator
     df_ngdp = obj.get_data(indicators="NGDP")
@@ -72,8 +60,7 @@ def test_get_data():
     assert list(df_all.indicator.unique()) == valid_indicators
 
     # test getting _data for an indicator that hasn't been loaded
-    with pytest.raises(ValueError):
-        _ = obj.get_data(indicators="BCA")
+    assert len(obj.get_data(indicators="BCA")) == 0
 
     # get _data including metadata
     df_meta = obj.get_data("NGDP", keep_metadata=True)

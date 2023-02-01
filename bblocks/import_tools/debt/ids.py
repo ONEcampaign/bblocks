@@ -5,6 +5,8 @@ import pandas as pd
 import requests
 from pyjstat import pyjstat
 
+from bblocks import config
+
 
 def _time_period(start_year: int, end_year: int) -> str:
     """Take a period range and convert it to an API compatible string"""
@@ -69,19 +71,19 @@ def download_ids_codes() -> None:
     # Get dictionary of country codes and names
     d = _get_ids_countries_dict(response=response)
 
+    path = config.BBPaths.import_settings / "ids_codes.csv"
     # Save the dictionary to a csv file
     (
         pd.DataFrame.from_dict(d, orient="index")
         .reset_index()
         .rename(columns={"index": "code", 0: "name"})
-        .to_csv("../../.raw_data/ids_codes.csv", index=False)
+        .to_csv(path, index=False)
     )
 
 
 def ids_codes() -> dict:
     """Return a dataframe of World Bank 3-letter country codes and their names"""
-
-    path = pathlib.Path("../../.raw_data/ids_codes.csv").resolve()
+    path = config.BBPaths.import_settings / "ids_codes.csv"
 
     if not pathlib.Path.exists(path):
         download_ids_codes()

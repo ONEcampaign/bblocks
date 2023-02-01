@@ -12,6 +12,5 @@ class BBPaths:
     wfp_data = raw_data / "wfp_raw"
     import_settings = scripts / "import_tools/settings"
     tests = project / "tests"
-    test_files = tests / "files"
     import_tools = scripts / "import_tools"
     tests_data = project / "tests/.tests_data"

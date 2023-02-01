@@ -2,6 +2,9 @@ import pandas as pd
 import pytest
 
 from bblocks.import_tools.debt import ids
+from bblocks import set_bblocks_data_path, config
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 
 def test__time_period():

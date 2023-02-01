@@ -41,4 +41,5 @@ def set_bblocks_data_path(path):
     global BBPaths
 
     BBPaths.raw_data = Path(path).resolve()
+    BBPaths.wfp_data = Path(path).resolve() / "wfp_raw"
     BBPaths.imported_data = Path(path).resolve()

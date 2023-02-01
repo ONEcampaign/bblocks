@@ -6,7 +6,8 @@ from bblocks.cleaning_tools.filter import (
     filter_african_countries,
     _filter_by,
     filter_eu_countries,
-    filter_by_un_region, filter_by_continent,
+    filter_by_un_region,
+    filter_by_continent,
 )
 
 
@@ -70,7 +71,6 @@ def test_filter_latest_by():
 
 
 def test__filter_by():
-
     # Create sample dataframe
     test_data = pd.DataFrame(
         {
@@ -109,7 +109,6 @@ def test_filter_african_countries():
 
 
 def test_filter_eu_countries():
-
     test_data = pd.DataFrame(
         {
             "country": [
@@ -132,7 +131,6 @@ def test_filter_eu_countries():
 
 
 def test_filter_by_un_region():
-
     test_data = pd.DataFrame(
         {
             "country": [
@@ -157,7 +155,6 @@ def test_filter_by_un_region():
 
 
 def test_filter_by_continent():
-
     test_data = pd.DataFrame(
         {
             "country": [
@@ -178,4 +175,4 @@ def test_filter_by_continent():
 
     assert test_data.columns.to_list() == ["country", "value"]
     assert result.shape == (1, 2)
-    assert result.country.to_list() == ['Guatemala']
+    assert result.country.to_list() == ["Guatemala"]

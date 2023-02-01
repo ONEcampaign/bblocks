@@ -128,6 +128,7 @@ def _get_insufficient_food(code: int, iso: str) -> None:
         os.makedirs(BBPaths.wfp_data)
 
     data.to_csv(BBPaths.wfp_data / f"{iso}_insufficient_food.csv", index=False)
+    logger.info(f"Insufficient food data for {iso} successfully downloaded.")
 
 
 def _read_files(iso_code: str, file_name: str) -> pd.DataFrame:
@@ -205,7 +206,7 @@ class WFPData(ImportData):
             except KeyError:
                 raise ValueError(f"Indicator {ind_} not available")
 
-    def update_data(self) -> None:
+    def update_data(self, reload_data: bool = True) -> None:
         """Update the data for all the indicators currently loaded"""
 
         if len(self._data) == 0:
@@ -220,4 +221,7 @@ class WFPData(ImportData):
                     for iso, code in self._country_codes().items()
                 ]
 
-        logger.info("Data correctly updated. Run `load_indicator` to load the new data")
+        logger.info("Data correctly updated.")
+
+        if reload_data:
+            self.load_data(list(self._data.keys()))

@@ -1,10 +1,12 @@
+from bblocks import config, set_bblocks_data_path
 from bblocks.other_tools.dictionaries import Dict
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 TEST_DICT = {"France": "FRA", "Germany": "DEU", "Italy": "ITA", "Guatemala": "GTM"}
 
 
 def test_change_keys():
-
     # Create a test dictionary of Dict class
     test = Dict(TEST_DICT)
 
@@ -15,7 +17,6 @@ def test_change_keys():
 
 
 def test_reverse():
-
     # Create a test dictionary of Dict class
     test = Dict(TEST_DICT)
 
@@ -26,7 +27,6 @@ def test_reverse():
 
 
 def test_set_keys_type():
-
     # Create a test dictionary of Dict class
     test = Dict({"1": "a", "2": "b", "3": "c"})
 
@@ -37,9 +37,8 @@ def test_set_keys_type():
 
 
 def test_set_values_type():
-
     # Create a test dictionary of Dict class
-    test = Dict({'a': 1.1, 'b': 2.2, 'c': 3.3})
+    test = Dict({"a": 1.1, "b": 2.2, "c": 3.3})
 
     # Set the values to string
     test.set_values_type(str)
