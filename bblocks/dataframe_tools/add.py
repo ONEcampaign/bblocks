@@ -21,7 +21,7 @@ def __validate_add_column_params(
 ) -> tuple:
     """Validate parameters to use in an *add column* function type"""
 
-    # Create a dataframe copy to avoid overriding the original data
+    # Create a dataframe copy to avoid overriding the original _data
     df = df.copy(deep=True)
 
     if id_type is None:
@@ -70,7 +70,6 @@ def add_population_column(
     date_column: str | None = None,
     target_column: str = "population",
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add population column to a dataframe
 
@@ -82,14 +81,13 @@ def add_population_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the population
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the data isn't specified, the most recent population data from
+            column as well. If the _data isn't specified, the most recent population _data from
             the world bank is used.
-        target_column: the column where the population data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+        target_column: the column where the population _data will be stored.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the population data.
+        DataFrame: the original DataFrame with a new column containing the population _data.
     """
 
     # validate parameters
@@ -102,8 +100,7 @@ def add_population_column(
 
     pop_df = get_population_df(
         most_recent_only=True if date_column is None else False,
-        update_population_data=update_data,
-        data_path=data_path,
+        update=update_data,
     ).rename(
         columns={"iso_code": "id_", "year": "merge_year", "population": target_column}
     )
@@ -111,7 +108,7 @@ def add_population_column(
     if date_column is None:
         pop_df = pop_df.drop(columns=["merge_year"])
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
+    # Create a deep copy of the dataframe to avoid overwriting the original _data
     df_ = df_.merge(pop_df, on=on_, how="left")
 
     if date_column is not None:
@@ -127,7 +124,6 @@ def add_poverty_ratio_column(
     date_column: str | None = None,
     target_column: str = "poverty_ratio",
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add poverty headcount column to a dataframe
 
@@ -139,13 +135,12 @@ def add_poverty_ratio_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the population
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the data isn't specified, the most recent data is used.
-        target_column: the column where the population data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+            column as well. If the _data isn't specified, the most recent _data is used.
+        target_column: the column where the population _data will be stored.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the poverty data.
+        DataFrame: the original DataFrame with a new column containing the poverty _data.
     """
 
     # validate parameters
@@ -158,8 +153,7 @@ def add_poverty_ratio_column(
 
     pov_df = get_poverty_ratio_df(
         most_recent_only=True if date_column is None else False,
-        update_poverty_data=update_data,
-        data_path=data_path,
+        update=update_data,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -171,7 +165,7 @@ def add_poverty_ratio_column(
     if date_column is None:
         pov_df = pov_df.drop(columns=["merge_year"])
 
-    # Create a deep copy of the dataframe to avoid overwriting the original data
+    # Create a deep copy of the dataframe to avoid overwriting the original _data
     df_ = df_.merge(pov_df, on=on_, how="left")
 
     if date_column is not None:
@@ -187,7 +181,6 @@ def add_population_density_column(
     date_column: str | None = None,
     target_column: str = "population_density",
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add population density column to a dataframe
 
@@ -199,14 +192,12 @@ def add_population_density_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the population
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the data isn't specified, the most recent data is used.
-        target_column: the column where the population data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
-
+            column as well. If the _data isn't specified, the most recent _data is used.
+        target_column: the column where the population _data will be stored.
+        update_data: whether to update the underlying _data or not.
     Returns:
         DataFrame: the original DataFrame with a new column containing the population
-            density data.
+            density _data.
     """
 
     # validate parameters
@@ -219,8 +210,7 @@ def add_population_density_column(
 
     pod_df = get_population_density_df(
         most_recent_only=True if date_column is None else False,
-        update_population_data=update_data,
-        data_path=data_path,
+        update=update_data,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -249,7 +239,6 @@ def add_gdp_column(
     usd: bool = True,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add GDP column to a dataframe
 
@@ -261,16 +250,15 @@ def add_gdp_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the GDP
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the date isn't specified, the most recent data is used.
-        include_estimates: Whether to include years for which the WEO data is labelled as
+            column as well. If the date isn't specified, the most recent _data is used.
+        include_estimates: Whether to include years for which the WEO _data is labelled as
             estimates.
-        usd: Whether to add the data as US dollars or Local Currency Units.
-        target_column: the column where the gdp data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+        usd: Whether to add the _data as US dollars or Local Currency Units.
+        target_column: the column where the gdp _data will be stored.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the gdp data from
+        DataFrame: the original DataFrame with a new column containing the gdp _data from
             the IMF World Economic Outlook.
     """
 
@@ -286,8 +274,7 @@ def add_gdp_column(
         usd=usd,
         most_recent_only=True if date_column is None else False,
         include_estimates=include_estimates,
-        update_gdp_data=update_data,
-        data_path=data_path,
+        update_data=update_data,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -316,7 +303,6 @@ def add_gov_expenditure_column(
     usd: bool = True,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add Government Expenditure column to a dataframe
 
@@ -328,16 +314,15 @@ def add_gov_expenditure_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the expenditure
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the date isn't specified, the most recent data is used.
-        include_estimates: Whether to include years for which the WEO data is labelled as
+            column as well. If the date isn't specified, the most recent _data is used.
+        include_estimates: Whether to include years for which the WEO _data is labelled as
             estimates.
-        usd: Whether to add the data as US dollars or Local Currency Units.
-        target_column: the column where the expenditure data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+        usd: Whether to add the _data as US dollars or Local Currency Units.
+        target_column: the column where the expenditure _data will be stored.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the expenditure data from
+        DataFrame: the original DataFrame with a new column containing the expenditure _data from
             the IMF World Economic Outlook.
     """
 
@@ -352,9 +337,8 @@ def add_gov_expenditure_column(
     gov_df = get_gov_expenditure_df(
         usd=usd,
         most_recent_only=True if date_column is None else False,
-        include_estimates=include_estimates,
         update_data=update_data,
-        data_path=data_path,
+        include_estimates=include_estimates,
     ).rename(
         columns={
             "iso_code": "id_",
@@ -385,7 +369,6 @@ def add_gdp_share_column(
     usd: bool = False,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add value as share of GDP column to a dataframe
 
@@ -397,19 +380,19 @@ def add_gdp_share_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the GDP
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the date isn't specified, the most recent data is used.
+            column as well. If the date isn't specified, the most recent _data is used.
         value_column: the column containing the value to be converted to a share of GDP.
         decimals: the number of decimals to use in the returned column.
-        include_estimates: Whether to include years for which the WEO data is labelled as
+        include_estimates: Whether to include years for which the WEO _data is labelled as
             estimates.
-        usd: Whether to add the data as US dollars or Local Currency Units.
-        target_column: the column where the gdp data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+        usd: Whether to add the _data as US dollars or Local Currency Units.
+        target_column: the column where the gdp _data will be stored.
+        update_data: whether to update the underlying _data or not.
+
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the data as a share
-         of gdp data, using the IMF World Economic Outlook.
+        DataFrame: the original DataFrame with a new column containing the _data as a share
+         of gdp _data, using the IMF World Economic Outlook.
     """
     kwargs = {
         k: v for k, v in dict(locals()).items() if k not in ["value_column", "decimals"]
@@ -436,7 +419,6 @@ def add_population_share_column(
     target_column: str = "population_share",
     decimals: int = 2,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add population share column to a dataframe
 
@@ -448,13 +430,12 @@ def add_population_share_column(
             "DACcode" must be passed.
         date_column: Optionally, a date column can be specified. If so, the population
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the data isn't specified, the most recent population data from
+            column as well. If the _data isn't specified, the most recent population _data from
             the world bank is used.
         value_column: the column containing the value to be used in the calculation.
-        target_column: the column where the population data will be stored.
+        target_column: the column where the population _data will be stored.
         decimals: the number of decimals to use in the returned column.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
         DataFrame: the original DataFrame with a new column containing value as share of
@@ -487,7 +468,6 @@ def add_gov_exp_share_column(
     usd: bool = False,
     include_estimates: bool = False,
     update_data: bool = False,
-    data_path: str | None = None,
 ) -> pd.DataFrame:
     """Add value as share of Government Expenditure column to a dataframe
 
@@ -497,19 +477,18 @@ def add_gov_exp_share_column(
         id_type: the type of ID used in th id_column. The default 'regex' tries to infer
             using the rules from the 'country_converter' package. For the DAC codes,
             "DACcode" must be passed.
-        date_column: Optionally, a date column can be specified. If so, the expenditure data
+        date_column: Optionally, a date column can be specified. If so, the expenditure _data
             for that year will be used. If it's missing, it will be missing in the returned
-            column as well. If the date isn't specified, the most recent data is used.
+            column as well. If the date isn't specified, the most recent _data is used.
         value_column: the column containing the value to be converted to a share of expenditure.
-        include_estimates: Whether to include years for which the WEO data is labelled as
+        include_estimates: Whether to include years for which the WEO _data is labelled as
             estimates.
-        usd: Whether to add the data as US dollars or Local Currency Units.
-        target_column: the column where the expenditure data will be stored.
-        update_data: whether to update the underlying data or not.
-        data_path: the path to the data folder. If None, the default data folder is used.
+        usd: Whether to add the _data as US dollars or Local Currency Units.
+        target_column: the column where the expenditure _data will be stored.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the data as a share
+        DataFrame: the original DataFrame with a new column containing the _data as a share
          of expenditure, using the IMF World Economic Outlook.
     """
     kwargs = {
@@ -533,7 +512,7 @@ def add_income_level_column(
     id_column: str,
     id_type: str | None = None,
     target_column: str = "income_level",
-    update_income_level_data: bool = False,
+    update_data: bool = False,
 ) -> pd.DataFrame:
     """Add an income levels column to a dataframe
 
@@ -543,11 +522,11 @@ def add_income_level_column(
         id_type: the type of ID used in th id_column. The default 'regex' tries to infer
             using the rules from the 'country_converter' package. For the DAC codes,
             "DACcode" must be passed.
-        target_column: the column where the income level data will be stored.
-        update_income_level_data: whether to update the underlying data or not.
+        target_column: the column where the income level _data will be stored.
+        update_data: whether to update the underlying _data or not.
 
     Returns:
-        DataFrame: the original DataFrame with a new column containing the income level data.
+        DataFrame: the original DataFrame with a new column containing the income level _data.
     """
     from bblocks.other_tools.dictionaries import income_levels, __download_income_levels
 
@@ -559,11 +538,11 @@ def add_income_level_column(
         date_column=None,
     )
 
-    if update_income_level_data:
+    if update_data:
         __download_income_levels()
-        print("Downloaded income levels data")
+        print("Downloaded income levels _data")
 
-    df[target_column] = df_["id_"].map(income_levels)
+    df[target_column] = df_["id_"].map(income_levels())
 
     return df
 
@@ -638,7 +617,7 @@ def add_median_observation(
     Args:
 
         df: the dataframe to which the column will be added
-        group_by: the column(s) by which to group the data to calculate the median.
+        group_by: the column(s) by which to group the _data to calculate the median.
         value_columns: the column(s) containing the values to be used for the median.
         append: if True, the median observation will be appended to the dataframe. If
             False, the median observation will be stored in a new column.
@@ -712,7 +691,7 @@ def add_flourish_geometries(
         df=df.copy(deep=True), id_column=id_column, id_type=id_type, date_column=None
     )
 
-    df[target_column] = df_.id_.map(flourish_geometries)
+    df[target_column] = df_.id_.map(flourish_geometries())
 
     return df
 
@@ -724,7 +703,6 @@ def add_value_as_share(
     target_col: str | None = None,
     decimals: int = 2,
 ) -> pd.DataFrame:
-
     # Copy the dataframe to avoid modifying the original one
     df = df.copy(deep=True)
 
