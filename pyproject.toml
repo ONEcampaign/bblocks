@@ -17,9 +17,9 @@ weo = "^0.7.4"
 beautifulsoup4 = "^4.11.1"
 pyjstat = "^2.3.0"
 pyarrow = "^11.0.0"
-camelot-py = "^0.10.1"
-PyPDF2 = "^3.0.1"
 wbgapi = "<1.1"
+PyPDF2 = "^2"
+camelot-py = "^0.10.1"
 
 [tool.poetry.dev-dependencies]
 bump2version = "^1.0.1"

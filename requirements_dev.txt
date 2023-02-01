@@ -34,7 +34,7 @@ pluggy==1.0.0; python_version >= "3.7"
 pyarrow==11.0.0; python_version >= "3.7"
 pycparser==2.21; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
 pyjstat==2.3.0
-pypdf2==3.0.1; python_version >= "3.6"
+pypdf2==2.12.1; python_version >= "3.6"
 pytest==7.2.1; python_version >= "3.7"
 python-dateutil==2.8.2; python_full_version >= "3.7.13" and python_version >= "3.8"
 pytz==2022.7.1; python_version >= "3.8" and python_full_version >= "3.7.13"
