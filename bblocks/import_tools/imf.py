@@ -1,42 +1,17 @@
 from __future__ import annotations
 
-import pandas as pd
-
-import weo.dates
 import os
+from dataclasses import dataclass
 from typing import Optional
 
+import pandas as pd
+import weo.dates
 from weo import all_releases, download, WEO
 
+from bblocks import config
 from bblocks.cleaning_tools.clean import clean_numeric_series
-
 from bblocks.import_tools.common import ImportData
-
-
-def _get_data(obj: ImportData, indicators: str | list) -> pd.DataFrame:
-    """Unpack dictionary of indicators into a dataframe"""
-    df = pd.DataFrame()
-
-    if indicators == "all":
-        indicators = obj.indicators.values()
-
-    if isinstance(indicators, str):
-        indicators = [indicators]
-
-    if isinstance(indicators, list):
-
-        for _ in indicators:
-            if _ not in obj.indicators:
-                raise ValueError(f"{_} has not been loaded or is an invalid indicator.")
-
-        indicators = [
-            obj.indicators[_] for _ in indicators if _ in list(obj.indicators)
-        ]
-
-    for _ in indicators:
-        df = pd.concat([df, _], ignore_index=True)
-
-    return df
+from bblocks.logger import logger
 
 
 def _check_weo_parameters(
@@ -56,15 +31,8 @@ def _check_weo_parameters(
 def _update_weo(
     latest_y: int = None,
     latest_r: int = None,
-    data_path: str = None,
 ) -> None:
-    """Update data from the World Economic Outlook, using WEO package"""
-
-    if data_path is None:
-        raise ValueError("Please specify a data path")
-
-    if data_path[-1] == "/":
-        data_path = data_path[:-1]
+    """Update _data from the World Economic Outlook, using WEO package"""
 
     latest_y, latest_r = _check_weo_parameters(latest_y, latest_r)
 
@@ -72,29 +40,36 @@ def _update_weo(
     download(
         latest_y,
         latest_r,
-        directory=data_path,
+        directory=config.BBPaths.raw_data,
         filename=f"weo{latest_y}_{latest_r}.csv",
     )
 
     # Validate the file
-    if os.path.getsize(f"{data_path}/weo{latest_y}_{latest_r}.csv") < 1000:
+    if (
+        os.path.getsize(config.BBPaths.raw_data / f"weo{latest_y}_{latest_r}.csv")
+        < 1000
+    ):
         print(
             f"Downloading release {latest_r} of "
             f"{latest_y} failed. Trying previous release"
         )
-        os.remove(f"{data_path}/weo{latest_y}_{latest_r}.csv")
+        os.remove(config.BBPaths.raw_data / f"weo{latest_y}_{latest_r}.csv")
 
         try:
-            _update_weo(latest_y, latest_r - 1, data_path=data_path)
+            _update_weo(latest_y, latest_r - 1)
         except weo.dates.DateError:
-            _update_weo(latest_y - 1, latest_r, data_path=data_path)
+            _update_weo(latest_y - 1, latest_r)
 
 
+@dataclass
 class WorldEconomicOutlook(ImportData):
-    """World Economic Outlook data"""
+    """World Economic Outlook _data"""
 
     year: Optional[int] = None
     release: Optional[int] = None
+
+    def __repr__(self) -> str:
+        return f"IMF WEO(year={self.year}, release={self.release})"
 
     def __load_data(
         self, latest_y: int | None = None, latest_r: int | None = None
@@ -126,27 +101,28 @@ class WorldEconomicOutlook(ImportData):
             "Country/Series-specific Notes",
         ]
 
-        # If data doesn't exist or update is required, update the data
-        if (
-            not os.path.exists(f"{self.data_path}/weo{latest_y}_{latest_r}.csv")
-            or self.update_data
-        ):
-            _update_weo(latest_y, latest_r, data_path=self.data_path)
+        # If _data doesn't exist or update is required, update the _data
+        if not (config.BBPaths.raw_data / f"weo{latest_y}_{latest_r}.csv").exists():
+            _update_weo(latest_y, latest_r)
 
-        # Load the data from disk. If it doesn't exist, try the previous one
+        # Load the _data from disk. If it doesn't exist, try the previous one
         try:
-            df = WEO(f"{self.data_path}/weo{latest_y}_{latest_r}.csv").df
+            df = WEO(config.BBPaths.raw_data / f"weo{latest_y}_{latest_r}.csv").df
             self.version = {"year": latest_y, "release": latest_r}
         except FileNotFoundError:
             try:
-                df = WEO(f"{self.data_path}/weo{latest_y}_{latest_r-1}.csv").df
+                df = WEO(
+                    config.BBPaths.raw_data / f"weo{latest_y}_{latest_r - 1}.csv"
+                ).df
                 self.version = {"year": latest_y, "release": latest_r - 1}
             except FileNotFoundError:
-                df = WEO(f"{self.data_path}/weo{latest_y-1}_{latest_r}.csv").df
+                df = WEO(
+                    config.BBPaths.raw_data / f"weo{latest_y - 1}_{latest_r}.csv"
+                ).df
                 self.version = {"year": latest_y - 1, "release": latest_r}
 
-        # Load data into data object
-        self.data = (
+        # Load _data into _data object
+        self._raw_data = (
             df.drop(to_drop, axis=1)
             .rename(columns=names)
             .melt(id_vars=names.values(), var_name="year", value_name="value")
@@ -160,12 +136,14 @@ class WorldEconomicOutlook(ImportData):
 
     def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
 
-        if self.data is None:
+        if self._raw_data is None:
             self.__load_data()
 
         # Create dictionary of available indicators
         indicators_ = (
-            self.data.drop_duplicates(subset=["indicator", "indicator_name", "units"])
+            self._raw_data.drop_duplicates(
+                subset=["indicator", "indicator_name", "units"]
+            )
             .assign(name_units=lambda d: d.indicator_name + " (" + d.units + ")")
             .set_index("indicator")["name_units"]
             .to_dict()
@@ -182,44 +160,54 @@ class WorldEconomicOutlook(ImportData):
                 self.available_indicators()
                 raise ValueError(f"Indicator not found: {_}")
 
-    def load_indicator(
-        self, indicator_code: str, indicator_name: Optional[str] = None
-    ) -> ImportData:
-        """Loads a specific indicator from the World Economic Outlook data"""
+    def load_data(self, indicator: str | list) -> ImportData:
+        """Loads a specific indicator from the World Economic Outlook _data"""
 
-        if self.data is None:
-            self.__load_data()
+        def __load_indicator(ind_: str) -> None:
+            self._data[ind_] = (
+                self._raw_data.query(f"indicator == '{ind_}'")
+                .assign(
+                    estimate=lambda d: d.apply(
+                        lambda r: True
+                        if r.year.year >= r.estimates_start_after
+                        else False,
+                        axis=1,
+                    ),
+                )
+                .drop(columns=["estimates_start_after"])
+                .sort_values(["iso_code", "year"])
+                .reset_index(drop=True)
+            )
+            logger.info(f"Loaded indicator: {ind_}")
+
+        if isinstance(indicator, str):
+            indicator = [indicator]
 
         # Check if indicator exists
-        self._check_indicators(indicators=indicator_code)
+        [self._check_indicators(indicators=i_) for i_ in indicator]
 
-        self.indicators[indicator_code] = (
-            self.data.loc[lambda d: d.indicator == indicator_code]
-            .assign(
-                indicator_name=indicator_name
-                if indicator_name is not None
-                else lambda d: d.indicator_name,
-                estimate=lambda d: d.apply(
-                    lambda r: True if r.year.year >= r.estimates_start_after else False,
-                    axis=1,
-                ),
-            )
-            .drop(columns=["estimates_start_after"])
-            .sort_values(["iso_code", "year"])
-            .reset_index(drop=True)
-        )
+        # Load indicator(s)
+        [__load_indicator(ind_) for ind_ in indicator]
+
         return self
 
-    def update(self, latest_y: int | None = None, latest_r: int | None = None) -> None:
-        """Update the stored WEO data, using WEO package.
+    def update_data(
+        self, year: int | None, release: int | None, reload_data: bool = True
+    ) -> None:
+        """Update the stored WEO _data, using WEO package.
 
         Args:
-            latest_y: passed only optionally to override the behaviour to get the latest
-                release year for the WEO.
-            latest_r: passed only optionally to override the behaviour to get the latest
-                released value (1 or 2).
         """
-        _update_weo(latest_y=latest_y, latest_r=latest_r, data_path=self.data_path)
+        _update_weo(latest_y=year, latest_r=release)
+
+        # Reset the _data
+        self._raw_data = None
+        self._data = {}
+
+        logger.info("WEO data updated.")
+
+        if reload_data:
+            self.load_data(indicator=list(self._data.keys()))
 
     def available_indicators(self) -> None:
         """Print the available indicators in the dataset"""
@@ -234,11 +222,9 @@ class WorldEconomicOutlook(ImportData):
         self, indicators: str | list = "all", keep_metadata: bool = False
     ) -> pd.DataFrame:
 
-        df = _get_data(obj=self, indicators=indicators)
+        df = super().get_data(indicators=indicators)
 
         if not keep_metadata:
             return df.filter(["iso_code", "name", "indicator", "year", "value"], axis=1)
 
         return df
-
-
