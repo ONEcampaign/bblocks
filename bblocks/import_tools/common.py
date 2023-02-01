@@ -1,54 +1,73 @@
 from __future__ import annotations
 
+import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 import pandas as pd
 
-from bblocks.config import PATHS
+from bblocks.logger import logger
 
 
-@dataclass
+@dataclass(repr=False)
 class ImportData(ABC):
-    indicators: dict = field(default_factory=dict)
-    data: pd.DataFrame = None
-    update_data: bool = False
-    data_path: str = None
-
-    def __post_init__(self):
-        if self.data_path is None:
-            self.data_path = f"{PATHS.imported_data}"
-
-        if self.data_path[-1] == "/":
-            self.data_path = self.data_path[:-1]
+    _data: dict[str, pd.DataFrame] = field(default_factory=dict)
+    _raw_data: pd.DataFrame | None = None
 
     @abstractmethod
-    def load_indicator(self, **kwargs) -> ImportData:
-        """Load the data saved on disk"""
+    def load_data(self, **kwargs) -> ImportData:
+        """Load the _data saved on disk"""
         pass
 
     @abstractmethod
-    def update(self, **kwargs) -> ImportData:
-        """Update object data"""
+    def update_data(self, **kwargs) -> ImportData:
+        """Update object _data"""
         pass
 
-    @abstractmethod
-    def get_data(self, **kwargs) -> pd.DataFrame:
-        """Get the data as a Pandas DataFrame"""
-        pass
+    def get_data(self, indicators: str | list = "all", **kwargs) -> pd.DataFrame:
+        """Get the _data as a Pandas DataFrame"""
+        if self._data is None:
+            raise RuntimeError("No data or indicators have been loaded")
+
+        df = pd.DataFrame()
+        indicators_ = []
+
+        if isinstance(indicators, str) and indicators != "all":
+            indicators = [indicators]
+
+        if indicators == "all":
+            indicators_ = self._data.values()
+
+        if isinstance(indicators, list):
+
+            for _ in indicators:
+                if _ not in self._data:
+                    logger.warning(f"{_} not loaded or is an invalid indicator.")
+
+            indicators_ = [self._data[_] for _ in indicators if _ in list(self._data)]
+
+        if len(indicators_) == 0:
+            logger.warning("No indicators were loaded. Returning empty dataframe.")
+
+        for _ in indicators_:
+            df = pd.concat([df, _], ignore_index=True)
+
+        return df
 
 
 def append_new_data(
-    new_data: pd.DataFrame, existing_data_path: str, parse_dates: list[str] | None
+    new_data: pd.DataFrame,
+    existing_data_path: str | pathlib.Path,
+    parse_dates: list[str] | None,
 ) -> pd.DataFrame:
-    """Append new data to an existing dataframe"""
+    """Append new _data to an existing dataframe"""
     # Read file
     try:
         saved = pd.read_csv(existing_data_path, parse_dates=parse_dates)
     except FileNotFoundError:
         saved = pd.DataFrame()
 
-    # Append new data
+    # Append new _data
     data = pd.concat([saved, new_data], ignore_index=True)
 
     return data.drop_duplicates(keep="last").reset_index(drop=True)

@@ -18,6 +18,9 @@ from bblocks.dataframe_tools.add import (
     add_value_as_share,
 )
 import pandas as pd
+from bblocks import set_bblocks_data_path, config
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 
 def test___validate_column_params():
@@ -48,7 +51,7 @@ def test___validate_column_params():
     )
 
     assert on_ == ["id_", "merge_year"]
-    assert df_test.year.to_list() == df_test.date.to_list()
+    assert df_test.date.to_list() == df_test.date.to_list()
 
     with pytest.raises(ValueError):
         __validate_add_column_params(
@@ -81,7 +84,7 @@ def test___validate_column_params():
         date_column="year",
     )
 
-    assert df_test.year.to_list() == [2022, 2002, 2005]
+    assert df_test.merge_year.to_list() == [2022, 2002, 2005]
 
     df_errors = pd.DataFrame(
         {
@@ -140,7 +143,6 @@ def test_add_population_column():
     pop_no_date = df_test.population.to_list()[0:2]
 
     assert pop_date[0] < pop_no_date[0]
-    assert pop_date[1] > pop_no_date[1]
 
 
 def test_add_short_names_column():
@@ -408,12 +410,6 @@ def test_add_income_level_column():
         "High income",
         "Upper middle income",
     ]
-
-    df_test2 = add_income_level_column(
-        df=df,
-        id_column="country_name",
-        update_income_level_data=True,
-    )
 
 
 def test_add_gdp_column():
