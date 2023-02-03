@@ -8,8 +8,9 @@ import pandas as pd
 import requests
 import io
 from bs4 import BeautifulSoup
-import os
+from dataclasses import dataclass
 
+from bblocks.config import BBPaths
 from bblocks.import_tools.common import ImportData
 
 
@@ -160,27 +161,11 @@ hdr_indicators: dict[str, list] = {
 }
 
 
+@dataclass(repr=False)
 class HDR(ImportData):
-    """Import UNDP Human Development Report data.
+    """ """
 
-    To use, instantiate the class. Call the `load_indicator` method to load the data
-    to the object. If the data has already been downloaded, it will be read from disk, otherwise
-    it will be downloaded from the UNDP website. Optionally set the attribute `update_data` to
-    True to force the data to be downloaded. To force an update of the data, call the `update`
-    method. To get the data, call the `get_data` method. To see a list of avilable composite indices,
-    call the `available_composite_indices` method. To see a list of available indicators, call the
-    `available_indicators` method.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.indicators = hdr_indicators  # set indicators
-
-    def available_composite_indices(self) -> list[str]:
-        """See available composite indices"""
-
-        return list(self.indicators.keys())
+    _available_indicators = hdr_indicators
 
     def available_indicators(self, composite_index: str = None) -> list[str]:
         """See available indicators
@@ -192,70 +177,65 @@ class HDR(ImportData):
         if composite_index is None:
             return [val for sublist in hdr_indicators.values() for val in sublist]
 
-        if composite_index not in self.indicators:
+        if composite_index not in self._available_indicators:
             raise ValueError(f"Composite index {composite_index} not found")
 
-        return self.indicators[composite_index]
+        return self._available_indicators[composite_index]
 
-    def load_indicator(self) -> ImportData:
-        """Load HDR data to the object
+    def available_composite_indices(self) -> list[str]:
+        """See available composite indices"""
 
-        If the data has not been downloaded or if `update_data` is True, the data will be
-        downloaded from the UNDP website. Otherwise, the data will be read from disk.
+        return list(self._available_indicators.keys())
 
-        Returns:
-            Same object to allow chaining
-        """
+    def load_data(self, indicators: str | list = "all") -> ImportData:
+        """ """
 
-        # check is data does not exist or if `update_data` is True. Update if condition passes.
-        if not os.path.exists(f"{self.data_path}/HDR.csv") or self.update_data:
-            self.update()
+        # download data if it does not exist
+        path = BBPaths.raw_data / "HDR.csv"
+        if not path.exists():
+            get_hdr_data().to_csv(path, index=False)
 
-        self.data = pd.read_csv(f"{self.data_path}/HDR.csv")
+        # load entire dataset to _raw_data if it does not exist
+        if self._raw_data is None:
+            self._raw_data = get_hdr_data()
+
+        # if indicators is "all", load all indicators
+        if indicators == "all":
+            indicators = self.available_indicators()
+        # if indicators is a string, convert to list
+        if isinstance(indicators, str):
+            indicators = [indicators]
+
+        # check if indicators are valid
+        for indicator in indicators:
+            if indicator not in self.available_indicators():
+                raise ValueError(f"Indicator {indicator} not found.")
+
+        # load data
+        self._data.update({indicator: (self._raw_data[self._raw_data["variable"] == indicator]
+                                       .reset_index(drop=True))
+                           for indicator in indicators
+                           })
         return self
 
-    def update(self) -> None:
-        """Force an update to the HDR data in the object and on disk."""
+    def update_data(self, reload_data: bool = True) -> ImportData:
+        """ """
 
-        hdr_data = get_hdr_data()
-        self.data = hdr_data
-        hdr_data.to_csv(f"{self.data_path}/HDR.csv", index=False)
+        if len(self._data) == 0:
+            raise RuntimeError("No indicators loaded")
 
-    def get_data(
-        self, composite_index: str = None, indicator: str = None
-    ) -> pd.DataFrame:
-        """Get HDR data as a pandas dataframe
+        self._raw_data = get_hdr_data()
+        self._raw_data.to_csv(BBPaths.raw_data / "HDR.csv", index=False)
+        if reload_data:
+            self.load_data(indicators=list(self._data.keys()))
 
-        Specify either a composite index or an indicator. If both are specified, an error will be
-        raised. If neither are specified, all data will be returned.
+        return self
 
-        Args:
-            composite_index (str): Composite index to get data for.
-            indicator (str): Indicator to get data for.
+    def get_data(self, indicators: str | list = "all", **kwargs) -> pd.DataFrame:
+        """ """
 
-        Returns:
-            pd.DataFrame: Dataframe with HDR data.
+        return super().get_data(indicators=indicators)
 
 
-        """
 
-        # check if composite index and indicator is both specified
-        if composite_index is not None and indicator is not None:
-            raise ValueError("Please specify either index or indicator, not both.")
 
-        # return composite index data
-        if composite_index is not None:
-            if composite_index not in self.indicators.keys():
-                raise ValueError(f"Composite index {composite_index} not found.")
-            return self.data[
-                self.data["variable"].isin(self.indicators[composite_index])
-            ].reset_index(drop=True)
-
-        # return single indicator data
-        if indicator is not None:
-            if indicator not in self.data["variable"].unique():
-                raise ValueError(f"Indicator {indicator} not found.")
-            return self.data[self.data["variable"] == indicator].reset_index(drop=True)
-
-        # return all data
-        return self.data
