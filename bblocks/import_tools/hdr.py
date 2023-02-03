@@ -12,9 +12,43 @@ from dataclasses import dataclass
 
 from bblocks.config import BBPaths
 from bblocks.import_tools.common import ImportData
+from bblocks.logger import logger
 
 
 BASE_URL: str = "https://hdr.undp.org/data-center/documentation-and-downloads"
+
+# dictionary of composite indices with their variables
+HDR_INDICATORS: dict[str, list] = {
+    "hdi": ["hdi_rank", "hdi", "le", "eys", "mys", "gnipc"],
+    "gdi": [
+        "gdi_group",
+        "gdi",
+        "hdi_f",
+        "le_f",
+        "eys_f",
+        "mys_f",
+        "gni_pc_f",
+        "hdi_m",
+        "le_m",
+        "eys_m",
+        "mys_m",
+        "gni_pc_m",
+    ],
+    "ihdi": ["ihdi", "coef_ineq", "loss", "ineq_le", "ineq_edu", "ineq_inc"],
+    "gii": [
+        "gii_rank",
+        "gii",
+        "mmr",
+        "abr",
+        "se_f",
+        "se_m",
+        "pr_f",
+        "pr_m",
+        "lfpr_f",
+        "lfpr_m",
+    ],
+    "phdi": ["rankdiff_hdi_phdi", "phdi", "diff_hdi_phdi", "co2_prod", "mf"],
+}
 
 
 def _parse_html(soup: BeautifulSoup) -> tuple[str, str]:
@@ -127,68 +161,51 @@ def get_hdr_data() -> pd.DataFrame:
     return data_df
 
 
-# dictionary of composite indices with their variables
-hdr_indicators: dict[str, list] = {
-    "hdi": ["hdi_rank", "hdi", "le", "eys", "mys", "gnipc"],
-    "gdi": [
-        "gdi_group",
-        "gdi",
-        "hdi_f",
-        "le_f",
-        "eys_f",
-        "mys_f",
-        "gni_pc_f",
-        "hdi_m",
-        "le_m",
-        "eys_m",
-        "mys_m",
-        "gni_pc_m",
-    ],
-    "ihdi": ["ihdi", "coef_ineq", "loss", "ineq_le", "ineq_edu", "ineq_inc"],
-    "gii": [
-        "gii_rank",
-        "gii",
-        "mmr",
-        "abr",
-        "se_f",
-        "se_m",
-        "pr_f",
-        "pr_m",
-        "lfpr_f",
-        "lfpr_m",
-    ],
-    "phdi": ["rankdiff_hdi_phdi", "phdi", "diff_hdi_phdi", "co2_prod", "mf"],
-}
+def available_indicators(composite_index: str = "all") -> list[str]:
+    """See available indicators
+
+    Args:
+        composite_index (str): Composite index to see available indicators for. If None, all
+    """
+
+    if composite_index == "all":
+        return [val for sublist in HDR_INDICATORS.values() for val in sublist]
+
+    if composite_index not in HDR_INDICATORS:
+        raise ValueError(f"Composite index {composite_index} not found")
+
+    return HDR_INDICATORS[composite_index]
+
+
+def available_composite_indices() -> list[str]:
+    """See available composite indices"""
+
+    return list(HDR_INDICATORS.keys())
 
 
 @dataclass(repr=False)
 class HDR(ImportData):
-    """ """
-
-    _available_indicators = hdr_indicators
-
-    def available_indicators(self, composite_index: str = None) -> list[str]:
-        """See available indicators
-
-        Args:
-            composite_index (str): Composite index to see available indicators for. If None, all
-        """
-
-        if composite_index is None:
-            return [val for sublist in hdr_indicators.values() for val in sublist]
-
-        if composite_index not in self._available_indicators:
-            raise ValueError(f"Composite index {composite_index} not found")
-
-        return self._available_indicators[composite_index]
-
-    def available_composite_indices(self) -> list[str]:
-        """See available composite indices"""
-
-        return list(self._available_indicators.keys())
+    """An object to help download and use UNDP Human Development Report data
+    To use, create an instance of the class. Call `load_data` to load the data for
+    desired indicators. If the data is not already downloaded, it will be downloaded,
+    then the selected indicators will be loaded to the object.
+    To see available indicators, call the function `available_indicators`. To see available composite
+    indices, call the function `available_composite_indices`.
+    To get the data as a dataframe, call `get_data` method. You can force an update by calling `update_data`
+    """
 
     def load_data(self, indicators: str | list = "all") -> ImportData:
-        """ """
+        """Load data to the object
+
+        When called this method checks if the data has been downloaded, if not it downloads it.
+        It then loads the data into the object for selected indicators and returns the object.
+
+        Args:
+            indicators: Indicator(s) to load. If "all", load all indicators.
+
+        Returns:
+            same object with loaded indicators to allow chaining
+        """
 
         # download data if it does not exist
         path = BBPaths.raw_data / "HDR.csv"
@@ -201,41 +218,61 @@ class HDR(ImportData):
 
         # if indicators is "all", load all indicators
         if indicators == "all":
-            indicators = self.available_indicators()
+            indicators = available_indicators()
         # if indicators is a string, convert to list
         if isinstance(indicators, str):
             indicators = [indicators]
 
         # check if indicators are valid
         for indicator in indicators:
-            if indicator not in self.available_indicators():
+            if indicator not in available_indicators():
                 raise ValueError(f"Indicator {indicator} not found.")
 
         # load data
-        self._data.update({indicator: (self._raw_data[self._raw_data["variable"] == indicator]
-                                       .reset_index(drop=True))
-                           for indicator in indicators
-                           })
+        self._data.update(
+            {
+                indicator: (
+                    self._raw_data[self._raw_data["variable"] == indicator].reset_index(
+                        drop=True
+                    )
+                )
+                for indicator in indicators
+            }
+        )
+        logger.info(f"Data loaded successfully.")
         return self
 
     def update_data(self, reload_data: bool = True) -> ImportData:
-        """ """
+        """Update the data
+
+        When called it will update the data used to load indicators.
+
+        Args:
+            reload_data: If True, reload the indicators after updating the data. Default is True.
+
+        Returns:
+            same object with updated data to allow chaining
+        """
 
         if len(self._data) == 0:
             raise RuntimeError("No indicators loaded")
 
-        self._raw_data = get_hdr_data()
+        self._raw_data = get_hdr_data()  # update data store in _raw_data attribute
         self._raw_data.to_csv(BBPaths.raw_data / "HDR.csv", index=False)
         if reload_data:
             self.load_data(indicators=list(self._data.keys()))
 
+        logger.info("Data updated successfully.")
         return self
 
     def get_data(self, indicators: str | list = "all", **kwargs) -> pd.DataFrame:
-        """ """
+        """Get the data as a dataframe
+
+        Args:
+            indicators: Indicator(s) to get data for. If "all", get all indicators.
+
+        Returns:
+            Loaded indicators as a dataframe
+        """
 
         return super().get_data(indicators=indicators)
-
-
-
-
