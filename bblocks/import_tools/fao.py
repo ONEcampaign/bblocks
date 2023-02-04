@@ -1,15 +1,17 @@
+import os
+import pathlib
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import os
 
-from bblocks.config import PATHS
+from bblocks.config import BBPaths
 
 URL = "https://www.fao.org/worldfoodsituation/foodpricesindex/en/"
 
 
 def __scrape_index_df(url: str) -> pd.DataFrame:
-    """Parse FAO food price index page to retrieve data csv url"""
+    """Parse FAO food price index page to retrieve _data csv url"""
 
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -41,16 +43,17 @@ def __clean_fao_food_price_index(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_fao_index(
-    local_path: str = f"{PATHS.imported_data}/fao_index.csv", update: bool = False
+    local_path: str | pathlib.Path = BBPaths.imported_data / "fao_index.csv",
+    update: bool = False,
 ) -> pd.DataFrame:
     """Get FAO food price index
 
     Args:
         local_path: where the downloaded CSV will be stored
 
-        update: if True, updates the data from the FAO website. Otherwise
-            it loads the data from the local file. If a local file does not exist,
-            the data will be extracted from the website.
+        update: if True, updates the _data from the FAO website. Otherwise
+            it loads the _data from the local file. If a local file does not exist,
+            the _data will be extracted from the website.
     """
 
     if not os.path.exists(local_path) or update:

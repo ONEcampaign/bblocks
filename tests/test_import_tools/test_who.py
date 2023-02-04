@@ -2,9 +2,11 @@
 
 import pandas as pd
 from numpy import nan
-import pytest
 
+from bblocks import set_bblocks_data_path, config
 from bblocks.import_tools import who
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 
 def test_clean_ghed_codes():
@@ -40,7 +42,8 @@ def test_clean_ghed_codes():
         }
     )
 
-    pd.testing.assert_frame_equal(who._clean_ghed_codes(raw), expected)
+    result = who._clean_ghed_codes(raw)
+    pd.testing.assert_frame_equal(result, expected)
 
 
 def test_clean_ghed_data():
@@ -109,7 +112,9 @@ def test_clean_ghed_data():
         }
     )
 
-    pd.testing.assert_frame_equal(who._clean_ghed_data(raw), expected)
+    result = who._clean_ghed_data(raw)
+
+    pd.testing.assert_frame_equal(result, expected)
 
 
 def test_clean_ghed_metadata():
@@ -171,4 +176,6 @@ def test_clean_ghed_metadata():
         }
     )
 
-    pd.testing.assert_frame_equal(who._clean_metadata(raw), expected)
+    result = who._clean_metadata(raw)
+
+    pd.testing.assert_frame_equal(result, expected)

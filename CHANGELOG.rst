@@ -1,7 +1,22 @@
 Changelog
 =========
 
-[0.5.0] - 2022-11-23
+[0.5.1] - 2023-01-12
+--------------------
+- Updated requirements
+
+[0.5.0] - 2023-01-12
+--------------------
+- Fixed bugs in `unaids` module preventing instantiation of the parent class `ImportData` 
+  and handling json responses for regional data.
+- Updated the requirements
+
+[0.4.3] - 2022-12-08
+--------------------
+- Fixed the `GHED` importer given changes in the underlying data structure
+
+
+[0.4.2] - 2022-12-06
 --------------------
 - Added a new feature: `who` module in `import_tools` with an object 
   to extract data from GHED dataset.

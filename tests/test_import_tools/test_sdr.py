@@ -1,7 +1,10 @@
 import pandas as pd
 import pytest
 from bblocks.import_tools import sdr
-from bblocks.config import PATHS
+from bblocks.config import BBPaths
+from bblocks import set_bblocks_data_path, config
+
+set_bblocks_data_path(config.BBPaths.tests_data)
 
 
 def test_create_tsv_link():
@@ -74,7 +77,7 @@ def test_parse_sdr_links():
         "1970": "https://www.imf.org/external/np/fin/tad/extsdr3.aspx?dateyear=1970",
     }
 
-    with open(f"{PATHS.test_files}/sdr_main_page.html", "rb") as f:
+    with open(f"{BBPaths.tests_data}/sdr_main_page.html", "rb") as f:
         response = f.read()
         link = sdr.parse_sdr_links(response)
 
@@ -199,7 +202,7 @@ def test_format_date():
 def test_parse_exchange():
     """test parse_exchange"""
 
-    with open(f"{PATHS.test_files}/sdr_exchange_rate.html", "rb") as f:
+    with open(f"{BBPaths.tests_data}/sdr_exchange_rate.html", "rb") as f:
         response = f.read()
 
     parsed_usd = sdr.parse_exchange(response, "USD")

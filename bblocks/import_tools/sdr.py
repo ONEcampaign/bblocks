@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -9,7 +11,8 @@ import calendar
 
 from bblocks.cleaning_tools.clean import clean_numeric_series
 from bblocks.import_tools.common import ImportData
-from bblocks.config import PATHS
+from bblocks.config import BBPaths
+from bblocks.logger import logger
 
 BASE_URL = "https://www.imf.org/external/np/fin/tad/"
 MAIN_PAGE_URL = "https://www.imf.org/external/np/fin/tad/extsdr1.aspx"
@@ -47,7 +50,7 @@ def parse_sdr_links(response: bytes) -> dict:
 
 
 def get_latest_date() -> str:
-    """ """
+    """Get the latest available date"""
 
     year_response = get_response(MAIN_PAGE_URL)
     year_links = parse_sdr_links(year_response.content)
@@ -60,7 +63,7 @@ def get_latest_date() -> str:
 
 
 def clean_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
-    """clean the SDR dataframe"""
+    """Clean the SDR dataframe"""
 
     df = df.loc[3:]["SDR Allocations and Holdings"].str.split("\t", expand=True)
     df.columns = ["entity", "holdings", "allocations"]
@@ -82,11 +85,11 @@ def read_tsv(url: str) -> pd.DataFrame:
         return pd.read_csv(url, delimiter="/t", engine="python")
 
     except pd.errors.ParserError:
-        raise ValueError("SDR data not available for this date")
+        raise ValueError("SDR _data not available for this date")
 
 
 def get_data(date: str) -> pd.DataFrame:
-    """Get the SDR data for a specific date"""
+    """Get the SDR _data for a specific date"""
 
     tsv_link = f"{BASE_URL}extsdr2.aspx?date1key={date}&tsvflag=Y"
     df = read_tsv(tsv_link).pipe(clean_df, date)
@@ -105,17 +108,17 @@ def format_date(date: list | tuple) -> str:
 
 
 def check_if_not_downloaded(date: str) -> bool:
-    """Checks if data is already downloaded for an indicator and area grouping
+    """Checks if _data is already downloaded for an indicator and area grouping
     Returns:
-        True if data is not downloaded, False if data is downloaded
+        True if _data is not downloaded, False if _data is downloaded
     """
-    if os.path.exists(f"{PATHS.imported_data}/SDR_{date}.csv"):
+    if os.path.exists(f"{BBPaths.raw_data}/SDR_{date}.csv"):
         return False
     else:
         return True
 
 
-def __get_rate(table: BeautifulSoup, currency: str):
+def __get_rate(table: BeautifulSoup, currency: str) -> float:
     """Returns currency value from SDR exchange rate table"""
 
     exchange_dict = {"USD": "U.S.$1.00 = SDR", "SDR": "SDR1 = US$"}
@@ -137,7 +140,7 @@ def __get_exchange_date(table: BeautifulSoup) -> str:
     return date
 
 
-def parse_exchange(response: bytes, currency: str):
+def parse_exchange(response: bytes, currency: str) -> tuple[str, float]:
     """Parse the exchange rate response"""
 
     soup = BeautifulSoup(response, "html.parser")
@@ -175,6 +178,7 @@ def get_latest_exchange_rate(
         return {"date": date, "rate": rate}
 
 
+@dataclass()
 class SDR(ImportData):
     """An object to import SDR data
 
@@ -182,12 +186,11 @@ class SDR(ImportData):
     data from the IMF website: https://www.imf.org/external/np/fin/tad/extsdr1.aspx
 
     In order to use, create an instance of this class.
-    Then, call the `load_indicator` method to load SDR data for a specific date. If no date is provided,
+    Then, call the `load_data` method to load SDR _data for a specific date. If no date is provided,
     the latest date will be found and loaded.
     Call `latest_date` to get the latest date available.
     If the data for a specific date has never been downloaded, it will be downloaded. If it has been downloaded,
-    it will be loaded from disk. If `update_data` is set to True when creating the object, the data will be updated each time
-    `load_indicators is called`. You can force an update by calling `update` if you
+    it will be loaded from disk. You can force an update by calling `update_data` if you
     want to refresh the data stored on disk and in the object.
     Call `get_data` to get the data as a DataFrame.
 
@@ -195,19 +198,19 @@ class SDR(ImportData):
 
     __latest_date: str = None
 
-    @property
+    def __repr__(self):
+        if self.__latest_date is None:
+            return f"SDR object with no data loaded"
+        return f"SDR data for {self.__latest_date}"
+
     def latest_date(self):
-        """return the latest date of the data"""
+        """Return the latest date of the _data"""
         if self.__latest_date is None:
             self.__latest_date = get_latest_date()
         return self.__latest_date
 
-    def load_indicator(self, date: tuple | list = "latest") -> ImportData:
-        """Load the SDR data for a specific date
-
-        Args:
-            date: a list or set containing the year and month for which to load the data. If no date is provided,
-            the latest date will be found and loaded.
+    def load_data(self, date: str | tuple = "latest") -> ImportData:
+        """Load the SDR _data for a specific date
 
         Returns:
             the same object to allow chaining
@@ -219,52 +222,48 @@ class SDR(ImportData):
         else:
             date = format_date(date)
 
-        if check_if_not_downloaded(date) or self.update_data:
+        if check_if_not_downloaded(date):
             df = get_data(date)
-            df.to_csv(f"{PATHS.imported_data}/SDR_{date}.csv", index=False)
+            df.to_csv(f"{BBPaths.imported_data}/SDR_{date}.csv", index=False)
 
-        self.indicators[date]: pd.DataFrame = pd.read_csv(
-            f"{PATHS.imported_data}/SDR_{date}.csv", parse_dates=["date"]
+        logger.info(f"Loading SDR data for {date}")
+        self._data[date]: pd.DataFrame = pd.read_csv(
+            f"{BBPaths.imported_data}/SDR_{date}.csv", parse_dates=["date"]
         )
         return self
 
-    def update(self, reload: bool = True) -> ImportData:
+    def update_data(self, reload: bool) -> ImportData:
         """Update the data stored on disk and in the object
-
-        Args:
-            reload: if True, the updated data will be reloaded to the object.
-                    If False, the data will be only be updated on disk.
 
         Returns:
             the same object to allow chaining
         """
 
-        for date in self.indicators:
+        for date in self._data:
             df = get_data(date)
-            df.to_csv(f"{PATHS.imported_data}/SDR_{date}.csv", index=False)
+            df.to_csv(f"{BBPaths.imported_data}/SDR_{date}.csv", index=False)
             if reload:
-                self.indicators[date] = df
+                self._data[date] = df
 
         return self
 
     def get_data(self, date: str = None, indicator: str = None) -> pd.DataFrame:
-        """Get SDR data as a DataFrame
+        """Get SDR _data as a DataFrame
 
         Args:
-            date: the date of the data to be retrieved. If no date is provided, data for all dates will be retrieved
-                  If 'latest' is provided, all the data will be returned.
+            date: the date of the _data to be retrieved. If no date is provided, _data for all dates will be retrieved
+                  If 'latest' is provided, all the _data will be returned.
 
             indicator: the indicator to be retrieved, choose from ['holdings', 'allocations].
                        If no indicator is provided, all the indicators will be returned.
 
         Returns:
-            a DataFrame containing the SDR data
+            a DataFrame containing the SDR _data
         """
-
         if date == "latest":
-            df = self.indicators[self.latest_date]
+            df = super().get_data(indicators="latest")
         elif date is None:
-            df = pd.concat(self.indicators.values())
+            df = super().get_data()
         else:
             raise ValueError("Date must be 'latest' or None")
 
@@ -273,4 +272,4 @@ class SDR(ImportData):
                 raise ValueError("Indicator must be 'holdings' or 'allocations'")
             df = df.loc[df.indicator == indicator]
 
-        return df
+        return df.reset_index(drop=True)

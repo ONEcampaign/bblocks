@@ -1,6 +1,6 @@
 import re
 import warnings
-from typing import Type, Optional
+from typing import Type
 
 import country_converter as coco
 import pandas as pd
@@ -12,7 +12,7 @@ def clean_number(number: str, to: Type = float) -> float | int:
     When selecting to=int, the default python round behaviour is used.
 
     Args:
-        number: the string to be cleaned
+        number: the string to clean
         to: the type to convert to (int or float)
 
     """
@@ -34,7 +34,7 @@ def clean_number(number: str, to: Type = float) -> float | int:
 
 def clean_numeric_series(
     data: pd.Series | pd.DataFrame,
-    series_columns: Optional[str | list] = None,
+    series_columns: str | list | None = None,
     to: Type = float,
 ) -> pd.DataFrame | pd.Series:
     """Clean a numeric column in a Pandas DataFrame or a Pandas Series which is
@@ -44,14 +44,14 @@ def clean_numeric_series(
     Args:
         data: it accepts a series or a dataframe. If a dataframe is passed, the column(s)
             to clean must be specified
-        series_columns: optionally declared (only when data is a dataframe). To apply to
+        series_columns: optionally declared (only when _data is a dataframe). To apply to
             one or more columns.
         to: the type to convert to (int or float)
 
     """
 
     if isinstance(data, pd.DataFrame) and (series_columns is None):
-        raise ValueError("series_column must be specified when data is a DataFrame")
+        raise ValueError("series_column must be specified when _data is a DataFrame")
 
     if isinstance(data, pd.DataFrame):
         if isinstance(series_columns, str):
@@ -66,7 +66,7 @@ def clean_numeric_series(
         return data.apply(clean_number, to=to)
 
 
-def to_date_column(series: pd.Series, date_format: Optional[str] = None) -> pd.Series:
+def to_date_column(series: pd.Series, date_format: str | None = None) -> pd.Series:
     """Converts a Pandas series into a date series.
     The series must contain integers or strings that can be converted into
     datetime objects"""
@@ -178,6 +178,7 @@ def format_number(
         as_millions: divided by 1 million, formatted with commas and the specified decimals
         as_billions: divided by 1 billion, formatted with commas and the specified decimals
         decimals: the number of decimals to use
+        add_sign: add a plus sign to positive numbers
         other_format: Other formats to use. This option can only be used if all others
             are false. Examples are available at:
             https://mkaz.blog/code/python-string-format-cookbook/

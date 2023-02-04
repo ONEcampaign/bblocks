@@ -1,20 +1,22 @@
 """Tools to retrieve data from UNAIDS"""
 
+import json
+import os
+from typing import Optional
+
 import pandas as pd
 import requests
-import json
+
+from bblocks import config
+from bblocks.config import BBPaths
 from bblocks.import_tools.common import ImportData
-import os
-from bblocks.config import PATHS
-from typing import Optional
-import warnings
 
 URL: str = "https://aidsinfo.unaids.org/datasheetdatarequest"
 AREA_CODES: dict = {
     "country": {"name": "world", "code": 2},
     "region": {"name": "world-continents", "code": 1},
 }
-AVAILABLE_INDICATORS = pd.read_json(f"{PATHS.import_tools}/aids_indicators.json")
+AVAILABLE_INDICATORS = pd.read_json(f"{BBPaths.import_settings}/aids_indicators.json")
 
 
 def get_response(
@@ -118,15 +120,18 @@ def response_params(group: str, indicator: str):
     }
 
 
-def response_to_df(grouping: str, response: dict) -> pd.DataFrame:
+def response_to_df(grouping: str, response: dict, indicator: str) -> pd.DataFrame:
     """Convert response to dataframe"""
 
     dimensions = get_dimensions(response)
     years = get_years(response)
 
-    df = parse_data_table(response, dimensions, years)
+    df = parse_data_table(response, dimensions, years).pipe(clean_data, indicator)
     if grouping == "region":
-        df = pd.concat([df, parse_global_data(response, dimensions, years)])
+        df_global = parse_global_data(response, dimensions, years).pipe(
+            clean_data, indicator
+        )
+        return pd.concat([df, df_global])
 
     return df
 
@@ -137,7 +142,7 @@ def extract_data(indicator: str, grouping: str):
     params = response_params(grouping, indicator)
     response = get_response(**params)
     check_response(response)
-    return response_to_df(grouping, response).pipe(clean_data, indicator)
+    return response_to_df(grouping, response, indicator)
 
 
 def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
@@ -147,10 +152,9 @@ def check_if_not_downloaded(indicator: str, area_grouping: str) -> bool:
         True if data is not downloaded, False if data is downloaded
 
     """
-    if os.path.exists(f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv"):
-        return False
-    else:
-        return True
+    return not os.path.exists(
+        f"{BBPaths.imported_data}/aids_{area_grouping}_{indicator}.csv"
+    )
 
 
 def check_area_grouping(area_grouping: str) -> list:
@@ -161,26 +165,8 @@ def check_area_grouping(area_grouping: str) -> list:
 
     if area_grouping == "all":
         return [group for group in AREA_CODES]
-    else:
-        return [area_grouping]
 
-
-def concat_dataframes(
-    indicator_dict: dict[str : pd.DataFrame], indicators: list | set, groupings: list
-) -> pd.DataFrame:
-    """concatenate dataframes stored in a dictionary"""
-
-    df = pd.DataFrame()
-
-    for grouping in groupings:
-        for indicator in indicators:
-            if indicator not in indicator_dict[grouping].keys():
-                warnings.warn(
-                    f"No {grouping} data available for indicator: {indicator}"
-                )
-            else:
-                df = pd.concat([df, indicator_dict[grouping][indicator]])
-    return df
+    return [area_grouping]
 
 
 class Aids(ImportData):
@@ -197,19 +183,17 @@ class Aids(ImportData):
     (or None and this will return all indicators) and passing the area grouping(s) ('all' by default)
     """
 
-    available_indicators: pd.DataFrame = AVAILABLE_INDICATORS
+    @property
+    def available_indicators(self) -> pd.DataFrame:
+        """Returns a dataframe of available indicators"""
+        return AVAILABLE_INDICATORS
 
-    def __init__(self):
-
-        self.indicators = {"country": {}, "region": {}}
-
-    def load_indicator(self, indicator: str, area_grouping: str = "all") -> ImportData:
+    def load_data(self, indicator: str, area_grouping: str = "all") -> ImportData:
         """Load an indicator to the object
 
-        Args:
-            indicator (str): The name of the indicator to load. To see a DataFrame of available indicators,
-             use the available_indicators method.
-            area_grouping (str): The grouping to use. Choose from ["country", "region", "all"].
+        indicator (str): The name of the indicator to load. To see a DataFrame of available
+            indicators, use the available_indicators method.
+        area_grouping (str): The grouping to use. Choose from ["country", "region", "all"].
 
         Returns:
             The same object to allow chaining
@@ -219,55 +203,48 @@ class Aids(ImportData):
             raise ValueError(f"Invalid indicator: {indicator}")
 
         for grouping in check_area_grouping(area_grouping):
-
             # check if either indicator for grouping has not been downloaded
-            # or if update_data is True
-            if check_if_not_downloaded(indicator, grouping) or self.update_data:
+            if check_if_not_downloaded(indicator, grouping):
                 df = extract_data(indicator, grouping)
                 df.to_csv(
-                    f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv",
+                    config.BBPaths.raw_data / f"aids_{grouping}_{indicator}.csv",
                     index=False,
                 )
 
-            # load data from disk
-            (
-                self.indicators[grouping].update(
-                    {
-                        indicator: pd.read_csv(
-                            f"{PATHS.imported_data}/aids_{grouping}_{indicator}.csv"
-                        )
-                    }
-                )
+            # load _data from disk
+            self._data[f"{indicator}_{grouping}"] = pd.read_csv(
+                config.BBPaths.raw_data / f"aids_{grouping}_{indicator}.csv"
             )
 
         return self
 
-    def update(self, reload_data: bool = True):
+    def update_data(self, reload_data: bool):
         """Update all loaded indicators saved on the disk
 
         When called, it will go through each loaded indicator/area grouping combination
         and update the data saved on disk.
 
-        Args:
-            reload_data (bool): If True, the updated data will be reloaded
-             into the object.
-
         Returns:
             The same object to allow chaining
         """
 
-        if len(self.indicators["country"]) == 0 and len(self.indicators["region"]) == 0:
+        if len(self._data) < 1:
             raise RuntimeError("No indicators loaded")
 
-        for area_grouping in self.indicators:
-            for indicator in self.indicators[area_grouping]:
+        area_groupings = set([area.split("_")[1] for area in self._data])
+
+        for area_grouping in area_groupings:
+            indicators_ = set(
+                [i_.split("_")[0] for i_ in self._data if area_grouping in i_]
+            )
+            for indicator in indicators_:
                 df = extract_data(indicator, area_grouping)
                 df.to_csv(
-                    f"{PATHS.imported_data}/aids_{area_grouping}_{indicator}.csv",
+                    config.BBPaths.raw_data / f"aids_{area_grouping}_{indicator}.csv",
                     index=False,
                 )
                 if reload_data:
-                    self.indicators[area_grouping][indicator] = df
+                    self._data[f"{indicator}_{area_grouping}"] = df
 
         return self
 
@@ -277,7 +254,7 @@ class Aids(ImportData):
         """Get the data as a Pandas DataFrame
 
         Args:
-            indicators:  By default, all indicators are returned in a single DataFrame.
+            indicators: By default, all indicators are returned in a single DataFrame.
                 If a list of indicators is passed, only those indicators will be returned.
                 A single indicator can be passed as a string as well.
             area_grouping (str): The area grouping to use. Choose from ["country", "region", "all"].
@@ -286,21 +263,17 @@ class Aids(ImportData):
         Returns:
             A Pandas DataFrame with the requested indicator data
         """
+        if indicators is None or indicators == "all":
+            indicators = set([indicator.split("_")[0] for indicator in self._data])
 
-        if len(self.indicators["country"]) == 0 and len(self.indicators["region"]) == 0:
-            raise RuntimeError(
-                "No indicators loaded. Use the load_indicators method to load indicators "
-                "into the object. To see a DataFrame of available indicators to load, call the class "
-                "attribute available_indicators"
-            )
+        area_groupings = check_area_grouping(area_grouping)
 
-        if isinstance(indicators, str):
-            indicators = [indicators]
+        indicators_list = set(
+            [
+                f"{indicator}_{area_grouping}"
+                for indicator in indicators
+                for area_grouping in area_groupings
+            ]
+        )
 
-        if indicators is None:
-            indicators = set(
-                list(self.indicators["country"]) + list(self.indicators["region"])
-            )
-
-        groupings = check_area_grouping(area_grouping)
-        return concat_dataframes(self.indicators, indicators, groupings)
+        return super().get_data(indicators=list(indicators_list))

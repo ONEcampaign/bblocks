@@ -1,9 +1,18 @@
-from typing import Optional
-import pandas as pd
 from operator import xor
 
+import pandas as pd
 
-def __validate_cols(d: pd.DataFrame, sdate, edate, date_col, value_col, grouper):
+from bblocks.logger import logger
+
+
+def __validate_cols(
+    d: pd.DataFrame,
+    sdate: str | None,
+    edate: str | None,
+    date_col: str,
+    value_col: str,
+    grouper: list[str] | None,
+) -> tuple:
     # If value column is None, set to 'value'
     if value_col is None:
         value_col = ["value"]
@@ -18,7 +27,7 @@ def __validate_cols(d: pd.DataFrame, sdate, edate, date_col, value_col, grouper)
 
     for col in [date_col, *value_col]:
         if col not in d.columns:
-            raise ValueError(f"{col} not found in data")
+            raise ValueError(f"{col} not found in _data")
 
     if grouper is None:
         grouper = [c for c in d.columns if c not in value_col]
@@ -32,7 +41,7 @@ def __validate_cols(d: pd.DataFrame, sdate, edate, date_col, value_col, grouper)
 
     for col in grouper:
         if col not in d.columns:
-            raise ValueError(f"{col} not found in data")
+            raise ValueError(f"{col} not found in _data")
 
     if not pd.api.types.is_datetime64_any_dtype(sdate):
         sdate = pd.to_datetime(sdate, infer_datetime_format=True)
@@ -45,11 +54,11 @@ def __validate_cols(d: pd.DataFrame, sdate, edate, date_col, value_col, grouper)
 
 def period_avg(
     data: pd.DataFrame,
-    start_date: Optional[str | int] = None,
-    end_date: Optional[str | int] = None,
+    start_date: str | int | None = None,
+    end_date: str | int | None = None,
     date_column: str = "date",
-    value_columns: str | list = None,
-    group_by: Optional[str | list] = None,
+    value_columns: str | list | None = None,
+    group_by: str | list | None = None,
 ) -> pd.DataFrame:
     """
     Calculate the average of (a) column(s) over a period of time.
@@ -69,6 +78,13 @@ def period_avg(
 
     # Create a copy of the dataframe to avoid modifying the original
     data = data.copy(deep=True)
+
+    # Check that date column is date and if not convert it
+    if not pd.api.types.is_datetime64_any_dtype(data[date_column]):
+        data[date_column] = pd.to_datetime(
+            data[date_column], infer_datetime_format=True
+        )
+        logger.info(f"Converted {date_column} to datetime")
 
     # Validate args
     start_date, end_date, date_column, value_columns, group_by = __validate_cols(
@@ -92,10 +108,10 @@ def change_from_date(
     start_date: str | int,
     end_date: str | int,
     value_columns: str | list = None,
-    group_by: Optional[str | list] = None,
+    group_by: str | list | None = None,
     percentage: bool = False,
 ) -> pd.DataFrame:
-    """Calculate the change in value from a start to and end data (in #)"""
+    """Calculate the change in value from a start to and end _data (in #)"""
 
     # Create a copy of the dataframe to avoid modifying the original
     data = data.copy(deep=True)
@@ -121,7 +137,7 @@ def change_from_date(
     return (
         data.loc[lambda d: d[date_column].isin([start_date, end_date])]
         .sort_values(by=[date_column] + group_by)
-        .groupby(by=group_by)[value_columns]
+        .groupby(by=group_by, group_keys=False)[value_columns]
         .apply(__range_diff if not percentage else __pct_diff)
         .reset_index()
         .filter(cols, axis=1)

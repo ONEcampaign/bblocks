@@ -1,82 +1,31 @@
 [tool.poetry]
 name = "bblocks"
-version = "0.4.1"
-homepage = "https://github.com/ONECampaign/bblocks"
-description = "A package with tools to download and analyse international development data."
-authors = ["The ONE Campaign <data@one.org>"]
-readme = "README.rst"
+version = "0.5.1"
+description = "package with tools to download and analyse development data. These tools are meant to be the building blocks of further analysis."
+authors = ["The ONE Campaign"]
 license = "MIT"
-classifiers=[
-    'Development Status :: 2 - Pre-Alpha',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
-    'Natural Language :: English',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.10',
-]
-packages = [
-    { include = "bblocks" },
-]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pandas = "^1.4"
-numpy = "^1.23"
-country-converter = "^0.7.7"
+pandas = "^1.5.3"
+numpy = "^1.24.1"
+country-converter = "^0.8.0"
 openpyxl = "^3.0.10"
-wbgapi = "1.0.12"
-requests = "^2.28.1"
-camelot-py = "^0.10.1"
-opencv-python = "^4.6.0"
-beautifulsoup4 = "^4.11.1"
+requests = "^2.28.2"
+opencv-python = "^4.7.0"
 weo = "^0.7.4"
+beautifulsoup4 = "^4.11.1"
 pyjstat = "^2.3.0"
-
+pyarrow = "^11.0.0"
+wbgapi = "<1.1"
+PyPDF2 = "^2"
+camelot-py = "^0.10.1"
 
 [tool.poetry.dev-dependencies]
-pip = "^22.1.2"
 bump2version = "^1.0.1"
-wheel = "^0.37.1"
-black = "^22.3.0"
-tox = "^3.25.0"
-coverage = "^6.4.1"
-twine = "^4.0.1"
-pytest-cov = "^3.0.0"
-pytest = "^7.1.2"
-Sphinx = "^5.1.1"
-sphinx-rtd-theme = "^1.0.0"
-
-[tool.black]
-line-length = 88
-target-version = ['py310']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[tool.poetry.extras]
-test = [
-    "pytest",
-    "coverage",
-    "black",
-    "pytest-cov",
-]
-
-dev = ["tox", "pip", "twine", "toml", "bump2version", 'pytest','pytest-cov'
-]
-
-docs = ["Sphinx", "sphinx-rtd-theme", "sphinxcontrib-napoleon", "myst-parser"]
+black = "^22.12.0"
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
