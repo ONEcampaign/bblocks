@@ -258,15 +258,3 @@ class HDR(ImportData):
 
         logger.info("Data updated successfully.")
         return self
-
-    def get_data(self, indicators: str | list = "all", **kwargs) -> pd.DataFrame:
-        """Get the data as a dataframe
-
-        Args:
-            indicators: Indicator(s) to get data for. If "all", get all indicators.
-
-        Returns:
-            Loaded indicators as a dataframe
-        """
-
-        return super().get_data(indicators=indicators)
