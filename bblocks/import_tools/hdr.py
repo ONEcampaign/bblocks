@@ -88,9 +88,11 @@ def read_data(response: requests.Response) -> pd.DataFrame:
         response.headers["Content-Type"]
         == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     ):
-        return pd.read_excel(response.content,
-                             sheet_name="codebook",
-                             engine="openpyxl",)
+        return pd.read_excel(
+            response.content,
+            sheet_name="codebook",
+            engine="openpyxl",
+        )
 
     else:
         raise ValueError(f"Could not read data")
@@ -145,14 +147,10 @@ def get_hdr_data() -> pd.DataFrame:
     links = get_data_links()  # get links to data and metadata
 
     # read metadata and create dictionary
-    code_dict = (read_data(get_response(links["metadata_url"]))
-                 .pipe(create_code_dict)
-                 )
+    code_dict = read_data(get_response(links["metadata_url"])).pipe(create_code_dict)
 
     # read data and format it
-    data_df = (read_data(get_response(links["data_url"]))
-               .pipe(format_data, code_dict)
-               )
+    data_df = read_data(get_response(links["data_url"])).pipe(format_data, code_dict)
 
     return data_df
 

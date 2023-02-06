@@ -94,5 +94,3 @@ def get_response(url: str) -> requests.Response:
         raise requests.exceptions.ConnectionError("Invalid url")
 
     return response
-
-
