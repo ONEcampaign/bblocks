@@ -23,7 +23,9 @@ def test_get_response_status_not_200():
     """test get_response function when the status code is not 200"""
 
     with patch("requests.get") as mock_get:
-        mock_get.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError
+        mock_get.return_value.raise_for_status.side_effect = (
+            requests.exceptions.HTTPError
+        )
         mock_get.return_value.status_code = 404
 
         url = "https://www.example.com"
@@ -32,11 +34,14 @@ def test_get_response_status_not_200():
 
         mock_get.assert_called_once_with(url)
 
+
 def test_get_response_connection_error():
     """test get_response function when there is a connection error"""
 
     with patch("requests.get") as mock_get:
-        mock_get.return_value.raise_for_status.side_effect = requests.exceptions.ConnectionError
+        mock_get.return_value.raise_for_status.side_effect = (
+            requests.exceptions.ConnectionError
+        )
 
         url = "https://www.example.com"
         with pytest.raises(requests.exceptions.ConnectionError):
