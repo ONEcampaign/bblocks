@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 import pandas as pd
+import requests
 
 from bblocks.logger import logger
 
@@ -71,3 +72,27 @@ def append_new_data(
     data = pd.concat([saved, new_data], ignore_index=True)
 
     return data.drop_duplicates(keep="last").reset_index(drop=True)
+
+
+def get_response(url: str) -> requests.Response:
+    """Get the response from a url
+
+    This function is used to get the response from a url.
+    It will raise an error if the url is invalid or if the response is not 200.
+
+    Args:
+        url: url to get the response from
+
+    Returns:
+        response from the url
+    """
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.ConnectionError:
+        raise requests.exceptions.ConnectionError("Invalid url")
+
+    return response
+
+

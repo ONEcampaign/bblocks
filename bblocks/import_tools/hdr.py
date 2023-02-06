@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from dataclasses import dataclass
 
 from bblocks.config import BBPaths
-from bblocks.import_tools.common import ImportData
+from bblocks.import_tools.common import ImportData, get_response
 from bblocks.logger import logger
 
 
@@ -63,45 +63,37 @@ def _parse_html(soup: BeautifulSoup) -> tuple[str, str]:
 def get_data_links() -> dict[str, str]:
     """returns links for data and metadata"""
 
-    try:
-        response = requests.get(BASE_URL)
-        soup = BeautifulSoup(response.content, "html.parser")
-        data_url, metadata_url = _parse_html(soup)
-        return {"data_url": data_url, "metadata_url": metadata_url}
+    response = get_response(BASE_URL)
+    soup = BeautifulSoup(response.content, "html.parser")
+    data_url, metadata_url = _parse_html(soup)
 
-    except ConnectionError:
-        raise ConnectionError(f"Could not read data from {BASE_URL}")
+    return {"data_url": data_url, "metadata_url": metadata_url}
 
 
-def read_data(url: str) -> pd.DataFrame:
+def read_data(response: requests.Response) -> pd.DataFrame:
     """Read UNDP Human Development Report data from a URL.
 
     Returns a dataframe with either the data or metadata. The function checks
     the content type of the response and returns the appropriate dataframe.
 
     Args:
-        url (str): URL to read data from.
+        response: Response object from a request to a UNDP HDR data URL.
     """
 
-    try:
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise ValueError(f"Could not read data from {url}")
-
-        # check content type, use read_csv for csv and read_excel for xlsx
-        if response.headers["Content-Type"] == "text/csv":
-            return pd.read_csv(io.BytesIO(response.content))
-
-        if (
-            response.headers["Content-Type"]
-            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ):
-            return pd.read_excel(response.content, sheet_name="codebook")
-
+    # check content type, use read_csv for csv and read_excel for xlsx
+    if response.headers["Content-Type"] == "text/csv":
         return pd.read_csv(io.BytesIO(response.content))
 
-    except ConnectionError:
-        raise ValueError(f"Could not read data from {url}")
+    elif (
+        response.headers["Content-Type"]
+        == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ):
+        return pd.read_excel(response.content,
+                             sheet_name="codebook",
+                             engine="openpyxl",)
+
+    else:
+        raise ValueError(f"Could not read data")
 
 
 def create_code_dict(metadata_df: pd.DataFrame) -> dict[str, str]:
@@ -153,10 +145,14 @@ def get_hdr_data() -> pd.DataFrame:
     links = get_data_links()  # get links to data and metadata
 
     # read metadata and create dictionary
-    code_dict = read_data(links["metadata_url"]).pipe(create_code_dict)
+    code_dict = (read_data(get_response(links["metadata_url"]))
+                 .pipe(create_code_dict)
+                 )
 
     # read data and format it
-    data_df = read_data(links["data_url"]).pipe(format_data, code_dict)
+    data_df = (read_data(get_response(links["data_url"]))
+               .pipe(format_data, code_dict)
+               )
 
     return data_df
 
@@ -172,7 +168,7 @@ def available_indicators(composite_index: str = "all") -> list[str]:
         return [val for sublist in HDR_INDICATORS.values() for val in sublist]
 
     if composite_index not in HDR_INDICATORS:
-        raise ValueError(f"Composite index {composite_index} not found")
+        raise ValueError(f"Composite index not found: {composite_index}")
 
     return HDR_INDICATORS[composite_index]
 
