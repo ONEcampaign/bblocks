@@ -21,7 +21,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
 ]
-autoapi_dirs = [".."]
+autoapi_dirs = ["../bblocks"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
