@@ -113,7 +113,7 @@ class WorldBankData(ImportData):
             )
 
             _params = {
-                "series": ind_,
+                "indicator": ind_,
                 "start_year": start_year,
                 "end_year": end_year,
                 "most_recent_only": most_recent_only,
