@@ -1,6 +1,8 @@
 The bblocks package
 ===================
 
+|pypi| |python| |Documentation| |codecov|
+
 
 **bblocks** is a python package with tools to download and analyse
 development data. These tools are meant to be the *building blocks* of
@@ -11,9 +13,9 @@ are very likely to change. We welcome feedback, feature requests, and
 collaboration. We hope that this will be a valuable resource for
 organisations working with sustainable development data.
 
--  [Documentation](https://bblocks.readthedocs.io/)
--  [GitHub](https://github.com/ONECampaign/bblocks)
--  [PyPI](https://pypi.org/project/bblocks/)
+-  Documentation: https://bblocks.readthedocs.io/
+-  GitHub: https://github.com/ONECampaign/bblocks
+-  PyPI: https://pypi.org/project/bblocks/
 -  Free software: MIT
 
 Installation
@@ -21,12 +23,12 @@ Installation
 
 bblocks can be installed from PyPI: from the command line:
 
-```{python}
-pip install bblocks
-```
+.. code-block:: python
+
+   pip install bblocks
 
 Alternatively, the source code is available on
-[GitHub](https://github.com/ONECampaign/bblocks>).
+`GitHub <https://github.com/ONECampaign/bblocks>`__.
 
 Basic usage
 -----------
@@ -39,4 +41,14 @@ about the features that we are planning to add.
 Questions?
 ----------
 
-Please feel free to reach out via GitHub or at data at data.one.org
+Please feel free to reach out via GitHub or at data at one.org
+
+.. |pypi| image:: https://img.shields.io/pypi/v/bblocks.svg
+   :target: https://pypi.org/project/bblocks/
+.. |python| image:: https://img.shields.io/pypi/pyversions/bblocks.svg
+   :target: https://pypi.org/project/bblocks/
+.. |codecov| image:: https://codecov.io/gh/ONECampaign/bblocks/branch/main/graph/badge.svg?token=YN8S1719NH
+   :target: https://codecov.io/gh/ONECampaign/bblocks
+.. |Documentation| image:: https://readthedocs.org/projects/bblocks/badge/?version=latest
+   :target: https://bblocks.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
