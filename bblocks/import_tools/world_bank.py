@@ -16,7 +16,7 @@ PINK_SHEET_URL = (
 
 
 def _get_wb_data(
-    series: str,
+    indicator: str,
     db: int,
     start_year: int | None = None,
     end_year: int | None = None,
