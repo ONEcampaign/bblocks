@@ -1,9 +1,21 @@
 [tool.poetry]
 name = "bblocks"
-version = "1.0.0"
-description = "package with tools to download and analyse development data. These tools are meant to be the building blocks of further analysis."
-authors = ["The ONE Campaign"]
+version = "1.0.1"
+description = "A package with tools to download and analyse international development data. These tools are meant to be the building blocks of further analysis."
+authors = ["The ONE Campaign <data@one.org>"]
+readme = "README.rst"
 license = "MIT"
+classifiers=[
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+]
+packages = [
+    { include = "bblocks" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
