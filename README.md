@@ -1,8 +1,6 @@
 The bblocks package
 ===================
 
-|pypi| |python| |Documentation| |codecov|
-
 
 **bblocks** is a python package with tools to download and analyse
 development data. These tools are meant to be the *building blocks* of
@@ -23,12 +21,11 @@ Installation
 
 bblocks can be installed from PyPI: from the command line:
 
-.. code-block:: python
-
+```{python}
    pip install bblocks
-
+```
 Alternatively, the source code is available on
-`GitHub <https://github.com/ONECampaign/bblocks>`__.
+[GitHub](https://github.com/ONECampaign/bblocks>)
 
 Basic usage
 -----------
@@ -41,14 +38,5 @@ about the features that we are planning to add.
 Questions?
 ----------
 
-Please feel free to reach out via GitHub or at data at one.org
+Please feel free to reach out via GitHub or at data at data.one.org
 
-.. |pypi| image:: https://img.shields.io/pypi/v/bblocks.svg
-   :target: https://pypi.org/project/bblocks/
-.. |python| image:: https://img.shields.io/pypi/pyversions/bblocks.svg
-   :target: https://pypi.org/project/bblocks/
-.. |codecov| image:: https://codecov.io/gh/ONECampaign/bblocks/branch/main/graph/badge.svg?token=YN8S1719NH
-   :target: https://codecov.io/gh/ONECampaign/bblocks
-.. |Documentation| image:: https://readthedocs.org/projects/bblocks/badge/?version=latest
-   :target: https://bblocks.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
