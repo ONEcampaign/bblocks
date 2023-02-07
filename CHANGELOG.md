@@ -1,5 +1,14 @@
 Changelog
 =========
+[1.0.0] - 2023-02-07
+--------------------
+- First major release of bblocks. This introduces changes to the importer classes
+  API in order to make things more coherent. As a result, backwards compatibility is not
+  guaranteed.
+
+- This release introduces changes to how files are stored. No data is distributed with
+  the package anymore. Instead, users are expected to set the working directory to a folder
+  where they want to store the data.
 
 [0.5.1] - 2023-01-12
 --------------------
