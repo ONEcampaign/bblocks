@@ -27,5 +27,5 @@ jobs:
       - name: Install package
         run: poetry install
 
-      - name: Build documentation
-        run: poetry run make html --directory docs/
+      #- name: Build documentation
+      #  run: poetry run make html --directory docs/
