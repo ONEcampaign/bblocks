@@ -385,7 +385,7 @@ def add_gdp_share_column(
         decimals: the number of decimals to use in the returned column.
         include_estimates: Whether to include years for which the WEO _data is labelled as
             estimates.
-        usd: Whether to add the _data as US dollars or Local Currency Units.
+        usd: Whether to add the data as US dollars or Local Currency Units.
         target_column: the column where the gdp _data will be stored.
         update_data: whether to update the underlying _data or not.
 

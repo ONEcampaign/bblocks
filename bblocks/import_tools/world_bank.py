@@ -36,7 +36,7 @@ def _get_wb_data(
     # get _data
     return (
         wb.data.DataFrame(
-            series=series,
+            series=indicator,
             time=time_period,
             mrnev=1 if most_recent_only else None,
             numericTimeKeys=True,
@@ -50,13 +50,13 @@ def _get_wb_data(
             columns={
                 "economy": "iso_code",
                 "index": "iso_code",
-                series: "value",
+                indicator: "value",
                 "time": "date",
-                f"{series}:T": "date",
+                f"{indicator}:T": "date",
             }
         )
         .assign(
-            indicator_code=series, date=lambda d: pd.to_datetime(d.date, format="%Y")
+            indicator_code=indicator, date=lambda d: pd.to_datetime(d.date, format="%Y")
         )
         .sort_values(by=["iso_code", "date"])
         .reset_index(drop=True)

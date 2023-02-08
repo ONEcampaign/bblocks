@@ -5,6 +5,7 @@ from bblocks.import_tools.world_bank import WorldBankData
 from bblocks.import_tools.who import GHED
 from bblocks.import_tools.wfp import WFPData
 from bblocks.import_tools.imf import WorldEconomicOutlook
+from bblocks.import_tools.unaids import Aids
 
 # Easy access to add tools
 from bblocks.dataframe_tools.add import (
