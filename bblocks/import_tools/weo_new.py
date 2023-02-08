@@ -4,12 +4,15 @@ import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 from dataclasses import dataclass
 import pandas as pd
-import datetime
+from datetime import datetime
+from bs4 import BeautifulSoup
+import io
 
-from bblocks.import_tools.common import ImportData
+from bblocks.import_tools.common import ImportData, get_response
 from bblocks.config import BBPaths
+from bblocks.logger import logger
 
-BASR_URL = "https://www.imf.org/"
+BASE_URL = "https://www.imf.org/"
 
 COLUMN_MAPPER = {
     "UNIT": "IMF.CL_WEO_UNIT.1.0",
@@ -20,18 +23,46 @@ COLUMN_MAPPER = {
 }
 
 
+def get_smdx_href(version: tuple[int, int]) -> str | None:
+    """retrieve the href for the SDMX file"""
+
+    url = (
+        f"{BASE_URL}/en/Publications/WEO/weo-database/"
+        f"{version[1]}/{version[2]}/download-entire-database"
+    )
+
+    response = get_response(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # check is data exists
+    if soup.find("a", text="SDMX Data"):
+        return soup.find_all("a", text="SDMX Data")[0].get("href")
+
+
+def get_folder(href: str) -> ZipFile:
+    """Extract the folder containing data and schema"""
+
+    # TODO add to common with error handling (remove unzip)
+
+    try:
+        response = get_response(BASE_URL + href)
+        return ZipFile(io.BytesIO(response.content))
+    except ConnectionError:
+        raise ConnectionError("invalid url")
+
+
 @dataclass
-class Downloader:
+class Parser:
     """Helper class to download WEO"""
 
     folder: ZipFile
+
     data_file = None
     schema_file = None
     data = None
 
     def get_files(self):
-        """Get the root of files
-        """
+        """Get the root of files"""
 
         if len(self.folder.namelist()) > 2:
             raise ValueError("More than one file in zip file")
@@ -46,8 +77,8 @@ class Downloader:
         if self.data_file is None or self.schema_file is None:
             raise ValueError("No data or schema file found")
 
-    def parse_data(self):
-        """Parse data file"""
+    def extract_data(self):
+        """extract data from data file"""
 
         rows = []
         for series in self.data_file[1].findall("./"):
@@ -75,83 +106,135 @@ class Downloader:
             self.data = self.data.rename(columns={col: f"{col}_CODE"})
             self.data[col] = self._convert_series_codes(self.data[f"{col}_CODE"], value)
 
-        for col in ['REF_AREA_CODE', 'LASTACTUALDATE', 'TIME_PERIOD','OBS_VALUE']:
-            self.data[col] = pd.to_numeric(self.data[col], errors = 'coerce')
+        for col in ['REF_AREA_CODE', 'LASTACTUALDATE', 'TIME_PERIOD', 'OBS_VALUE']:
+            self.data[col] = pd.to_numeric(self.data[col], errors='coerce')
 
-    def get_data(self) -> pd.DataFrame:
-        """Pipeline"""
-
-        # webscraping steps TODO
+    def parse_data(self) -> pd.DataFrame:
+        """Parse the data to a dataframe"""
 
         self.get_files()
-        self.parse_data()
+        self.extract_data()
         self.clean_data()
 
         return self.data
 
 
+def gen_latest_version() -> tuple[int, int]:
+    """Generates the latest expected version based on the current date"""
+
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+
+    # if month is less than 4 (April)
+    # return the version 2 (October) for the previous year
+    if current_month < 4:
+        current_year -= 1
+        return current_year, 2
+
+
+    # elif month is less than 10 (October)
+    # return current year and version 2 (April)
+    elif current_month < 10:
+        return current_year, 1
+
+    # else (if month is more than 10 (October)
+    # return current month and version 2 (October
+
+    else:
+        return current_year, 2
+
+
+def roll_back_version(version: tuple[int, int]) -> tuple[int, int]:
+    """Roll back version to the previous version"""
+
+    if version[1] == 2:
+        return version[0], 1
+
+    elif version[1] == 1:
+        return version[0] - 1, 2
+
+    else:
+        raise ValueError(f'Release must be either 1 or 2. Invalid release: {version[1]}')
+
+
 @dataclass
 class WEO(ImportData):
     """
-
-    Attributes:
-        year: Report year
-        release: Report release, 1 for April, 2 for October
-
-
-
     """
 
-    year: int = None
-    release: int = None
+    version: tuple[int, int] = 'latest'
 
-    folder = None # to replace with web scraping
+    @property
+    def _path(self):
+        """Generate path based on version"""
+        return BBPaths.raw_data / f"weo_{self.version[1]}_{self.version[2]}.csv"
 
-    super().__init__()
+    def _download_latest_data(self) -> None:
+        """Get data for latest release, and replace release with latest"""
 
-    def __post_init__(self):
+        href = None  # set href to none
+        # search for the latest, until data is found
+        while href is None:
+            href = get_smdx_href(self.version)
+            if href is None:
+                # roll back version
+                self.version = roll_back_version(self.version)
 
-        current_year = datetime.datetime.now().year
-        current_month = datetime.datetime.now().month
+        # parse data and save to disk
+        folder = get_folder(href)
+        Parser(folder).parse_data().to_csv(self._path, index=False)
 
-        # check version, if latest, set latest
-        if self.year is None:
-            self.year = current_year
+    def _download_data(self) -> None:
+        """Get data for the version, raise error is no data for version is found"""
 
-            if self.release is None:
-                month = datetime.datetime.now().month
-                if month < 4:
-                    self.year -= 1
-                    self.release = 2
+        href = get_smdx_href(self.version)
+        if href is None:
+            raise ValueError(f'No data found for version:'
+                             f' {self.version[0]}, {self.version[1]}')
+
+        # parse data and save to disk
+        folder = get_folder(href)
+        Parser(folder).parse_data().to_csv(self._path, index=False)
+
+    def load_data(self, indicators: str | list = 'all') -> self:
+        """ """
+
+        # check if latest is requested
+        if self.version == 'latest':
+            self.version = gen_latest_version()  # set latest expected version
+            if not self._path.exists():  # check if not downloaded
+                self._download_latest_data()  # find latest and download data
 
         else:
-            if self.year < current_year
-                self.release = 2
-            elif self.year == current_year
+            if not self._path.exists():  # check if not downloaded
+                self._download_data()  # download data
 
+        # check if raw data is not loaded to object
+        if self._raw_data is None:
+            self._raw_data = pd.read_csv(self._path)
 
+        # load indicators
+        if indicators == 'all':
+            indicators = self._raw_data['CONCEPT_CODE'].unique()
+        if isinstance(indicators, str):
+            indicators = [indicators]
 
+        self._data.update(
+            {indicator: (self._raw_data[self._raw_data['CONCEPT_CODE'] == indicator]
+                         .reset_index(drop=True)
+                         )
+             for indicator in indicators
+             }
+        )
+        logger.info("Data loaded successfully")
+        return self
 
-    def load_data(self, indicators: str | list = 'all'):
+    def update_data(self, reload_data: bool = True):
         """ """
+        if len(self._data) == 0:
+            raise RuntimeError('No indicators loaded')
 
-        path = BBPaths.raw_data / f"WEO_{self.year}_{self.release}.csv"
-        if not path.exists():
-            Downloader(self.folder).get_data().to_csv(path)
-
-
-    def update_data(self):
-        """ """
-        raise RuntimeError("No indicators loaded")
-        pass
-
-    def get_data(self, indicators: str | list = "all", only_data = False, only_estimates: bool = False):
-        """ """
-
-        pass
-
-
-
-
-
-
+        self._download_data()
+        self._raw_data = pd.read_csv(self._path)
+        if reload_data:
+            self.load_data(indicators=self._raw_data['CONCEPT_CODE'])
