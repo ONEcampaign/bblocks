@@ -16,7 +16,7 @@ PINK_SHEET_URL = (
 
 
 def _get_wb_data(
-    series: str,
+    indicator: str,
     db: int,
     start_year: int | None = None,
     end_year: int | None = None,
@@ -113,7 +113,7 @@ class WorldBankData(ImportData):
             )
 
             _params = {
-                "series": ind_,
+                "indicator": ind_,
                 "start_year": start_year,
                 "end_year": end_year,
                 "most_recent_only": most_recent_only,
