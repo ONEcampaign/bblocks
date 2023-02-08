@@ -1,4 +1,4 @@
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 # Easy access to importers
 from bblocks.import_tools.world_bank import WorldBankData
