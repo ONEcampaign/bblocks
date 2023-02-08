@@ -3,6 +3,10 @@ Changelog
 
 [1.0.1] - 2023-02-07
 --------------------
+Improved documentation
+
+[1.0.1] - 2023-02-07
+--------------------
 Fix a bug with parsing food security dates
 
 [1.0.0] - 2023-02-07
