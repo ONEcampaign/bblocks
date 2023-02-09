@@ -1,248 +1,248 @@
-"""Tools to extract data from the World Economic Outlook database."""
+""" """
 
-import xml.etree.ElementTree
-
-import pandas as pd
-import requests
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
-import io
-from bs4 import BeautifulSoup
+from dataclasses import dataclass
+import pandas as pd
 from datetime import datetime
-import country_converter as coco
+import calendar
+from bs4 import BeautifulSoup
+import io
 
-BASE = "https://www.imf.org/"
+from bblocks.import_tools.common import ImportData, get_response
+from bblocks.config import BBPaths
+from bblocks.logger import logger
+
+BASE_URL = "https://www.imf.org/"
+
+COLUMN_MAPPER = {
+    "UNIT": "IMF.CL_WEO_UNIT.1.0",
+    "CONCEPT": "IMF.CL_WEO_CONCEPT.1.0",
+    "REF_AREA": "IMF.CL_WEO_REF_AREA.1.0",
+    "FREQ": "IMF.CL_FREQ.1.0",
+    "SCALE": "IMF.CL_WEO_SCALE.1.0",
+}
 
 
-def _convert_month(month: int) -> str:
-    """Converts a month number to a string"""
-    if month == 1:
-        return "April"
-    elif month == 2:
-        return "October"
+def get_smdx_href(version: tuple[int, int]) -> str | None:
+    """retrieve the href for the SDMX file"""
+
+    if version[1] == 1:
+        month = 'April'
+    elif version[1] == 2:
+        month = 'October'
     else:
-        raise ValueError('invalid month. Must be 1 or 2, or "April" or "October"')
+        raise ValueError('invalid version. Must be 1 or 2')
+
+    url = (
+        f"{BASE_URL}/en/Publications/WEO/weo-database/"
+        f"{version[0]}/{month}/download-entire-database"
+    )
+
+    response = get_response(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # check is data exists
+    if soup.find("a", string="SDMX Data"):
+        return soup.find_all("a", string="SDMX Data")[0].get("href")
 
 
-def validate_date(year: int, month: str | int) -> tuple[int, str]:
-    """Check if the date is valid, and return the year as an integer and
-    the month as a string either 'April' or 'October' (for weo releases)
-    """
+def get_folder(href: str) -> ZipFile:
+    """Extract the folder containing data and schema"""
 
-    if isinstance(month, int):
-        month = _convert_month(month)
-    elif month not in ["April", "October"]:
-        raise ValueError('invalid month. Must be 1 or 2, or "April" or "October"')
+    # TODO add to common with error handling (remove unzip)
 
-    if year < 2017:
-        raise ValueError("invalid year. Must be 2017 or later")
-
-    return year, month
+    try:
+        response = get_response(BASE_URL + href)
+        return ZipFile(io.BytesIO(response.content))
+    except ConnectionError:
+        raise ConnectionError("invalid url")
 
 
-def latest_version():
-    """Return the latest version date of the WEO data"""
-    year = datetime.now().year
-    month = datetime.now().month
+@dataclass
+class Parser:
+    """Helper class to download WEO"""
 
-    if month < 4:
-        year -= 1
-        return year, "October"
+    folder: ZipFile
 
-    elif month < 10:
-        return year, "April"
+    data_file = None
+    schema_file = None
+    data = None
 
-    else:
-        return year, "October"
-
-
-def get_root(folder: ZipFile, file: str) -> xml.etree.ElementTree.Element:
-    """Get the root of the xml file
-
-    Args:
-        folder (ZipFile): ZipFile object containing the WEO data and schema files
-        file (str): name of the file to be parsed
-
-    Returns:
-        xml.etree.ElementTree.Element: root of the xml file
-    """
-
-    tree = ET.parse(folder.open(file))
-    return tree.getroot()
-
-
-def convert_series_codes(
-    root: xml.etree.ElementTree.Element, series: pd.Series, lookup_value: str
-) -> pd.Series:
-    """Converts a series of codes to a series of labels
-
-    Args:
-        root (xml.etree.ElementTree.Element): root of the xml file
-        series (pd.Series): series of codes
-        lookup_value (str): value to look up in the xml file
-
-    Returns:
-        pd.Series: series of labels
-    """
-
-    query = root.findall(
-        "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
-        + f'"{lookup_value}"'
-        + "]/"
-    )[0].findall("./")
-    return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
-
-
-class WEODownloader:
-    """Object to download and parse the WEO data
-
-    to use, instantiate the object and declare the weo version to download.
-    If no version is provided, the latest version will be used.
-    To get the data call the `get_data` method. This will return extract the data
-    from weo, assign the data to the `data` attribute and return the a dataframe.
-    """
-
-    def __init__(self, version: tuple[int, str] | None = None):
-
-        if version is not None:
-            self.version = validate_date(*version)  # check if version is valid
-            self._latest = False
-        else:
-            self.version = latest_version()
-            self._latest = True
-
-        self.href = None
-        self.folder = None
-        self.data_file = None
-        self.schema_file = None
-        self.data = None
-
-        self.column_mapper = {
-            "UNIT": "IMF.CL_WEO_UNIT.1.0",
-            "CONCEPT": "IMF.CL_WEO_CONCEPT.1.0",
-            "REF_AREA": "IMF.CL_WEO_REF_AREA.1.0",
-            "FREQ": "IMF.CL_FREQ.1.0",
-            "SCALE": "IMF.CL_WEO_SCALE.1.0",
-        }
-
-    def roll_back_version(self):
-        """Roll back the month and year to a previous version"""
-
-        if self.version[1] == "October":
-            self.version = (self.version[0], "April")
-        else:
-            self.version = (self.version[0] - 1, "October")
-
-    def _parse_href(self) -> str | bool:
-        """Retrieve the href of the SDMX file"""
-
-        url = (
-            f"{BASE}/en/Publications/WEO/weo-database/"
-            f"{self.version[0]}/{self.version[1]}/download-entire-database"
-        )
-        try:
-            content = requests.get(url).content
-            soup = BeautifulSoup(content, "html.parser")
-            if soup.find("a", text="SDMX Data"):
-                return soup.find_all("a", text="SDMX Data")[0].get("href")
-            else:
-                return False
-        except ConnectionError:
-            raise ConnectionError("invalid url")
-
-    def get_href(self):
-        """Retrieve the href of the SDMX file"""
-
-        self.href = self._parse_href()
-
-        if self._latest:
-            # check if version hasn't been released yet
-            if self.href is False:
-                # if version hasn't been released, roll back to previous version and try again
-                self.roll_back_version()
-                href = self._parse_href()
-
-                # if previous version hasn't been released, raise error
-                if href is False:
-                    raise ValueError("No valid version found")
-        else:
-            if self.href is False:
-                raise ValueError("Version is not available")
-
-    def get_folder(self):
-        """Get the folder containing the data and schema files"""
-
-        try:
-            resp = requests.get(BASE + self.href)
-            self.folder = ZipFile(io.BytesIO(resp.content))
-        except ConnectionError:
-            raise ConnectionError("invalid url")
-
-    def get_file_names(self):
-        """Get the names of the data and schema files in the folder
-        (these may change naming convention in future releases)
-        """
+    def get_files(self):
+        """Get the root of files"""
 
         if len(self.folder.namelist()) > 2:
             raise ValueError("More than one file in zip file")
+
         for file in self.folder.namelist():
             if file.endswith(".xml"):
-                self.data_file = file
+                self.data_file = ET.parse(self.folder.open(file)).getroot()
+
             if file.endswith(".xsd"):
-                self.schema_file = file
+                self.schema_file = ET.parse(self.folder.open(file)).getroot()
+
         if self.data_file is None or self.schema_file is None:
             raise ValueError("No data or schema file found")
 
-    def parse_data(self):
-        """Parse the data file"""
-
-        root = get_root(self.folder, self.data_file)
+    def extract_data(self):
+        """extract data from data file"""
 
         rows = []
-        for series in root[1].findall("./"):
+        for series in self.data_file[1].findall("./"):
             for obs in series.findall("./"):
                 rows.append({**series.attrib, **obs.attrib})
 
         self.data = pd.DataFrame(rows)
 
-    def convert_columns(self):
-        """Convert the columns which contain codes to labels"""
+    def _convert_series_codes(self, series: pd.Series, lookup_value: str):
+        """ """
 
-        schema_root = get_root(self.folder, self.schema_file)
-        for col, value in self.column_mapper.items():
+        query = self.schema_file.findall(
+            "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
+            + f'"{lookup_value}"'
+            + "]/"
+        )[0].findall("./")
+
+        return series.map({elem.attrib["value"]: elem[0][0].text
+                           for elem in query})
+
+    def clean_data(self):
+        """Format the dataframe"""
+
+        for col, value in COLUMN_MAPPER.items():
             self.data = self.data.rename(columns={col: f"{col}_CODE"})
-            self.data[col] = convert_series_codes(
-                schema_root, self.data[f"{col}_CODE"], value
-            )
+            self.data[col] = self._convert_series_codes(self.data[f"{col}_CODE"], value)
 
-    def get_data(self):
-        """Extract weo data"""
+        for col in ['REF_AREA_CODE', 'LASTACTUALDATE', 'TIME_PERIOD', 'OBS_VALUE']:
+            self.data[col] = pd.to_numeric(self.data[col], errors='coerce')
 
-        self.get_href()
-        self.get_folder()
-        self.get_file_names()
-        self.parse_data()
-        self.convert_columns()
+    def parse_data(self) -> pd.DataFrame:
+        """Parse the data to a dataframe"""
+
+        self.get_files()
+        self.extract_data()
+        self.clean_data()
 
         return self.data
 
-    def make_weo_format(self):
-        """Temporary function to make the data in the same format as the weo package data"""
 
-        col_mapper = {
-            "REF_AREA_CODE": "WEO Country Code",
-            "CONCEPT_CODE": "WEO Subject Code",
-            "REF_AREA": "Country",
-            "CONCEPT": "Subject Descriptor",
-            "UNIT": "Units",
-            "SCALE": "Scale",
-            "LASTACTUALDATE": "Estimates Start After",
-        }
+def gen_latest_version() -> tuple[int, int]:
+    """Generates the latest expected version based on the current date"""
 
-        return (
-            self.data.rename(columns=col_mapper)
-            .loc[:, list(col_mapper.values()) + ["TIME_PERIOD", "OBS_VALUE"]]
-            .pivot(index=col_mapper.values(), columns="TIME_PERIOD", values="OBS_VALUE")
-            .reset_index()
-            .assign(ISO=lambda d: coco.convert(d.Country, to="ISO3", not_found=None))
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+
+    # if month is less than 4 (April)
+    # return the version 2 (October) for the previous year
+    if current_month < 4:
+        current_year -= 1
+        return current_year, 2
+
+
+    # elif month is less than 10 (October)
+    # return current year and version 2 (April)
+    elif current_month < 10:
+        return current_year, 1
+
+    # else (if month is more than 10 (October)
+    # return current month and version 2 (October
+
+    else:
+        return current_year, 2
+
+
+def roll_back_version(version: tuple[int, int]) -> tuple[int, int]:
+    """Roll back version to the previous version"""
+
+    if version[1] == 2:
+        return version[0], 1
+
+    elif version[1] == 1:
+        return version[0] - 1, 2
+
+    else:
+        raise ValueError(f'Release must be either 1 or 2. Invalid release: {version[1]}')
+
+
+@dataclass
+class WEO(ImportData):
+    """
+    """
+
+    version: tuple[int, int] = 'latest'
+
+    @property
+    def _path(self):
+        """Generate path based on version"""
+        return BBPaths.raw_data / f"weo_{self.version[0]}_{self.version[1]}.csv"
+
+    def _download_latest_data(self) -> None:
+        """Get data for latest release, and replace release with latest"""
+
+        href = None  # set href to none
+        # search for the latest, until data is found
+        while href is None:
+            href = get_smdx_href(self.version)
+            if href is None:
+                # roll back version
+                self.version = roll_back_version(self.version)
+
+        # parse data and save to disk
+        folder = get_folder(href)
+        Parser(folder).parse_data().to_csv(self._path, index=False)
+
+    def _download_data(self) -> None:
+        """Get data for the version, raise error is no data for version is found"""
+
+        href = get_smdx_href(self.version)
+        if href is None:
+            raise ValueError(f'No data found for version:'
+                             f' {self.version[0]}, {self.version[1]}')
+
+        # parse data and save to disk
+        folder = get_folder(href)
+        Parser(folder).parse_data().to_csv(self._path, index=False)
+
+    def load_data(self, indicators: str | list = 'all') -> ImportData:
+        """ """
+
+        # check if latest is requested
+        if self.version == 'latest':
+            self.version = gen_latest_version()  # set latest expected version
+            if not self._path.exists():  # check if not downloaded
+                self._download_latest_data()  # find latest and download data
+
+        else:
+            if not self._path.exists():  # check if not downloaded
+                self._download_data()  # download data
+
+        # check if raw data is not loaded to object
+        if self._raw_data is None:
+            self._raw_data = pd.read_csv(self._path)
+
+        # load indicators
+        if indicators == 'all':
+            indicators = self._raw_data['CONCEPT_CODE'].unique()
+        if isinstance(indicators, str):
+            indicators = [indicators]
+
+        self._data.update(
+            {indicator: (self._raw_data[self._raw_data['CONCEPT_CODE'] == indicator]
+                         .reset_index(drop=True)
+                         )
+             for indicator in indicators
+             }
         )
+        logger.info("Data loaded successfully")
+        return self
+
+    def update_data(self, reload_data: bool = True):
+        """ """
+        if len(self._data) == 0:
+            raise RuntimeError('No indicators loaded')
+
+        self._download_data()
+        self._raw_data = pd.read_csv(self._path)
+        if reload_data:
+            self.load_data(indicators=self._raw_data['CONCEPT_CODE'])
