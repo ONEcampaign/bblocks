@@ -5,11 +5,10 @@ from zipfile import ZipFile
 from dataclasses import dataclass
 import pandas as pd
 from datetime import datetime
-import calendar
 from bs4 import BeautifulSoup
 import io
 
-from bblocks.import_tools.common import ImportData, get_response
+from bblocks.import_tools.common import ImportData, get_response, unzip
 from bblocks.config import BBPaths
 from bblocks.logger import logger
 
@@ -45,18 +44,6 @@ def get_smdx_href(version: tuple[int, int]) -> str | None:
     # check is data exists
     if soup.find("a", string="SDMX Data"):
         return soup.find_all("a", string="SDMX Data")[0].get("href")
-
-
-def get_folder(href: str) -> ZipFile:
-    """Extract the folder containing data and schema"""
-
-    # TODO add to common with error handling (remove unzip)
-
-    try:
-        response = get_response(BASE_URL + href)
-        return ZipFile(io.BytesIO(response.content))
-    except ConnectionError:
-        raise ConnectionError("invalid url")
 
 
 @dataclass
@@ -139,15 +126,13 @@ def gen_latest_version() -> tuple[int, int]:
         current_year -= 1
         return current_year, 2
 
-
     # elif month is less than 10 (October)
     # return current year and version 2 (April)
     elif current_month < 10:
         return current_year, 1
 
     # else (if month is more than 10 (October)
-    # return current month and version 2 (October
-
+    # return current month and version 2 (October)
     else:
         return current_year, 2
 
@@ -188,8 +173,9 @@ class WEO(ImportData):
                 # roll back version
                 self.version = roll_back_version(self.version)
 
-        # parse data and save to disk
-        folder = get_folder(href)
+        # get and parse data and save to disk
+        response = get_response(BASE_URL + href)
+        folder = unzip(io.BytesIO(response.content))
         Parser(folder).parse_data().to_csv(self._path, index=False)
 
     def _download_data(self) -> None:
@@ -200,8 +186,9 @@ class WEO(ImportData):
             raise ValueError(f'No data found for version:'
                              f' {self.version[0]}, {self.version[1]}')
 
-        # parse data and save to disk
-        folder = get_folder(href)
+        # get and parse data and save to disk
+        response = get_response(BASE_URL + href)
+        folder = unzip(io.BytesIO(response.content))
         Parser(folder).parse_data().to_csv(self._path, index=False)
 
     def load_data(self, indicators: str | list = 'all') -> ImportData:
