@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 import requests
+import io
+from zipfile import ZipFile, BadZipFile
 
 from bblocks.logger import logger
 
@@ -94,3 +96,25 @@ def get_response(url: str) -> requests.Response:
         raise requests.exceptions.ConnectionError("Invalid url")
 
     return response
+
+
+def unzip(file: str | io.BytesIO) -> ZipFile:
+    """Unzip a file
+
+    Create a ZipFile object from a file on disk or a file-like object from a requests
+    response.
+
+    Args:
+        file: path to zipfile or file-like object. If zipfile is extracted from a url,
+        the file like object can be obtained by calling `io.BytesIO(response.content)`
+
+    Returns:
+        ZipFile: object containing unzipped folder
+    """
+
+    try:
+        return ZipFile(file)
+    except BadZipFile as e:
+        raise ValueError(f"The file could not be unzipped. Error : {str(e)}")
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Could not find file: {file}")
