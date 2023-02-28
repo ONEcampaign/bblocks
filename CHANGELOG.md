@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.1.0] - 2023-02-28
+--------------------
+- Added a new feature: `ilo` module in `import_tools` with an object 
+  to extract data from the ILO.
+
 [1.0.1] - 2023-02-07
 --------------------
 Improved documentation
