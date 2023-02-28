@@ -7,21 +7,14 @@ from bs4 import BeautifulSoup
 from dataclasses import dataclass
 from bblocks.import_tools.common import ImportData
 from bblocks.config import BBPaths
+from urllib.error import HTTPError
 
 
 BASE_URL = "https://www.ilo.org"
 
 
-def _get_glossaries_links(lang: str = "en") -> dict[str, str]:
-    """Get reference dictionaries for codes and names of indicators
-
-    Args:
-        lang (str, optional): Language of the glossaries. Defaults to 'en'.
-        Choose from en (English), fr (French), es (Spanish)
-
-    Returns:
-        dict: Dictionary with the names as keys and a dictionary of codes and names as values
-    """
+def _get_glossaries_links() -> dict[str, str]:
+    """Get reference dictionaries for codes and names of indicators"""
     d = {}
 
     response = requests.get(
@@ -30,27 +23,20 @@ def _get_glossaries_links(lang: str = "en") -> dict[str, str]:
     soup = BeautifulSoup(response.text, "html.parser")
 
     for a in soup.find_all("a"):
-        if f"_{lang}.csv" in a.text:
+        if f"_en.csv" in a.text:
             d.update({a.text.split("_")[0]: f"{BASE_URL}/{a.get('href')}"})
-
-    if len(d) == 0:
-        raise ValueError(f"Language {lang} not available. Choose from en, fr, es")
 
     return d
 
 
-def get_glossaries(lang: str = "en") -> dict[str, dict[str, str]]:
+def get_glossaries() -> dict[str, dict[str, str]]:
     """Get reference dictionaries for codes and names of indicators
-
-    Args:
-        lang (str, optional): Language of the glossaries. Defaults to 'en'.
-        Choose from en (English), fr (French), es (Spanish)
 
     Returns:
         dict: Dictionary with the names as keys and a dictionary of codes and names as values
     """
     d = {}
-    glossaries_links = _get_glossaries_links(lang)
+    glossaries_links = _get_glossaries_links()
 
     for name, link in glossaries_links.items():
         d.update({name: pd.read_csv(link, index_col=0).iloc[:, 0].to_dict()})
@@ -77,8 +63,8 @@ def extract_data(indicator_code: str) -> pd.DataFrame:
 
     try:
         return pd.read_csv(url, compression="gzip")
-    except requests.exceptions.HTTPError:
-        raise requests.exceptions.HTTPError(f"Indicator {indicator_code} not available")
+    except HTTPError:
+        raise ValueError(f"Indicator not available: {indicator_code}")
 
 
 def clean_df(df, glossaries) -> pd.DataFrame:
@@ -101,6 +87,22 @@ def clean_df(df, glossaries) -> pd.DataFrame:
             )  # add new column with glossary names
 
     return df
+
+
+def download_data(indicator: str, path: str, glossaries: dict) -> None:
+    """Pipeline to download an indicator and save it to disk.
+
+    Args:
+        indicator: Indicator code to download
+        path: Path to save the data to
+        glossaries: dictionary to map codes to names
+    """
+
+    (
+        extract_data(indicator)
+        .pipe(clean_df, glossaries)
+        .to_csv(path, index=False)
+    )
 
 
 @dataclass
@@ -127,7 +129,7 @@ class ILO(ImportData):
             )
         return self._available_indicators
 
-    def _load_glossaries(self):
+    def _load_glossaries(self) -> None:
         """Load the glossaries to the object"""
 
         self._glossaries = get_glossaries()
@@ -161,15 +163,11 @@ class ILO(ImportData):
                     self._load_glossaries()
 
                 # download data
-                (
-                    extract_data(ind)
-                    .pipe(clean_df, self._glossaries)
-                    .to_csv(path, index=False)
-                )
+                download_data(ind, path, self._glossaries)
 
             # load data to object
             self._data[ind] = pd.read_csv(path)
-            return self
+        return self
 
     def update_data(self, reload_data: bool = True) -> ImportData:
         """Update the data saved on disk
@@ -195,12 +193,8 @@ class ILO(ImportData):
 
         for ind in self._data:  # loop through loaded indicators
 
-            # extract data
-            (
-                extract_data(ind)
-                .pipe(clean_df, self._glossaries)
-                .to_csv(BBPaths.raw_data / f"{ind}.csv", index=False)
-            )
+            # download data
+            download_data(ind, BBPaths.raw_data / f"{ind}.csv", self._glossaries)
 
             # reload data to object if reload_data is True
             if reload_data:
