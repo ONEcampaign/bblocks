@@ -3,11 +3,13 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from urllib.error import HTTPError
 
 from dataclasses import dataclass
+
 from bblocks.import_tools.common import ImportData
 from bblocks.config import BBPaths
-from urllib.error import HTTPError
+from bblocks.logger import logger
 
 
 BASE_URL = "https://www.ilo.org"
@@ -64,10 +66,11 @@ def extract_data(indicator_code: str) -> pd.DataFrame:
     try:
         return pd.read_csv(url, compression="gzip")
     except HTTPError:
+        logger.error(f"Indicator not available: {indicator_code}")
         raise ValueError(f"Indicator not available: {indicator_code}")
 
 
-def clean_df(df, glossaries) -> pd.DataFrame:
+def clean_df(df: pd.DataFrame, glossaries: dict[str: dict]) -> pd.DataFrame:
     """Clean a dataframe
 
     Args:
@@ -116,8 +119,8 @@ class ILO(ImportData):
     all the available indicators from the ILO.
     """
 
-    _glossaries: dict = None
-    _available_indicators: pd.DataFrame = None
+    _glossaries: dict = None # dictionary used to map codes to names
+    _available_indicators: pd.DataFrame = None # dataframe with information on all available indicators
 
     @property
     def available_indicators(self) -> pd.DataFrame:
@@ -127,12 +130,14 @@ class ILO(ImportData):
             self._available_indicators = pd.read_csv(
                 f"{BASE_URL}//ilostat-files/WEB_bulk_download/indicator/table_of_contents_en.csv"
             )
+            logger.info("Loaded available indicators to object")
         return self._available_indicators
 
     def _load_glossaries(self) -> None:
         """Load the glossaries to the object"""
 
         self._glossaries = get_glossaries()
+        logger.info("Loaded glossaries to object")
 
     def load_data(self, indicator: str | list) -> ImportData:
         """Load an ILO indicator to the object
@@ -161,12 +166,15 @@ class ILO(ImportData):
                 # download glossaries if not loaded to object
                 if self._glossaries is None:
                     self._load_glossaries()
+                    logger.info("Loaded glossaries to object")
 
                 # download data
                 download_data(ind, path, self._glossaries)
 
             # load data to object
             self._data[ind] = pd.read_csv(path)
+            logger.info(f"Loaded indicator to object: {ind}")
+
         return self
 
     def update_data(self, reload_data: bool = True) -> ImportData:
@@ -199,5 +207,8 @@ class ILO(ImportData):
             # reload data to object if reload_data is True
             if reload_data:
                 self._data[ind] = pd.read_csv(BBPaths.raw_data / f"{ind}.csv")
+                logger.info(f"Reloaded indicator to object: {ind}")
+
+        logger.info("Data successfully updated")
 
         return self

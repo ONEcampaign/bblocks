@@ -14,9 +14,9 @@ class TestILO:
 
     obj = ilo.ILO()
 
-    indicator_1 = 'CLD_TPOP_SEX_AGE_GEO_NB_A'
-    indicator_2 = 'CPI_XCPI_COI_RT_Q'
-    indicator_list = ['CLD_TPOP_SEX_AGE_NB_A', 'CLD_XCHD_SEX_AGE_NB_A']
+    indicator_1 = "CLD_TPOP_SEX_AGE_GEO_NB_A"
+    indicator_2 = "CPI_XCPI_COI_RT_Q"
+    indicator_list = ["CLD_TPOP_SEX_AGE_NB_A", "CLD_XCHD_SEX_AGE_NB_A"]
 
     def test_update_data_error(self):
         """Test that update_data raises an error because no data is loaded"""
@@ -53,7 +53,9 @@ class TestILO:
         assert self.indicator_2 in self.obj._data
         assert isinstance(self.obj._data[self.indicator_2], pd.DataFrame)
 
-        assert self.indicator_1 in self.obj._data  # check that first indicator is still there
+        assert (
+            self.indicator_1 in self.obj._data
+        )  # check that first indicator is still there
 
     def test_load_data_list(self):
         """Test loading a list of indicators"""
@@ -68,15 +70,4 @@ class TestILO:
         """Test that an error is raised if the indicator is invalid"""
 
         with pytest.raises(ValueError, match="Indicator not available"):
-            self.obj.load_data('invalid')
-
-
-    def test_update_data(self):
-        """Test that the data in disk has been updated"""
-
-
-
-
-
-
-
+            self.obj.load_data("invalid")
