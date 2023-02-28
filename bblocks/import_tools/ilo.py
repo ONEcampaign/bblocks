@@ -70,7 +70,7 @@ def extract_data(indicator_code: str) -> pd.DataFrame:
         raise ValueError(f"Indicator not available: {indicator_code}")
 
 
-def clean_df(df: pd.DataFrame, glossaries: dict[str: dict]) -> pd.DataFrame:
+def clean_df(df: pd.DataFrame, glossaries: dict[str:dict]) -> pd.DataFrame:
     """Clean a dataframe
 
     Args:
@@ -101,11 +101,7 @@ def download_data(indicator: str, path: str, glossaries: dict) -> None:
         glossaries: dictionary to map codes to names
     """
 
-    (
-        extract_data(indicator)
-        .pipe(clean_df, glossaries)
-        .to_csv(path, index=False)
-    )
+    (extract_data(indicator).pipe(clean_df, glossaries).to_csv(path, index=False))
 
 
 @dataclass
@@ -119,8 +115,10 @@ class ILO(ImportData):
     all the available indicators from the ILO.
     """
 
-    _glossaries: dict = None # dictionary used to map codes to names
-    _available_indicators: pd.DataFrame = None # dataframe with information on all available indicators
+    _glossaries: dict = None  # dictionary used to map codes to names
+    _available_indicators: pd.DataFrame = (
+        None  # dataframe with information on all available indicators
+    )
 
     @property
     def available_indicators(self) -> pd.DataFrame:
