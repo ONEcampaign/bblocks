@@ -40,7 +40,7 @@ def get_glossaries() -> dict[str, dict[str, str]]:
         dict: Dictionary with the names as keys and a dictionary of codes and names as values
     """
     d = {}
-    glossaries_links = _get_glossaries_links() # get names and links to glossaries
+    glossaries_links = _get_glossaries_links()  # get names and links to glossaries
 
     # loop through links and get the data
     for name, link in glossaries_links.items():
