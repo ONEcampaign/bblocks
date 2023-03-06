@@ -24,8 +24,10 @@ def _get_glossaries_links() -> dict[str, str]:
     )
     soup = BeautifulSoup(response.text, "html.parser")
 
+    # loop through links and get the ones that end with _en.csv
     for a in soup.find_all("a"):
         if f"_en.csv" in a.text:
+            # update dictionary with name and link
             d.update({a.text.split("_")[0]: f"{BASE_URL}/{a.get('href')}"})
 
     return d
@@ -38,12 +40,13 @@ def get_glossaries() -> dict[str, dict[str, str]]:
         dict: Dictionary with the names as keys and a dictionary of codes and names as values
     """
     d = {}
-    glossaries_links = _get_glossaries_links()
+    glossaries_links = _get_glossaries_links() # get names and links to glossaries
 
+    # loop through links and get the data
     for name, link in glossaries_links.items():
         d.update({name: pd.read_csv(link, index_col=0).iloc[:, 0].to_dict()})
 
-    d.update({"obs_status": d.pop("obs")})
+    d.update({"obs_status": d.pop("obs")})  # rename obs to obs_status
 
     return d
 
@@ -56,7 +59,6 @@ def extract_data(indicator_code: str) -> pd.DataFrame:
 
     Returns:
         pd.DataFrame: Dataframe with the data
-
     """
 
     url = (
@@ -101,7 +103,7 @@ def download_data(indicator: str, path: str, glossaries: dict) -> None:
         glossaries: dictionary to map codes to names
     """
 
-    (extract_data(indicator).pipe(clean_df, glossaries).to_csv(path, index=False))
+    extract_data(indicator).pipe(clean_df, glossaries).to_csv(path, index=False)
 
 
 @dataclass
@@ -120,15 +122,14 @@ class ILO(ImportData):
         None  # dataframe with information on all available indicators
     )
 
-    @property
     def available_indicators(self) -> pd.DataFrame:
-        """Return a datafra"""
+        """Return a dataframe with information on all the available indicators from the ILO"""
 
         if self._available_indicators is None:
             self._available_indicators = pd.read_csv(
                 f"{BASE_URL}//ilostat-files/WEB_bulk_download/indicator/table_of_contents_en.csv"
             )
-            logger.info("Loaded available indicators to object")
+            logger.debug("Loaded available indicators to object")
         return self._available_indicators
 
     def _load_glossaries(self) -> None:
@@ -156,7 +157,7 @@ class ILO(ImportData):
 
         for ind in indicator:  # loop through indicators
 
-            path = BBPaths.raw_data / f"{indicator}.csv"
+            path = BBPaths.raw_data / f"{ind}.csv"
 
             # download data if not saved to disk
             if not path.exists():

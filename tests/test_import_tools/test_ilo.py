@@ -1,7 +1,6 @@
 """Tests for the ilo module"""
 import pandas as pd
 import pytest
-import urllib
 
 from bblocks.import_tools import ilo
 from bblocks import set_bblocks_data_path, config
@@ -27,7 +26,7 @@ class TestILO:
     def test_available_indicators(self):
         """Test that the available indicators are returned and loaded to the object"""
 
-        assert isinstance(self.obj.available_indicators, pd.DataFrame)
+        assert isinstance(self.obj.available_indicators(), pd.DataFrame)
         assert self.obj._available_indicators is not None
 
     def test_load_glossaries(self):
