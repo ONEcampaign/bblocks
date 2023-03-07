@@ -51,10 +51,19 @@ def _api_url(
     time_period = _time_period(start_year, end_year)
 
     return (
-        "http://api.worldbank.org/v2/"
+        "https://api.worldbank.org/v2/"
         f"sources/{source}/country/{countries}/"
         f"series/{indicator}/time/{time_period}/"
         f"data?format=jsonstat"
+    )
+
+
+def _clean_ids_response(data: pd.DataFrame, indicator: str) -> pd.DataFrame:
+    return (
+        data.loc[data.value.notna()]
+        .assign(series_code=indicator)
+        .astype({"value": "float64"})
+        .reset_index(drop=True)
     )
 
 
@@ -74,11 +83,7 @@ def get_indicator_data(
         data = pyjstat.Dataset.read(url).write(output="dataframe")
         logger.debug(f"Got data for {indicator}")
 
-        return (
-            data.loc[data.value.notna()]
-            .assign(series_code=indicator)
-            .reset_index(drop=True)
-        )
+        return data.pipe(_clean_ids_response, indicator=indicator)
 
     except requests.exceptions.HTTPError:
         logger.debug(f"Failed to get data for {indicator}")
