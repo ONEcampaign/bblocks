@@ -66,7 +66,7 @@ def _get_wb_data(
 
 @dataclass(repr=False)
 class WorldBankData(ImportData):
-    """An object to help download _data from the World Bank.
+    """An object to help download data from the World Bank.
     In order to use, create an instance of this class.
     Then, call the load_indicator method to load an indicator. This can be done multiple times.
     If the _data for an indicator has never been downloaded, it will be downloaded.
@@ -101,7 +101,6 @@ class WorldBankData(ImportData):
         """
 
         def _load_indicator(ind_: str) -> None:
-
             years_str = (
                 f"{start_year}-{end_year}"
                 if all([isinstance(start_year, int), isinstance(end_year, int)])
@@ -162,7 +161,6 @@ class WorldBankData(ImportData):
         return self
 
     def get_data(self, indicators: str | list = "all", **kwargs) -> pd.DataFrame:
-
         for _c, _d in self._indicators.items():
             self._data[_c] = _d[0]
 
