@@ -281,6 +281,18 @@ def test_load_data_invalid():
         )
 
 
+def test_load_data_twice():
+    test = DebtIDS()
+
+    # Test list
+    test.load_data(indicators=["DT.AMT.BLAT.CD"], start_year=2015, end_year=2018)
+
+    with pytest.raises(KeyError):
+        test.load_data(indicators=["DT.AMT.BLAT.CD"], start_year=2016, end_year=2017)
+
+    assert "DT.AMT.BLAT.CD_2015-2018" in test._data.keys()
+
+
 def test_load_data_not_downloaded():
     test = DebtIDS()
     sample_df = pd.DataFrame(

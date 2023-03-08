@@ -1,3 +1,4 @@
+"""Import data from the World Bank's International Debt Statistics database"""
 import json
 from dataclasses import dataclass
 
@@ -9,14 +10,41 @@ from bblocks.import_tools.debt.get_data import get_indicator_data
 
 
 def read_indicators(file: str = "ids") -> dict:
-    """Read a json which contains all the IDS indicators"""
+    """Read a json which contains the IDS indicators stored in the requested file
+
+    Args:
+        file (str): The file to read - either 'ids','debt_stocks', or 'debt_service'.
+         Defaults to "ids"
+    """
     with open(BBPaths.debt_settings / f"{file}_indicators.json", "r") as fp:
         return json.load(fp)
 
 
 @dataclass
 class DebtIDS(ImportData):
-    """Import data from the World Bank's International Debt Statistics database"""
+    """Import data from the World Bank's International Debt Statistics database.
+
+    To use this object, first create an instance of it.
+    Then use the `load_data` method to load indicators. One or more indicators can
+    be loaded at a time, and a starting and end year must be specified.
+
+    If the data has not been downloaded before, it will be downloaded from the
+    World Bank API. If the data has been downloaded before, it will be loaded from
+    the local data folder.
+
+    To get a DataFrame, use the `get_data` method. You can get the data for one or more,
+    or for all indicators at once.
+
+    To update the data, use the `update_data` method. This will download the latest
+    data from the World Bank API and overwrite the local data.
+
+    - To get a list of available indicators, use the `get_available_indicators` method.
+    - To get a list of available debt service indicators, use the
+      `debt_service_indicators` method.
+    - To get a list of available debt stocks indicators, use the
+      `debt_stocks_indicators` method.
+
+    """
 
     def __post_init__(self):
         """Set the path to the data folder and create it if it doesn't exist"""
@@ -152,6 +180,14 @@ class DebtIDS(ImportData):
                 # Once the data has been downloaded, save the filename to the
                 # stored_data variable.
                 stored_data = f"{indicator}_{start_year}-{end_year}.feather"
+
+            # check if indicator already exists in the data dictionary
+            for key in self._data:
+                if indicator in key:
+                    raise KeyError(
+                        f"{indicator} has already been loaded. "
+                        f"Only one version of the same indicator can be loaded at once."
+                    )
 
             # load the data into the data dictionary, keeping only requested years.
             self._data[f"{indicator}_{start_year}-{end_year}"] = (

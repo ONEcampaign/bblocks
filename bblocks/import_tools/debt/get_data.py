@@ -1,3 +1,5 @@
+"""Helper functions to generate the URL and extract the data from the
+IDS database."""
 import time
 
 import pandas as pd
@@ -75,6 +77,21 @@ def get_indicator_data(
     source: int = 6,
     try_again: bool = True,
 ) -> pd.DataFrame:
+    """Get data for a single indicator from the World Bank API
+
+    Args:
+        indicator: The indicator to get data for
+        countries: The countries to get data for. Defaults to all countries
+        start_year: The start year for the data. Defaults to 2017
+        end_year: The end year for the data. Defaults to 2025
+        source: The source of the data. Defaults to 6 (IDS)
+        try_again: Whether to try again if the API fails. Defaults to True
+
+    Returns:
+        A dataframe with the data
+
+    """
+
     # Get API url
     url = _api_url(indicator, countries, start_year, end_year, source)
 
@@ -85,14 +102,14 @@ def get_indicator_data(
 
         return data.pipe(_clean_ids_response, indicator=indicator)
 
-    except requests.exceptions.HTTPError:
-        logger.debug(f"Failed to get data for {indicator}")
+    except requests.exceptions.HTTPError as http:
+        logger.debug(f"Failed to get data for {indicator}: {http}")
 
-    except requests.exceptions.JSONDecodeError:
-        logger.debug(f"Failed to get data for {indicator}")
+    except requests.exceptions.JSONDecodeError as j:
+        logger.debug(f"Failed to get data for {indicator}: {j}")
 
     except Exception as e:
-        print("Ran into other trouble: ", e)
+        logger.debug(f"Failed to get data for {indicator}: {e}")
 
     if try_again:
         time.sleep(300)
