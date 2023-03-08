@@ -5,11 +5,9 @@ import pandas as pd
 import pytest
 import requests
 
-from bblocks import DebtIDS
+from bblocks import DebtIDS, config, set_bblocks_data_path
 from bblocks.import_tools.debt import get_data as ids
 from bblocks.import_tools.debt.wb_ids import read_indicators
-
-from bblocks import set_bblocks_data_path, config
 
 set_bblocks_data_path(config.BBPaths.tests_data)
 
@@ -47,23 +45,23 @@ class MockPyjstatWrite:
 
 def test_get_indicator_data():
     with patch(
-        "pyjstat.pyjstat.Dataset.read",
-        new_callable=mock_pyjstat_read,
+            "pyjstat.pyjstat.Dataset.read",
+            new_callable=mock_pyjstat_read,
     ):
         ids.get_indicator_data("test")
 
     with patch("pyjstat.pyjstat.Dataset.read", new_callable=mock_pyjstat_read), patch(
-        "time.sleep", return_value=None
+            "time.sleep", return_value=None
     ):
         ids.get_indicator_data("HTTPError")
 
     with patch("pyjstat.pyjstat.Dataset.read", new_callable=mock_pyjstat_read), patch(
-        "time.sleep", return_value=None
+            "time.sleep", return_value=None
     ):
         ids.get_indicator_data("JsonError")
 
     with patch("pyjstat.pyjstat.Dataset.read", new_callable=mock_pyjstat_read), patch(
-        "time.sleep", return_value=None
+            "time.sleep", return_value=None
     ):
         ids.get_indicator_data("ValueError")
 
@@ -227,3 +225,125 @@ def test_debt_stocks_indicators_detail_true():
     details = ["Bonds" in value for value in result.values()]
 
     assert any(details)
+
+
+def test_get_indicator():
+    sample_df = pd.DataFrame(
+        {
+            "country": ["FRA", "GTM"],
+            "counterpart-area": ["USA", "DEU"],
+            "time": [2015, 2016],
+            "value": [1, 2.2],
+            "series_code": "test",
+        }
+    )
+
+    test = DebtIDS()
+
+    with patch(
+            "bblocks.import_tools.debt.wb_ids.get_indicator_data", return_value=sample_df
+    ) as get, patch("pandas.DataFrame.to_feather", return_value=None) as save:
+        test._get_indicator("test", 2015, 2016)
+
+        assert get.assert_called
+        assert save.assert_called
+
+
+def test_load_data_list():
+    test = DebtIDS()
+
+    # Test list
+    test.load_data(indicators=["DT.AMT.BLAT.CD"], start_year=2015, end_year=2018)
+
+    assert "DT.AMT.BLAT.CD_2015-2018" in test._data.keys()
+
+
+def test_load_data_str():
+    test = DebtIDS()
+
+    # Test str
+    test.load_data(indicators="DT.AMT.BLAT.CD", start_year=2015, end_year=2018)
+
+    assert "DT.AMT.BLAT.CD_2015-2018" in test._data.keys()
+
+
+def test_load_data_invalid():
+    test = DebtIDS()
+
+    # Test invalid
+    with pytest.raises(ValueError):
+        test.load_data(indicators=["xxx"], start_year=2015, end_year=2018)
+
+    # Test valid and invalid
+    with pytest.raises(ValueError):
+        test.load_data(
+            indicators=["DT.AMT.BLAT.CD", "xxx"], start_year=2015, end_year=2018
+        )
+
+
+def test_load_data_not_downloaded():
+    test = DebtIDS()
+    sample_df = pd.DataFrame(
+        {
+            "country": ["FRA", "GTM"],
+            "counterpart_area": ["USA", "DEU"],
+            "year": [2015, 2016],
+            "value": [1, 2.2],
+            "series_code": "DT.INT.BLAT.CD",
+        }
+    )
+
+    with patch(
+            "bblocks.import_tools.debt.wb_ids.DebtIDS._get_indicator",
+            return_value=None,
+    ) as get, patch("pandas.read_feather", return_value=sample_df) as read:
+        test.load_data(indicators="DT.INT.BLAT.CD", start_year=2015, end_year=2018)
+
+        assert get.assert_called
+        assert read.assert_called
+
+
+def test_update_data_not_loaded():
+    test = DebtIDS()
+
+    with pytest.raises(ValueError):
+        test.update_data()
+
+
+def test_update_data_loaded():
+    test = DebtIDS()
+
+    test.load_data(indicators="DT.AMT.BLAT.CD", start_year=2015, end_year=2018)
+
+    # No reload
+    with patch("bblocks.import_tools.debt.wb_ids.DebtIDS._get_indicator") as get:
+        test.update_data(reload_data=False)
+        assert get.assert_called
+
+    # Reload
+    with patch("bblocks.import_tools.debt.wb_ids.DebtIDS._get_indicator") as get:
+        test.update_data(reload_data=True)
+        assert get.assert_called
+
+
+def test_get_data_all():
+    test = DebtIDS()
+
+    test.load_data(indicators="DT.AMT.BLAT.CD", start_year=2015, end_year=2018)
+
+    result = test.get_data(indicators='all')
+
+    assert isinstance(result, pd.DataFrame)
+    assert result.series_code.unique()[0] == "DT.AMT.BLAT.CD"
+
+
+
+def test_get_data_indicator():
+    test = DebtIDS()
+
+    test.load_data(indicators="DT.AMT.BLAT.CD", start_year=2015, end_year=2018)
+
+    result = test.get_data(indicators='DT.AMT.BLAT.CD')
+
+    assert isinstance(result, pd.DataFrame)
+    assert result.series_code.unique()[0] == "DT.AMT.BLAT.CD"

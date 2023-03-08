@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from bblocks.import_tools.common import ImportData
 from bblocks.config import BBPaths
+from bblocks.import_tools.common import ImportData
 from bblocks.import_tools.debt.get_data import get_indicator_data
 
 
@@ -27,7 +27,7 @@ class DebtIDS(ImportData):
             self._path.mkdir()
 
     def _check_stored_data(
-        self, indicator: str, start_year: int, end_year: int
+            self, indicator: str, start_year: int, end_year: int
     ) -> str | bool:
         """Check if the data is already stored locally
 
@@ -87,7 +87,7 @@ class DebtIDS(ImportData):
         }
 
     def _get_indicator(
-        self, indicator: str, start_year: int, end_year: int
+            self, indicator: str, start_year: int, end_year: int
     ) -> ImportData:
         """Get data for an indicator. This method is not meant to be accessed
         directly. Instead, use the `.get_data()` method.
@@ -117,7 +117,7 @@ class DebtIDS(ImportData):
         return self
 
     def load_data(
-        self, indicators: str | list, start_year: int, end_year: int
+            self, indicators: str | list, start_year: int, end_year: int
     ) -> ImportData:
         """Load the data for an indicator or a list of indicators.
 
