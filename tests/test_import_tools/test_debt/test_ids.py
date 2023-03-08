@@ -45,23 +45,23 @@ class MockPyjstatWrite:
 
 def test_get_indicator_data():
     with patch(
-            "pyjstat.pyjstat.Dataset.read",
-            new_callable=mock_pyjstat_read,
+        "pyjstat.pyjstat.Dataset.read",
+        new_callable=mock_pyjstat_read,
     ):
         ids.get_indicator_data("test")
 
     with patch("pyjstat.pyjstat.Dataset.read", new_callable=mock_pyjstat_read), patch(
-            "time.sleep", return_value=None
+        "time.sleep", return_value=None
     ):
         ids.get_indicator_data("HTTPError")
 
     with patch("pyjstat.pyjstat.Dataset.read", new_callable=mock_pyjstat_read), patch(
-            "time.sleep", return_value=None
+        "time.sleep", return_value=None
     ):
         ids.get_indicator_data("JsonError")
 
     with patch("pyjstat.pyjstat.Dataset.read", new_callable=mock_pyjstat_read), patch(
-            "time.sleep", return_value=None
+        "time.sleep", return_value=None
     ):
         ids.get_indicator_data("ValueError")
 
@@ -241,7 +241,7 @@ def test_get_indicator():
     test = DebtIDS()
 
     with patch(
-            "bblocks.import_tools.debt.wb_ids.get_indicator_data", return_value=sample_df
+        "bblocks.import_tools.debt.wb_ids.get_indicator_data", return_value=sample_df
     ) as get, patch("pandas.DataFrame.to_feather", return_value=None) as save:
         test._get_indicator("test", 2015, 2016)
 
@@ -294,8 +294,8 @@ def test_load_data_not_downloaded():
     )
 
     with patch(
-            "bblocks.import_tools.debt.wb_ids.DebtIDS._get_indicator",
-            return_value=None,
+        "bblocks.import_tools.debt.wb_ids.DebtIDS._get_indicator",
+        return_value=None,
     ) as get, patch("pandas.read_feather", return_value=sample_df) as read:
         test.load_data(indicators="DT.INT.BLAT.CD", start_year=2015, end_year=2018)
 
@@ -331,11 +331,10 @@ def test_get_data_all():
 
     test.load_data(indicators="DT.AMT.BLAT.CD", start_year=2015, end_year=2018)
 
-    result = test.get_data(indicators='all')
+    result = test.get_data(indicators="all")
 
     assert isinstance(result, pd.DataFrame)
     assert result.series_code.unique()[0] == "DT.AMT.BLAT.CD"
-
 
 
 def test_get_data_indicator():
@@ -343,7 +342,7 @@ def test_get_data_indicator():
 
     test.load_data(indicators="DT.AMT.BLAT.CD", start_year=2015, end_year=2018)
 
-    result = test.get_data(indicators='DT.AMT.BLAT.CD')
+    result = test.get_data(indicators="DT.AMT.BLAT.CD")
 
     assert isinstance(result, pd.DataFrame)
     assert result.series_code.unique()[0] == "DT.AMT.BLAT.CD"
