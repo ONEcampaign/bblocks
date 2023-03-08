@@ -183,7 +183,7 @@ class DebtIDS(ImportData):
 
             # check if indicator already exists in the data dictionary
             for key in self._data:
-                if indicator in key:
+                if indicator in key and key != f"{indicator}_{start_year}-{end_year}":
                     raise KeyError(
                         f"{indicator} has already been loaded. "
                         f"Only one version of the same indicator can be loaded at once."
