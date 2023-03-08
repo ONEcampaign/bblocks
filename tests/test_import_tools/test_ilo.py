@@ -12,6 +12,7 @@ class TestILO:
     """Tests for ILO module"""
 
     obj = ilo.ILO()
+    obj_2 = ilo.ILO()
 
     indicator_1 = "CLD_TPOP_SEX_AGE_GEO_NB_A"
     indicator_2 = "CPI_XCPI_COI_RT_Q"
@@ -39,6 +40,12 @@ class TestILO:
         key = list(self.obj._glossaries.keys())[0]
         assert isinstance(self.obj._glossaries[key], dict)
 
+    def test_load_area_dict(self):
+        """Test that the area dictionary is loaded to the object"""
+
+        self.obj._load_area_dict()
+        assert isinstance(self.obj._area_dict, dict)
+
     def test_load_data(self):
         """Test loading a single indicator"""
 
@@ -47,6 +54,7 @@ class TestILO:
         assert isinstance(self.obj._data[self.indicator_1], pd.DataFrame)
 
         self.obj._glossaries = None  # set glossaries back to None
+        self.obj._area_dict = None  # set area dictionary back to None
 
         self.obj.load_data(self.indicator_2)
         assert self.indicator_2 in self.obj._data
@@ -70,3 +78,17 @@ class TestILO:
 
         with pytest.raises(ValueError, match="Indicator not available"):
             self.obj.load_data("invalid")
+
+    def test_update_data_when_data_loaded_from_disk(self):
+        """Test that the data is updated correctly when data is loaded from disk"""
+
+        # mock data loaded from disk - data object is not empty but glossaries and areas are empty
+        self.obj_2.load_data(self.indicator_1)
+        self.obj_2._glossaries = None
+        self.obj_2._area_dict = None
+
+        self.obj_2.update_data()
+        assert self.indicator_1 in self.obj_2._data
+        assert isinstance(self.obj_2._data[self.indicator_1], pd.DataFrame)
+        assert self.obj_2._glossaries is not None
+        assert self.obj_2._area_dict is not None
