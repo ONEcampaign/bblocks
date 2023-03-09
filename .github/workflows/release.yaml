@@ -18,11 +18,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Get version from tag
-        id: tag_name
-        run: |
-          echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
-        shell: bash
       - name: Get version from tag (new)
         run: echo "{current_version}={${GITHUB_REF#refs/tags/v}}" >> $GITHUB_OUTPUT
 
