@@ -1,0 +1,42 @@
+{
+  "DT.AMT.BLAT.CD": {
+    "broad_category": "Bilateral",
+    "detailed_category": "Bilateral Principal"
+  },
+  "DT.AMT.MLAT.CD": {
+    "broad_category": "Multilateral",
+    "detailed_category": "Multilateral Principal"
+  },
+  "DT.AMT.PBND.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Bonds Principal"
+  },
+  "DT.AMT.PCBK.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Banks Principal"
+  },
+  "DT.AMT.PROP.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Other Principal"
+  },
+  "DT.INT.BLAT.CD": {
+    "broad_category": "Bilateral",
+    "detailed_category": "Bilateral Interests"
+  },
+  "DT.INT.MLAT.CD": {
+    "broad_category": "Multilateral",
+    "detailed_category": "Multilateral Interests"
+  },
+  "DT.INT.PBND.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Bonds Interests"
+  },
+  "DT.INT.PCBK.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Banks Interests"
+  },
+  "DT.INT.PROP.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Other Interests"
+  }
+}

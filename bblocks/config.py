@@ -13,4 +13,5 @@ class BBPaths:
     import_settings = scripts / "import_tools/settings"
     tests = project / "tests"
     import_tools = scripts / "import_tools"
+    debt_settings = import_tools / "debt/settings"
     tests_data = project / "tests/.tests_data"
