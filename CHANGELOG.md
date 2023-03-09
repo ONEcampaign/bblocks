@@ -1,16 +1,13 @@
 Changelog
 =========
 
-[1.2.0] - 2023-03-09
---------------------
-- Added a new feature: `DebtIDS` module in `import_tools` with an object
-  to extract data from the World Bank International Debt Statistics database.
-- Fixed a bug in the `ilo` importer object that did not map names correctly.
-
-[1.1.0] - 2023-02-28
+[1.1.0] - 2023-03-09
 --------------------
 - Added a new feature: `ilo` module in `import_tools` with an object 
   to extract data from the ILO.
+- Added a new feature: `DebtIDS` module in `import_tools` with an object 
+  to extract data from the World Bank International Debt Statistics database.
+- Fixed a bug in the `ilo` importer object that did not map names correctly.
 
 [1.0.1] - 2023-02-07
 --------------------
