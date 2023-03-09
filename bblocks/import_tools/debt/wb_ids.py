@@ -172,6 +172,14 @@ class DebtIDS(ImportData):
                 indicator, start_year=start_year, end_year=end_year
             )
 
+            # check if indicator already exists in the data dictionary
+            for key in self._data:
+                if indicator in key and key != f"{indicator}_{start_year}-{end_year}":
+                    raise KeyError(
+                        f"{indicator} has already been loaded. "
+                        f"Only one version of the same indicator can be loaded at once."
+                    )
+
             # if the data isn't stored locally, get it
             if not stored_data:
                 # get the data
@@ -180,14 +188,6 @@ class DebtIDS(ImportData):
                 # Once the data has been downloaded, save the filename to the
                 # stored_data variable.
                 stored_data = f"{indicator}_{start_year}-{end_year}.feather"
-
-            # check if indicator already exists in the data dictionary
-            for key in self._data:
-                if indicator in key and key != f"{indicator}_{start_year}-{end_year}":
-                    raise KeyError(
-                        f"{indicator} has already been loaded. "
-                        f"Only one version of the same indicator can be loaded at once."
-                    )
 
             # load the data into the data dictionary, keeping only requested years.
             self._data[f"{indicator}_{start_year}-{end_year}"] = (
