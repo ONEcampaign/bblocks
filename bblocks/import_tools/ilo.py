@@ -51,6 +51,25 @@ def get_glossaries() -> dict[str, dict[str, str]]:
     return d
 
 
+def get_area_dict() -> dict[str, str]:
+    """Get dictionary to map area codes to names
+
+    Returns:
+        dict: Dictionary with area codes as keys and names as values
+    """
+
+    url = (
+        f"{BASE_URL}/ilostat-files/WEB_bulk_download/ref_area/table_of_contents_en.csv"
+    )
+
+    return (
+        pd.read_csv(url)
+        .loc[lambda d: d.freq == "A"]
+        .set_index("ref_area")["ref_area.label"]
+        .to_dict()
+    )
+
+
 def extract_data(indicator_code: str) -> pd.DataFrame:
     """Extract data from ILO website
 
@@ -72,12 +91,15 @@ def extract_data(indicator_code: str) -> pd.DataFrame:
         raise ValueError(f"Indicator not available: {indicator_code}")
 
 
-def clean_df(df: pd.DataFrame, glossaries: dict[str:dict]) -> pd.DataFrame:
+def clean_df(
+    df: pd.DataFrame, glossaries: dict[str:dict], areas: dict[str:str]
+) -> pd.DataFrame:
     """Clean a dataframe
 
     Args:
         df (pd.DataFrame): Dataframe to clean
         glossaries (dict): Dictionary with the names as keys and a dictionary of codes and names as values
+        areas: Dictionary with area codes as keys and names as values
 
     Returns:
         pd.DataFrame: Cleaned dataframe
@@ -91,19 +113,25 @@ def clean_df(df: pd.DataFrame, glossaries: dict[str:dict]) -> pd.DataFrame:
                 glossaries[key]
             )  # add new column with glossary names
 
+    # map area codes to names
+    df = df.rename(columns={"ref_area": "ref_area_code"}).assign(
+        ref_area=lambda d: d.ref_area_code.map(areas)
+    )
+
     return df
 
 
-def download_data(indicator: str, path: str, glossaries: dict) -> None:
+def download_data(indicator: str, path: str, glossaries: dict, areas: dict) -> None:
     """Pipeline to download an indicator and save it to disk.
 
     Args:
         indicator: Indicator code to download
         path: Path to save the data to
         glossaries: dictionary to map codes to names
+        areas: dictionary to map area codes to names
     """
 
-    extract_data(indicator).pipe(clean_df, glossaries).to_csv(path, index=False)
+    extract_data(indicator).pipe(clean_df, glossaries, areas).to_csv(path, index=False)
 
 
 @dataclass
@@ -113,7 +141,7 @@ class ILO(ImportData):
     To use this object, first create an instance of it and then call the `load_data` method
     to load an indicator to the object. Use the `get_data` method to get the data from the object.
     To update the data saved on disk and in the object, call the `update_data` method.
-    The attribute `available_indicators` contains a dataframe with information on
+    The method `available_indicators()` returns a dataframe with information on
     all the available indicators from the ILO.
     """
 
@@ -121,9 +149,14 @@ class ILO(ImportData):
     _available_indicators: pd.DataFrame = (
         None  # dataframe with information on all available indicators
     )
+    _area_dict: dict = None  # dictionary to map area codes to names
 
     def available_indicators(self) -> pd.DataFrame:
-        """Return a dataframe with information on all the available indicators from the ILO"""
+        """Return a dataframe with information on all the available indicators from the ILO
+
+        If the dataframe is not already loaded to the object,
+        it will be downloaded from the ILO website.
+        """
 
         if self._available_indicators is None:
             self._available_indicators = pd.read_csv(
@@ -137,6 +170,12 @@ class ILO(ImportData):
 
         self._glossaries = get_glossaries()
         logger.info("Loaded glossaries to object")
+
+    def _load_area_dict(self) -> None:
+        """Load the area dictionary to the object"""
+
+        self._area_dict = get_area_dict()
+        logger.info("Loaded area dictionary to object")
 
     def load_data(self, indicator: str | list) -> ImportData:
         """Load an ILO indicator to the object
@@ -165,10 +204,13 @@ class ILO(ImportData):
                 # download glossaries if not loaded to object
                 if self._glossaries is None:
                     self._load_glossaries()
-                    logger.info("Loaded glossaries to object")
+
+                # download area dictionary if not loaded to object
+                if self._area_dict is None:
+                    self._load_area_dict()
 
                 # download data
-                download_data(ind, path, self._glossaries)
+                download_data(ind, path, self._glossaries, self._area_dict)
 
             # load data to object
             self._data[ind] = pd.read_csv(path)
@@ -198,10 +240,16 @@ class ILO(ImportData):
         if self._glossaries is None:
             self._load_glossaries()
 
+        # download area dictionary if not loaded to object
+        if self._area_dict is None:
+            self._load_area_dict()
+
         for ind in self._data:  # loop through loaded indicators
 
             # download data
-            download_data(ind, BBPaths.raw_data / f"{ind}.csv", self._glossaries)
+            download_data(
+                ind, BBPaths.raw_data / f"{ind}.csv", self._glossaries, self._area_dict
+            )
 
             # reload data to object if reload_data is True
             if reload_data:
