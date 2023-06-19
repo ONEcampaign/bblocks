@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "bblocks"
-version = "1.0.1"
+version = "1.1.0"
 description = "A package with tools to download and analyse international development data. These tools are meant to be the building blocks of further analysis."
 authors = ["The ONE Campaign <data@one.org>"]
 readme = "README.md"
 license = "MIT"
-classifiers=[
-    'Development Status :: 2 - Pre-Alpha',
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
     'Natural Language :: English',
@@ -38,11 +38,9 @@ bump2version = "^1.0.1"
 black = "^22.12.0"
 pytest = "^7.2.1"
 pytest-cov = "^4.0.0"
-
-[tool.poetry.group.dev.dependencies]
 myst-nb = {version = "^0.17.1", python = "^3.9"}
 sphinx-autoapi = "^2.0.1"
-sphinx-rtd-theme = "^1.1.1"
+#sphinx-rtd-theme = "^1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

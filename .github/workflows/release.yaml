@@ -18,17 +18,12 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Get version from tag
-        id: tag_name
-        run: |
-          echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
-        shell: bash
       - name: Get version from tag (new)
         run: echo "{current_version}={${GITHUB_REF#refs/tags/v}}" >> $GITHUB_OUTPUT
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-versions }}
 
@@ -52,7 +47,7 @@ jobs:
           files: dist/*.whl
           draft: false
           prerelease: false
-
+          generate_release_notes: true
       - name: publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

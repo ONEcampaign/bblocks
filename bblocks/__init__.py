@@ -1,10 +1,12 @@
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 # Easy access to importers
 from bblocks.import_tools.world_bank import WorldBankData
 from bblocks.import_tools.who import GHED
 from bblocks.import_tools.wfp import WFPData
 from bblocks.import_tools.imf import WorldEconomicOutlook
+from bblocks.import_tools.unaids import Aids
+from bblocks.import_tools.debt import DebtIDS, get_dsa
 
 # Easy access to add tools
 from bblocks.dataframe_tools.add import (

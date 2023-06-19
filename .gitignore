@@ -105,8 +105,11 @@ ENV/
 .idea/
 
 # downloaded files
-./bblocks/.raw_data/*.csv
-./bblocks/.raw_data/*.feather
+/bblocks/.raw_data/*.csv
+/bblocks/.raw_data/*.feather
 
 # Sphinx documentation
 docs/_build/
+bblocks/.raw_data/ids_data/DT.DOD.MLAT.CD_2008-2009.feather
+bblocks/.raw_data/ids_data/DT.DOD.MLAT.CD_2010-2023.feather
+bblocks/.raw_data/ids_data/DT.DOD.MLAT.CD_2012-2020.feather

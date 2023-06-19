@@ -1,0 +1,22 @@
+{
+  "DT.DOD.BLAT.CD": {
+    "broad_category": "Bilateral",
+    "detailed_category": "Bilateral Stocks"
+  },
+  "DT.DOD.MLAT.CD": {
+    "broad_category": "Multilateral",
+    "detailed_category": "Bilateral Stocks"
+  },
+  "DT.DOD.PBND.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Bonds Stocks"
+  },
+  "DT.DOD.PCBK.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Banks Stocks"
+  },
+  "DT.DOD.PROP.CD": {
+    "broad_category": "Private",
+    "detailed_category": "Private Other Stocks"
+  }
+}
