@@ -1,4 +1,4 @@
-""" """
+"""Tools to import IMF World Economic Outlook data."""
 
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
@@ -21,29 +21,6 @@ COLUMN_MAPPER = {
     "FREQ": "IMF.CL_FREQ.1.0",
     "SCALE": "IMF.CL_WEO_SCALE.1.0",
 }
-
-
-def get_smdx_href(version: tuple[int, int]) -> str | None:
-    """retrieve the href for the SDMX file"""
-
-    if version[1] == 1:
-        month = 'April'
-    elif version[1] == 2:
-        month = 'October'
-    else:
-        raise ValueError('invalid version. Must be 1 or 2')
-
-    url = (
-        f"{BASE_URL}/en/Publications/WEO/weo-database/"
-        f"{version[0]}/{month}/download-entire-database"
-    )
-
-    response = get_response(url)
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    # check is data exists
-    if soup.find("a", string="SDMX Data"):
-        return soup.find_all("a", string="SDMX Data")[0].get("href")
 
 
 @dataclass
@@ -91,8 +68,7 @@ class Parser:
             + "]/"
         )[0].findall("./")
 
-        return series.map({elem.attrib["value"]: elem[0][0].text
-                           for elem in query})
+        return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
 
     def clean_data(self):
         """Format the dataframe"""
@@ -101,8 +77,8 @@ class Parser:
             self.data = self.data.rename(columns={col: f"{col}_CODE"})
             self.data[col] = self._convert_series_codes(self.data[f"{col}_CODE"], value)
 
-        for col in ['REF_AREA_CODE', 'LASTACTUALDATE', 'TIME_PERIOD', 'OBS_VALUE']:
-            self.data[col] = pd.to_numeric(self.data[col], errors='coerce')
+        for col in ["REF_AREA_CODE", "LASTACTUALDATE", "TIME_PERIOD", "OBS_VALUE"]:
+            self.data[col] = pd.to_numeric(self.data[col], errors="coerce")
 
     def parse_data(self) -> pd.DataFrame:
         """Parse the data to a dataframe"""
@@ -147,15 +123,57 @@ def roll_back_version(version: tuple[int, int]) -> tuple[int, int]:
         return version[0] - 1, 2
 
     else:
-        raise ValueError(f'Release must be either 1 or 2. Invalid release: {version[1]}')
+        raise ValueError(
+            f"Release must be either 1 or 2. Invalid release: {version[1]}"
+        )
+
+
+def get_smdx_href(version: tuple[int, int]) -> str | None:
+    """retrieve the href for the SDMX file"""
+
+    if version[1] == 1:
+        month = "April"
+    elif version[1] == 2:
+        month = "October"
+    else:
+        raise ValueError("invalid version. Must be 1 or 2")
+
+    url = (
+        f"{BASE_URL}/en/Publications/WEO/weo-database/"
+        f"{version[0]}/{month}/download-entire-database"
+    )
+
+    response = get_response(url)
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # check is data exists
+    if soup.find("a", string="SDMX Data"):
+        return soup.find_all("a", string="SDMX Data")[0].get("href")
 
 
 @dataclass
 class WEO(ImportData):
-    """
+    """An object to extract WEO data from the IMF website using SDMX
+    To use, create an instance of the class setting the version to the desired version,
+    or leave blank to get the latest version.
+    Call the load_data method to load the data to the object. If the data is already
+    downloaded, it will load from disk, otherwise it will download the data.
+    To force an update of the data, call the update_data method.
+    To retrieve the data, call the get_data method.
+
+    Attributes:
+        version: tuple of (year, release) or "latest". Default is "latest"
     """
 
-    version: tuple[int, int] = 'latest'
+    version: tuple[int, int] = "latest"
+
+    def __post_init__(self):
+        """check that version is valid"""
+
+        if (self.version != "latest") and not (isinstance(self.version, tuple)):
+            raise ValueError(
+                'Invalid version. Must be a tuple of (year, release) or "latest"'
+            )
 
     @property
     def _path(self):
@@ -183,19 +201,32 @@ class WEO(ImportData):
 
         href = get_smdx_href(self.version)
         if href is None:
-            raise ValueError(f'No data found for version:'
-                             f' {self.version[0]}, {self.version[1]}')
+            raise ValueError(
+                f"No data found for version:" f" {self.version[0]}, {self.version[1]}"
+            )
 
         # get and parse data and save to disk
         response = get_response(BASE_URL + href)
         folder = unzip(io.BytesIO(response.content))
         Parser(folder).parse_data().to_csv(self._path, index=False)
 
-    def load_data(self, indicators: str | list = 'all') -> ImportData:
-        """ """
+    def load_data(self, indicators: str | list = "all") -> ImportData:
+        """Load data to object
+
+        When called this method will load WEO indicators to the object.
+        If the data is not downloaded, it will download the data. If the data is
+        already downloaded, it will load the data from disk. If the version is set to
+        'latest', it will find the latest version and download the data.
+
+        Args:
+            indicators: The indicators to load. If 'all' is passed, all indicators will be loaded. Default is 'all'
+
+        Returns:
+            same object with data loaded
+        """
 
         # check if latest is requested
-        if self.version == 'latest':
+        if self.version == "latest":
             self.version = gen_latest_version()  # set latest expected version
             if not self._path.exists():  # check if not downloaded
                 self._download_latest_data()  # find latest and download data
@@ -209,27 +240,48 @@ class WEO(ImportData):
             self._raw_data = pd.read_csv(self._path)
 
         # load indicators
-        if indicators == 'all':
-            indicators = self._raw_data['CONCEPT_CODE'].unique()
+        if indicators == "all":
+            indicators = self._raw_data["CONCEPT_CODE"].unique()
         if isinstance(indicators, str):
             indicators = [indicators]
 
         self._data.update(
-            {indicator: (self._raw_data[self._raw_data['CONCEPT_CODE'] == indicator]
-                         .reset_index(drop=True)
-                         )
-             for indicator in indicators
-             }
+            {
+                indicator: (
+                    self._raw_data[
+                        self._raw_data["CONCEPT_CODE"] == indicator
+                    ].reset_index(drop=True)
+                )
+                for indicator in indicators
+            }
         )
         logger.info("Data loaded successfully")
         return self
 
-    def update_data(self, reload_data: bool = True):
-        """ """
+    def update_data(self, reload_data: bool = True) -> ImportData:
+        """Update the data
+
+        When called it will update the data used to load the indicators.
+        If reload_data is True, it will reload the indicators to the object.
+
+        Args:
+            reload_data: If True, reload the indicators after updating the data. Default is True.
+
+        Returns:
+            same object with updated data to allow chaining
+        """
         if len(self._data) == 0:
-            raise RuntimeError('No indicators loaded')
+            raise RuntimeError("No indicators loaded")
 
         self._download_data()
         self._raw_data = pd.read_csv(self._path)
         if reload_data:
-            self.load_data(indicators=self._raw_data['CONCEPT_CODE'])
+            self.load_data(indicators=self._raw_data["CONCEPT_CODE"])
+
+        logger.info("Data updated successfully")
+        return self
+
+
+if __name__ == "__main__":
+    w = WEO()
+    w.load_data()
