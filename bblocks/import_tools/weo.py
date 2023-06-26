@@ -11,6 +11,7 @@ import io
 from bblocks.import_tools.common import ImportData, get_response, unzip
 from bblocks.config import BBPaths
 from bblocks.logger import logger
+from bblocks.cleaning_tools import clean
 
 BASE_URL = "https://www.imf.org/"
 
@@ -23,21 +24,29 @@ COLUMN_MAPPER = {
 }
 
 
-@dataclass
 class Parser:
-    """Helper class to download WEO"""
+    """Helper class to parse WEO data
 
-    folder: ZipFile
+    This class parses the data and schema files into a clean dataframe
+    to be used in the main WEO class
 
-    data_file = None
-    schema_file = None
-    data = None
+    Parameters:
+        folder: the folder containing the data and schema files
+    """
 
-    def get_files(self):
+    def __init__(self, folder: ZipFile):
+
+        self.folder: ZipFile = folder
+
+        self.data_file: ET = None
+        self.schema_file: ET = None
+        self.data: pd.DataFrame | None = None
+
+    def get_files(self) -> None:
         """Get the root of files"""
 
         if len(self.folder.namelist()) > 2:
-            raise ValueError("More than one file in zip file")
+            raise ValueError("More than two files in zip file")
 
         for file in self.folder.namelist():
             if file.endswith(".xml"):
@@ -49,7 +58,7 @@ class Parser:
         if self.data_file is None or self.schema_file is None:
             raise ValueError("No data or schema file found")
 
-    def extract_data(self):
+    def _extract_data(self) -> None:
         """extract data from data file"""
 
         rows = []
@@ -59,8 +68,8 @@ class Parser:
 
         self.data = pd.DataFrame(rows)
 
-    def _convert_series_codes(self, series: pd.Series, lookup_value: str):
-        """ """
+    def _convert_series_codes(self, series: pd.Series, lookup_value: str) -> pd.Series:
+        """Converts a series of codes to the corresponding values in the schema file"""
 
         query = self.schema_file.findall(
             "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
@@ -70,22 +79,29 @@ class Parser:
 
         return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
 
-    def clean_data(self):
-        """Format the dataframe"""
+    def _clean_data(self) -> None:
+        """Clean and format the dataframe"""
 
         for col, value in COLUMN_MAPPER.items():
             self.data = self.data.rename(columns={col: f"{col}_CODE"})
             self.data[col] = self._convert_series_codes(self.data[f"{col}_CODE"], value)
 
-        for col in ["REF_AREA_CODE", "LASTACTUALDATE", "TIME_PERIOD", "OBS_VALUE"]:
-            self.data[col] = pd.to_numeric(self.data[col], errors="coerce")
+        self.data = clean.clean_numeric_series(self.data,
+                                               series_columns=["REF_AREA_CODE", "LASTACTUALDATE",
+                                                               "TIME_PERIOD", "OBS_VALUE"])
 
-    def parse_data(self) -> pd.DataFrame:
+    def parse_data(self) -> None:
         """Parse the data to a dataframe"""
 
         self.get_files()
-        self.extract_data()
-        self.clean_data()
+        self._extract_data()
+        self._clean_data()
+
+    def get_data(self) -> pd.DataFrame:
+        """Get the data. If the data is not already parsed, parse it first"""
+
+        if self.data is None:
+            self.parse_data()
 
         return self.data
 
@@ -165,7 +181,7 @@ class WEO(ImportData):
         version: tuple of (year, release) or "latest". Default is "latest"
     """
 
-    version: tuple[int, int] = "latest"
+    version: str | tuple[int, int] = "latest"
 
     def __post_init__(self):
         """check that version is valid"""
@@ -180,35 +196,22 @@ class WEO(ImportData):
         """Generate path based on version"""
         return BBPaths.raw_data / f"weo_{self.version[0]}_{self.version[1]}.csv"
 
-    def _download_latest_data(self) -> None:
-        """Get data for latest release, and replace release with latest"""
-
-        href = None  # set href to none
-        # search for the latest, until data is found
-        while href is None:
-            href = get_smdx_href(self.version)
-            if href is None:
-                # roll back version
-                self.version = roll_back_version(self.version)
-
-        # get and parse data and save to disk
-        response = get_response(BASE_URL + href)
-        folder = unzip(io.BytesIO(response.content))
-        Parser(folder).parse_data().to_csv(self._path, index=False)
-
     def _download_data(self) -> None:
-        """Get data for the version, raise error is no data for version is found"""
+        """Downloads latest data or data for specified version"""
 
+        # set href to None
         href = get_smdx_href(self.version)
-        if href is None:
-            raise ValueError(
-                f"No data found for version:" f" {self.version[0]}, {self.version[1]}"
-            )
 
-        # get and parse data and save to disk
-        response = get_response(BASE_URL + href)
-        folder = unzip(io.BytesIO(response.content))
-        Parser(folder).parse_data().to_csv(self._path, index=False)
+        # if href is not None, get and parse data and save to disk
+        if href is not None:
+            response = get_response(BASE_URL + href)
+            folder = unzip(io.BytesIO(response.content))
+            Parser(folder).get_data().to_csv(self._path, index=False)
+            logger.info(f"Data downloaded to disk for version {self.version}")
+
+        # if href is None, log that no data was found
+        else:
+            logger.info(f"No data found for version {self.version}")
 
     def load_data(self, indicators: str | list = "all") -> ImportData:
         """Load data to object
@@ -225,19 +228,24 @@ class WEO(ImportData):
             same object with data loaded
         """
 
-        # check if latest is requested
-        if self.version == "latest":
-            self.version = gen_latest_version()  # set latest expected version
-            if not self._path.exists():  # check if not downloaded
-                self._download_latest_data()  # find latest and download data
+        # download data if it doesn't exist
 
-        else:
-            if not self._path.exists():  # check if not downloaded
-                self._download_data()  # download data
+        if self.version == "latest":
+            # set version to latest version
+            self.version = gen_latest_version()
+            if not self._path.exists():
+                self._download_data()
+                if not self._path.exists():
+                    self.version = roll_back_version(self.version)
+
+        if not self._path.exists():
+            self._download_data()
+            if not self._path.exists():
+                raise ValueError("No data found")
 
         # check if raw data is not loaded to object
         if self._raw_data is None:
-            self._raw_data = pd.read_csv(self._path)
+            self._raw_data = pd.read_csv(self._path, low_memory=False)
 
         # load indicators
         if indicators == "all":
@@ -250,7 +258,7 @@ class WEO(ImportData):
                 indicator: (
                     self._raw_data[
                         self._raw_data["CONCEPT_CODE"] == indicator
-                    ].reset_index(drop=True)
+                        ].reset_index(drop=True)
                 )
                 for indicator in indicators
             }
@@ -276,12 +284,7 @@ class WEO(ImportData):
         self._download_data()
         self._raw_data = pd.read_csv(self._path)
         if reload_data:
-            self.load_data(indicators=self._raw_data["CONCEPT_CODE"])
+            self.load_data(indicators=list(self._raw_data["CONCEPT_CODE"].unique()))
 
         logger.info("Data updated successfully")
         return self
-
-
-if __name__ == "__main__":
-    w = WEO()
-    w.load_data()
