@@ -87,9 +87,15 @@ class Parser:
             self.data = self.data.rename(columns={col: f"{col}_CODE"})
             self.data[col] = self._convert_series_codes(self.data[f"{col}_CODE"], value)
 
-        self.data = clean.clean_numeric_series(self.data,
-                                               series_columns=["REF_AREA_CODE", "LASTACTUALDATE",
-                                                               "TIME_PERIOD", "OBS_VALUE"])
+        self.data = clean.clean_numeric_series(
+            self.data,
+            series_columns=[
+                "REF_AREA_CODE",
+                "LASTACTUALDATE",
+                "TIME_PERIOD",
+                "OBS_VALUE",
+            ],
+        )
 
     def parse_data(self) -> None:
         """Parse the data to a dataframe"""
@@ -269,7 +275,7 @@ class WEO(ImportData):
                 indicator: (
                     self._raw_data[
                         self._raw_data["CONCEPT_CODE"] == indicator
-                        ].reset_index(drop=True)
+                    ].reset_index(drop=True)
                 )
                 for indicator in indicators
             }

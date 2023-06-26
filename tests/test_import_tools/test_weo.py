@@ -36,8 +36,10 @@ def test_get_files():
     assert parser.data_file.tag == "root"
     assert parser.schema_file.tag == "root"
 
+
 # test the error handling when the zipfile contains more than two files
 # by mocking the zipfile and the ET.parse method and getroot method
+
 
 def test_get_files_error():
     """Tests the get_files method of the Parser class."""
@@ -63,6 +65,7 @@ def test_get_files_error():
 # test error handling if data_file or schema_file is None
 # by mocking the zipfile and the ET.parse method and getroot method
 
+
 def test_get_files_error2():
     """Tests the get_files method of the Parser class."""
     # mock the zipfile
@@ -84,7 +87,7 @@ def test_get_files_error2():
         parser.get_files()
 
 
-@patch('bblocks.import_tools.weo.datetime')
+@patch("bblocks.import_tools.weo.datetime")
 def test_gen_latest_version(mock_datetime):
     """Test gen_latest_version function."""
 
@@ -120,8 +123,14 @@ def test_roll_back_version():
 def test_smdx_query_url():
     """Test smdx_query_url function."""
 
-    assert weo._smdx_query_url((2025, 1)) == 'https://www.imf.org//en/Publications/WEO/weo-database/2025/April/download-entire-database'
-    assert weo._smdx_query_url((2025, 2)) == 'https://www.imf.org//en/Publications/WEO/weo-database/2025/October/download-entire-database'
+    assert (
+        weo._smdx_query_url((2025, 1))
+        == "https://www.imf.org//en/Publications/WEO/weo-database/2025/April/download-entire-database"
+    )
+    assert (
+        weo._smdx_query_url((2025, 2))
+        == "https://www.imf.org//en/Publications/WEO/weo-database/2025/October/download-entire-database"
+    )
 
     with pytest.raises(ValueError):
         weo._smdx_query_url((2025, 3))
@@ -131,13 +140,14 @@ def test_parse_sdmx_query_response():
     """Test parse_sdmx_query_response function."""
 
     mocked_content = '<html><a href="example.com">SDMX Data</a></html>'
-    assert weo._parse_sdmx_query_response(mocked_content) == 'example.com'
+    assert weo._parse_sdmx_query_response(mocked_content) == "example.com"
 
-    assert weo._parse_sdmx_query_response('') is None
+    assert weo._parse_sdmx_query_response("") is None
 
 
 class TestWEO:
     """Test the WEO class."""
+
     def test_init_valid_version(self):
         version = (2022, 2)
         w = weo.WEO(version=version)
@@ -151,10 +161,3 @@ class TestWEO:
         invalid_version = "2022"
         with pytest.raises(ValueError):
             weo.WEO(version=invalid_version)
-
-
-
-
-
-
-
