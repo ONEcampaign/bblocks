@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 from bs4 import BeautifulSoup
 import io
+import requests
 
 from bblocks.import_tools.common import ImportData, get_response, unzip
 from bblocks.config import BBPaths
@@ -144,8 +145,8 @@ def roll_back_version(version: tuple[int, int]) -> tuple[int, int]:
         )
 
 
-def get_smdx_href(version: tuple[int, int]) -> str | None:
-    """retrieve the href for the SDMX file"""
+def _smdx_query_url(version: tuple[int, int]) -> str:
+    """Generate the url for the SDMX query"""
 
     if version[1] == 1:
         month = "April"
@@ -154,17 +155,27 @@ def get_smdx_href(version: tuple[int, int]) -> str | None:
     else:
         raise ValueError("invalid version. Must be 1 or 2")
 
-    url = (
+    return (
         f"{BASE_URL}/en/Publications/WEO/weo-database/"
         f"{version[0]}/{month}/download-entire-database"
     )
 
-    response = get_response(url)
-    soup = BeautifulSoup(response.content, "html.parser")
+
+def _parse_sdmx_query_response(content: requests.Response.content) -> str:
+    """Parse the response from the SDMX query"""
+    soup = BeautifulSoup(content, "html.parser")
 
     # check is data exists
     if soup.find("a", string="SDMX Data"):
         return soup.find_all("a", string="SDMX Data")[0].get("href")
+
+
+def get_sdmx_href(version: tuple[int, int]) -> str | None:
+    """retrieve the href for the SDMX file"""
+
+    url = _smdx_query_url(version)
+    response = get_response(url)
+    return _parse_sdmx_query_response(response.content)
 
 
 @dataclass
@@ -200,7 +211,7 @@ class WEO(ImportData):
         """Downloads latest data or data for specified version"""
 
         # set href to None
-        href = get_smdx_href(self.version)
+        href = get_sdmx_href(self.version)
 
         # if href is not None, get and parse data and save to disk
         if href is not None:
