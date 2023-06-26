@@ -11,21 +11,14 @@ from bblocks.import_tools import weo
 
 def test_get_files():
     """Tests the get_files method of the Parser class."""
-    # mock the zipfile
+
     mock_zipfile = Mock()
     mock_zipfile.namelist.return_value = ["file.xml", "file.xsd"]
-
-    # mock the ET.parse method and getroot method
     mock_parse = Mock()
-    # mock the getroot method to return an ET object
     mock_parse.return_value.getroot.return_value = ET.Element("root")
-
     ET.parse = mock_parse
 
-    # create the Parser object
     parser = weo.Parser(mock_zipfile)
-
-    # call the get_files method
     parser.get_files()
 
     # assert that the data_file and schema_file attributes are not None
@@ -37,52 +30,33 @@ def test_get_files():
     assert parser.schema_file.tag == "root"
 
 
-# test the error handling when the zipfile contains more than two files
-# by mocking the zipfile and the ET.parse method and getroot method
-
-
 def test_get_files_error():
     """Tests the get_files method of the Parser class."""
-    # mock the zipfile
+
     mock_zipfile = Mock()
     mock_zipfile.namelist.return_value = ["file.xml", "file.xsd", "file2.xml"]
 
-    # mock the ET.parse method and getroot method
     mock_parse = Mock()
-    # mock the getroot method to return an ET object
     mock_parse.return_value.getroot.return_value = ET.Element("root")
-
     ET.parse = mock_parse
 
-    # create the Parser object
     parser = weo.Parser(mock_zipfile)
 
-    # call the get_files method
     with pytest.raises(ValueError):
         parser.get_files()
 
 
-# test error handling if data_file or schema_file is None
-# by mocking the zipfile and the ET.parse method and getroot method
-
-
 def test_get_files_error2():
     """Tests the get_files method of the Parser class."""
-    # mock the zipfile
+
     mock_zipfile = Mock()
     mock_zipfile.namelist.return_value = ["file.xml", "file.xsd"]
-
-    # mock the ET.parse method and getroot method
     mock_parse = Mock()
-    # mock the getroot method to return an ET object
     mock_parse.return_value.getroot.return_value = None
-
     ET.parse = mock_parse
 
-    # create the Parser object
     parser = weo.Parser(mock_zipfile)
 
-    # call the get_files method
     with pytest.raises(ValueError):
         parser.get_files()
 

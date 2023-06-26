@@ -6,9 +6,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u"bblocks"
-copyright = u"2022, The ONE Campaign"
-author = u"ONE Campaign"
+project = "bblocks"
+copyright = "2022, The ONE Campaign"
+author = "ONE Campaign"
 
 # -- General configuration ---------------------------------------------------
 
