@@ -51,7 +51,11 @@ def _parse_sdmx_query_response(content: requests.Response.content) -> str:
 
 
 def get_sdmx_href(version: tuple[int, int]) -> str | None:
-    """retrieve the href for the SDMX file"""
+    """retrieve the href for the SDMX file
+
+    Args:
+        version (tuple[int, int]): the version of the WEO data as a tuple of (year, version)
+    """
 
     url = _smdx_query_url(version)
     response = get_response(url)
@@ -137,6 +141,8 @@ class Parser:
     def parse_data(self) -> None:
         """Parse the data to a dataframe"""
 
+        logger.info("Parsing data")
+
         self.get_files()
         self._extract_data()
         self._clean_data()
@@ -145,7 +151,6 @@ class Parser:
         """Get the data. If the data is not already parsed, parse it first"""
 
         if self.data is None:
-            logger.info("Parsing data")
             self.parse_data()
 
         return self.data
@@ -263,7 +268,7 @@ class WEO(ImportData):
                     logger.info(f"Data downloaded to disk for version {self.version}")
                 else:
                     self.version = roll_back_version(self.version)
-                    logger.info(f"Data not available for expected version. "
+                    logger.debug(f"Data not available for expected version. "
                                 f"Rolling back version to {self.version}")
 
         if not self._path.exists():
@@ -302,17 +307,17 @@ class WEO(ImportData):
         if isinstance(indicators, str):
             indicators = [indicators]
 
-        self._data.update(
-            {
-                indicator: (
+        for indicator in indicators:
+            if indicator not in self._raw_data["concept_code"].unique():
+                logger.debug(f"Indicator not found in data: {indicator}")
+            else:
+                self._data[indicator] = (
                     self._raw_data[
                         self._raw_data["concept_code"] == indicator
                         ].reset_index(drop=True)
                 )
-                for indicator in indicators
-            }
-        )
-        logger.info("Data loaded successfully")
+
+        logger.info("Data loaded to object")
         return self
 
     def update_data(self, reload_data: bool = True) -> ImportData:
@@ -364,7 +369,7 @@ class WEO(ImportData):
         return self
 
     def available_indicators(self) -> pd.DataFrame:
-        """Returns a list of available indicators to load to the object"""
+        """Returns a DataFrame of available indicators to load to the object"""
 
         if self._raw_data is not None:
             return (self._raw_data
