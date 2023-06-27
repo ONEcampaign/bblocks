@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from unittest.mock import Mock, patch
 
-from bblocks.import_tools import weo
+from bblocks.import_tools import imf_weo
 
 
 def test_get_files():

@@ -69,7 +69,6 @@ class Parser:
     """
 
     def __init__(self, folder: ZipFile):
-
         self.folder: ZipFile = folder
 
         self.data_file: ET = None
