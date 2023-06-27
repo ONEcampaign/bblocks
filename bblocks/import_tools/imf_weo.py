@@ -135,17 +135,15 @@ class Parser:
             self.data = self.data.rename(columns={col: f"{col}_CODE"})
             self.data[col] = self._convert_series_codes(self.data[f"{col}_CODE"], value)
 
-        self.data = clean.clean_numeric_series(
-            self.data,
-            series_columns="OBS_VALUE"
-        )
+        self.data = clean.clean_numeric_series(self.data, series_columns="OBS_VALUE")
         self.data = clean.clean_numeric_series(
             self.data,
             series_columns=[
                 "REF_AREA_CODE",
                 "LASTACTUALDATE",
                 "TIME_PERIOD",
-            ], to=int
+            ],
+            to=int,
         )
 
         self.data.columns = self.data.columns.str.lower()
@@ -280,8 +278,10 @@ class WEO(ImportData):
                     logger.info(f"Data downloaded to disk for version {self.version}")
                 else:
                     self.version = roll_back_version(self.version)
-                    logger.debug(f"Data not available for expected version. "
-                                f"Rolling back version to {self.version}")
+                    logger.debug(
+                        f"Data not available for expected version. "
+                        f"Rolling back version to {self.version}"
+                    )
 
         if not self._path.exists():
             df = extract_data(self.version)
@@ -323,11 +323,9 @@ class WEO(ImportData):
             if indicator not in self._raw_data["concept_code"].unique():
                 logger.debug(f"Indicator not found in data: {indicator}")
             else:
-                self._data[indicator] = (
-                    self._raw_data[
-                        self._raw_data["concept_code"] == indicator
-                        ].reset_index(drop=True)
-                )
+                self._data[indicator] = self._raw_data[
+                    self._raw_data["concept_code"] == indicator
+                ].reset_index(drop=True)
 
         logger.info("Data loaded to object")
         return self
@@ -358,8 +356,10 @@ class WEO(ImportData):
 
             else:
                 self.version = roll_back_version(self.version)
-                logger.info(f"Data not available for expected version. "
-                            f"Rolling back version to {self.version}")
+                logger.info(
+                    f"Data not available for expected version. "
+                    f"Rolling back version to {self.version}"
+                )
 
         # exctract data for a specific version or if version was rolled back
         df = extract_data(self.version)
@@ -384,18 +384,18 @@ class WEO(ImportData):
         """Returns a DataFrame of available indicators to load to the object"""
 
         if self._raw_data is not None:
-            return (self._raw_data
-                    .loc[:, ['concept_code', 'concept']]
-                    .drop_duplicates()
-                    .reset_index(drop=True)
-                    )
+            return (
+                self._raw_data.loc[:, ["concept_code", "concept"]]
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
 
         else:
             self._download_data()
             self._raw_data = pd.read_feather(self._path)
 
-            return (self._raw_data
-                    .loc[:, ['concept_code', 'concept']]
-                    .drop_duplicates()
-                    .reset_index(drop=True)
-                    )
+            return (
+                self._raw_data.loc[:, ["concept_code", "concept"]]
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
