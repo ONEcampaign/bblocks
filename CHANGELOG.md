@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.2.0] - 2023-06-27
+--------------------
+- Added a new feature: `imf_weo` module in `import_tools` with an object 
+  to extract data from the World Economic Outlook (WEO).
+
 [1.1.0] - 2023-03-09
 --------------------
 - Added a new feature: `ilo` module in `import_tools` with an object 
