@@ -99,22 +99,34 @@ class Parser:
         """extract data from data file"""
 
         rows = []
-        for series in self.data_file[1].findall("./"):
-            for obs in series.findall("./"):
+        for series in self.data_file[1]:
+            for obs in series:
                 rows.append({**series.attrib, **obs.attrib})
 
         self.data = pd.DataFrame(rows)
 
+    # def _convert_series_codes(self, series: pd.Series, lookup_value: str) -> pd.Series:
+    #     """Converts a series of codes to the corresponding values in the schema file"""
+    #
+    #     query = self.schema_file.findall(
+    #         "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
+    #         + f'"{lookup_value}"'
+    #         + "]/"
+    #     )[0].findall("./")
+    #
+    #     return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
+
     def _convert_series_codes(self, series: pd.Series, lookup_value: str) -> pd.Series:
         """Converts a series of codes to the corresponding values in the schema file"""
 
-        query = self.schema_file.findall(
-            "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
-            + f'"{lookup_value}"'
-            + "]/"
-        )[0].findall("./")
+        xpath_expr = f"./{{http://www.w3.org/2001/XMLSchema}}simpleType[@name='{lookup_value}']/*/*"
+        query = self.schema_file.findall(xpath_expr)
 
-        return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
+        lookup_dict = {}
+        for elem in query:
+            lookup_dict[elem.attrib["value"]] = elem[0][0].text
+
+        return series.map(lookup_dict)
 
     def _clean_data(self) -> None:
         """Clean and format the dataframe"""
