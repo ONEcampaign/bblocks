@@ -25,6 +25,39 @@ COLUMN_MAPPER = {
 }
 
 
+def _smdx_query_url(version: tuple[int, int]) -> str:
+    """Generate the url for the SDMX query"""
+
+    if version[1] == 1:
+        month = "April"
+    elif version[1] == 2:
+        month = "October"
+    else:
+        raise ValueError("invalid version. Must be 1 or 2")
+
+    return (
+        f"{BASE_URL}/en/Publications/WEO/weo-database/"
+        f"{version[0]}/{month}/download-entire-database"
+    )
+
+
+def _parse_sdmx_query_response(content: requests.Response.content) -> str:
+    """Parse the response from the SDMX query"""
+    soup = BeautifulSoup(content, "html.parser")
+
+    # check is data exists
+    if soup.find("a", string="SDMX Data"):
+        return soup.find_all("a", string="SDMX Data")[0].get("href")
+
+
+def get_sdmx_href(version: tuple[int, int]) -> str | None:
+    """retrieve the href for the SDMX file"""
+
+    url = _smdx_query_url(version)
+    response = get_response(url)
+    return _parse_sdmx_query_response(response.content)
+
+
 class Parser:
     """Helper class to parse WEO data
 
@@ -89,13 +122,18 @@ class Parser:
 
         self.data = clean.clean_numeric_series(
             self.data,
+            series_columns="OBS_VALUE"
+        )
+        self.data = clean.clean_numeric_series(
+            self.data,
             series_columns=[
                 "REF_AREA_CODE",
                 "LASTACTUALDATE",
                 "TIME_PERIOD",
-                "OBS_VALUE",
-            ],
+            ], to=int
         )
+
+        self.data.columns = self.data.columns.str.lower()
 
     def parse_data(self) -> None:
         """Parse the data to a dataframe"""
@@ -108,6 +146,7 @@ class Parser:
         """Get the data. If the data is not already parsed, parse it first"""
 
         if self.data is None:
+            logger.info("Parsing data")
             self.parse_data()
 
         return self.data
@@ -151,37 +190,26 @@ def roll_back_version(version: tuple[int, int]) -> tuple[int, int]:
         )
 
 
-def _smdx_query_url(version: tuple[int, int]) -> str:
-    """Generate the url for the SDMX query"""
+def extract_data(version) -> pd.DataFrame | None:
+    """Downloads latest data or data for specified version
 
-    if version[1] == 1:
-        month = "April"
-    elif version[1] == 2:
-        month = "October"
+    Args:
+        version (tuple[int, int]): version to download
+    """
+
+    logger.info(f"Extracting data for version {version}")
+
+    href = get_sdmx_href(version)
+
+    # if href is not None, get and parse data and save to disk
+    if href is not None:
+        response = get_response(BASE_URL + href)
+        folder = unzip(io.BytesIO(response.content))
+        return Parser(folder).get_data()
+
+    # if href is None, log that no data was found
     else:
-        raise ValueError("invalid version. Must be 1 or 2")
-
-    return (
-        f"{BASE_URL}/en/Publications/WEO/weo-database/"
-        f"{version[0]}/{month}/download-entire-database"
-    )
-
-
-def _parse_sdmx_query_response(content: requests.Response.content) -> str:
-    """Parse the response from the SDMX query"""
-    soup = BeautifulSoup(content, "html.parser")
-
-    # check is data exists
-    if soup.find("a", string="SDMX Data"):
-        return soup.find_all("a", string="SDMX Data")[0].get("href")
-
-
-def get_sdmx_href(version: tuple[int, int]) -> str | None:
-    """retrieve the href for the SDMX file"""
-
-    url = _smdx_query_url(version)
-    response = get_response(url)
-    return _parse_sdmx_query_response(response.content)
+        logger.debug(f"No data found for version {version}")
 
 
 @dataclass
@@ -211,24 +239,41 @@ class WEO(ImportData):
     @property
     def _path(self):
         """Generate path based on version"""
-        return BBPaths.raw_data / f"weo_{self.version[0]}_{self.version[1]}.csv"
+        return BBPaths.raw_data / f"weo_{self.version[0]}_{self.version[1]}.feather"
 
     def _download_data(self) -> None:
-        """Downloads latest data or data for specified version"""
+        """Downloads latest data or data for specified version if not already available in disk
 
-        # set href to None
-        href = get_sdmx_href(self.version)
+        If version is "latest" it will generate the expected version based on the current date
+        and try download the data. If it is not available for the expected version, it will
+        roll back the version and try again. If no data is found, it will raise an error.
 
-        # if href is not None, get and parse data and save to disk
-        if href is not None:
-            response = get_response(BASE_URL + href)
-            folder = unzip(io.BytesIO(response.content))
-            Parser(folder).get_data().to_csv(self._path, index=False)
-            logger.info(f"Data downloaded to disk for version {self.version}")
+        If version is a tuple of (year, release), it will try download the data for that version
+        """
 
-        # if href is None, log that no data was found
-        else:
-            logger.info(f"No data found for version {self.version}")
+        if self.version == "latest":
+            # set version to expected latest version
+            self.version = gen_latest_version()
+            # if the path does not exist yet, try download the data
+            if not self._path.exists():
+                df = extract_data(self.version)
+
+                # if data is not None, save to disk
+                if df is not None:
+                    df.to_feather(self._path)
+                    logger.info(f"Data downloaded to disk for version {self.version}")
+                else:
+                    self.version = roll_back_version(self.version)
+                    logger.info(f"Data not available for expected version. "
+                                f"Rolling back version to {self.version}")
+
+        if not self._path.exists():
+            df = extract_data(self.version)
+            if df is not None:
+                df.to_feather(self._path)
+                logger.info(f"Data downloaded to disk for version {self.version}")
+            else:
+                raise ValueError(f"No data found for version {self.version}")
 
     def load_data(self, indicators: str | list = "all") -> ImportData:
         """Load data to object
@@ -246,27 +291,15 @@ class WEO(ImportData):
         """
 
         # download data if it doesn't exist
-
-        if self.version == "latest":
-            # set version to latest version
-            self.version = gen_latest_version()
-            if not self._path.exists():
-                self._download_data()
-                if not self._path.exists():
-                    self.version = roll_back_version(self.version)
-
-        if not self._path.exists():
-            self._download_data()
-            if not self._path.exists():
-                raise ValueError("No data found")
+        self._download_data()
 
         # check if raw data is not loaded to object
         if self._raw_data is None:
-            self._raw_data = pd.read_csv(self._path, low_memory=False)
+            self._raw_data = pd.read_feather(self._path)
 
         # load indicators
         if indicators == "all":
-            indicators = self._raw_data["CONCEPT_CODE"].unique()
+            indicators = self._raw_data["concept_code"].unique()
         if isinstance(indicators, str):
             indicators = [indicators]
 
@@ -274,8 +307,8 @@ class WEO(ImportData):
             {
                 indicator: (
                     self._raw_data[
-                        self._raw_data["CONCEPT_CODE"] == indicator
-                    ].reset_index(drop=True)
+                        self._raw_data["concept_code"] == indicator
+                        ].reset_index(drop=True)
                 )
                 for indicator in indicators
             }
@@ -295,13 +328,58 @@ class WEO(ImportData):
         Returns:
             same object with updated data to allow chaining
         """
-        if len(self._data) == 0:
-            raise RuntimeError("No indicators loaded")
+        if self.version == "latest":
+            # set version to expected latest version
+            self.version = gen_latest_version()
+            # try download the data
+            df = extract_data(self.version)
+            # if data is not None, save to disk, otherwise roll back version
+            if df is not None:
+                df.to_feather(self._path)
+                logger.info(f"Data downloaded to disk for version {self.version}")
 
-        self._download_data()
-        self._raw_data = pd.read_csv(self._path)
+                return self
+
+            else:
+                self.version = roll_back_version(self.version)
+                logger.info(f"Data not available for expected version. "
+                            f"Rolling back version to {self.version}")
+
+        # exctract data for a specific version or if version was rolled back
+        df = extract_data(self.version)
+        # if data is not None, save to disk otherwise raise error
+        if df is not None:
+            df.to_feather(self._path)
+            logger.info(f"Data downloaded to disk for version {self.version}")
+        else:
+            raise ValueError(f"No data found for version {self.version}")
+
+        # load raw data to object
+        self._raw_data = pd.read_feather(self._path)
+
+        # reload data if reload_data is True
         if reload_data:
-            self.load_data(indicators=list(self._raw_data["CONCEPT_CODE"].unique()))
+            self.load_data(indicators=list(self._raw_data["concept_code"].unique()))
 
         logger.info("Data updated successfully")
         return self
+
+    def available_indicators(self) -> pd.DataFrame:
+        """Returns a list of available indicators to load to the object"""
+
+        if self._raw_data is not None:
+            return (self._raw_data
+                    .loc[:, ['concept_code', 'concept']]
+                    .drop_duplicates()
+                    .reset_index(drop=True)
+                    )
+
+        else:
+            self._download_data()
+            self._raw_data = pd.read_feather(self._path)
+
+            return (self._raw_data
+                    .loc[:, ['concept_code', 'concept']]
+                    .drop_duplicates()
+                    .reset_index(drop=True)
+                    )
