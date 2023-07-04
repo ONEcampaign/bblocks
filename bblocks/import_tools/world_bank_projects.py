@@ -25,8 +25,11 @@ class QueryAPI:
     """Helper class for querying the World Bank Projects API"""
 
     def __init__(
-            self, response_format: str = 'json', max_rows_per_response: int = 500,
-            start_date: str | None = None, end_date: str | None = None
+        self,
+        response_format: str = "json",
+        max_rows_per_response: int = 500,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ):
         """Initialize QueryAPI object"""
 
@@ -36,11 +39,11 @@ class QueryAPI:
         self.end_date = end_date
 
         self._params = {
-            'format': self.response_format,
-            'rows': self.max_rows_per_response,
+            "format": self.response_format,
+            "rows": self.max_rows_per_response,
             # 'os': 0, # offset
-            'strdate': self.start_date,
-            'enddate': self.end_date
+            "strdate": self.start_date,
+            "enddate": self.end_date,
         }
 
         self._check_params()
@@ -51,22 +54,22 @@ class QueryAPI:
         """Check parameters"""
 
         # if end_date is before start_date, raise error
-        if self._params['strdate'] is not None and self._params['enddate'] is not None:
-            if self._params['enddate'] < self._params['strdate']:
+        if self._params["strdate"] is not None and self._params["enddate"] is not None:
+            if self._params["enddate"] < self._params["strdate"]:
                 raise ValueError("end date must be after start date")
 
         # if max_rows is greater than 1000, raise error
-        if self._params['rows'] > 1000:
+        if self._params["rows"] > 1000:
             raise ValueError("max_rows must be less than or equal to 1000")
 
         # if dates are None, drop them from params
-        if self._params['strdate'] is None:
+        if self._params["strdate"] is None:
             # drop start_date from params
-            self._params.pop('strdate')
+            self._params.pop("strdate")
 
-        if self._params['enddate'] is None:
+        if self._params["enddate"] is None:
             # drop end_date from params
-            self._params.pop('enddate')
+            self._params.pop("enddate")
 
     def _request(self) -> dict:
         """Single request to API. Returns the rsponse json."""
@@ -74,14 +77,14 @@ class QueryAPI:
         try:
             response = requests.get(BASE_API_URL, params=self._params)
             response.raise_for_status()
-            data = response.json()['projects']  # keep only the projects data
+            data = response.json()["projects"]  # keep only the projects data
 
             return data
 
         except Exception as e:
             raise Exception(f"Failed to get data: {e}")
 
-    def request_data(self) -> 'QueryAPI':
+    def request_data(self) -> "QueryAPI":
         """Request data from API
 
         This method will request all the data from the API
@@ -93,7 +96,7 @@ class QueryAPI:
             'QueryAPI' to allow chaining of methods
         """
 
-        self._params['os'] = 0  # reset offset to 0
+        self._params["os"] = 0  # reset offset to 0
 
         while True:
 
@@ -108,7 +111,7 @@ class QueryAPI:
             self.response_data.update(data)
 
             # update offset
-            self._params['os'] += self._params['rows']
+            self._params["os"] += self._params["rows"]
 
         # Log if no data was returned from API
         if len(self.response_data) == 0:
@@ -137,38 +140,50 @@ def clean_theme(data: dict) -> list[dict] | list:
     """
 
     # if there are no themes, return an empty list
-    if 'theme_list' not in data.keys():
+    if "theme_list" not in data.keys():
         # return [{'project ID': proj_id}]
         return []
 
     theme_list = []
-    proj_id = data['id']
-    for theme1 in data['theme_list']:
+    proj_id = data["id"]
+    for theme1 in data["theme_list"]:
 
         # get first theme
-        name = theme1['name']
-        theme_list.append({'project ID': proj_id,
-                           'theme1': name,
-                           'percent': clean.clean_number(theme1['percent'])})
+        name = theme1["name"]
+        theme_list.append(
+            {
+                "project ID": proj_id,
+                "theme1": name,
+                "percent": clean.clean_number(theme1["percent"]),
+            }
+        )
 
         # get 2nd theme
-        if 'theme2' in theme1.keys():
-            for theme2 in theme1['theme2']:
-                name_2 = theme2['name']
-                theme_list.append({'project ID': proj_id,
-                                   'theme1': name,
-                                   'theme2': name_2,
-                                   'percent': clean.clean_number(theme2['percent'])})
+        if "theme2" in theme1.keys():
+            for theme2 in theme1["theme2"]:
+                name_2 = theme2["name"]
+                theme_list.append(
+                    {
+                        "project ID": proj_id,
+                        "theme1": name,
+                        "theme2": name_2,
+                        "percent": clean.clean_number(theme2["percent"]),
+                    }
+                )
 
                 # get 3rd theme
-                if 'theme3' in theme2.keys():
-                    for theme3 in theme2['theme3']:
-                        name_3 = theme3['name']
-                        theme_list.append({'project ID': proj_id,
-                                           'theme1': name,
-                                           'theme2': name_2,
-                                           'theme3': name_3,
-                                           'percent': clean.clean_number(theme3['percent'])})
+                if "theme3" in theme2.keys():
+                    for theme3 in theme2["theme3"]:
+                        name_3 = theme3["name"]
+                        theme_list.append(
+                            {
+                                "project ID": proj_id,
+                                "theme1": name,
+                                "theme2": name_2,
+                                "theme3": name_3,
+                                "percent": clean.clean_number(theme3["percent"]),
+                            }
+                        )
     return theme_list
 
 
@@ -183,43 +198,41 @@ def clean_sector(sector_series: pd.Series) -> pd.Series:
         series of sector data as a string separated by ' | '
     """
 
-    return (sector_series
-            .apply(lambda x: ' | '.join([item['Name']
-                                         for item in x]) if isinstance(x, list) else np.nan)
-            )
+    return sector_series.apply(
+        lambda x: " | ".join([item["Name"] for item in x])
+        if isinstance(x, list)
+        else np.nan
+    )
 
 
 general_fields = {  # general info
-    'id': 'project ID',
-    'project_name': 'project name',
-    'countryshortname': 'country',
-    'regionname': 'region name',
-    'url': 'url',
-    'teamleadname': 'team leader',
-    'status': 'status',
-    'envassesmentcategorycode': 'environmental assesment category',
-
+    "id": "project ID",
+    "project_name": "project name",
+    "countryshortname": "country",
+    "regionname": "region name",
+    "url": "url",
+    "teamleadname": "team leader",
+    "status": "status",
+    "envassesmentcategorycode": "environmental assesment category",
     # dates
-    'approvalfy': 'fiscal year',
-    'boardapprovaldate': 'board approval date',
-    'closingdate': 'closing date',
-    'p2a_updated_date': 'update date',
-
+    "approvalfy": "fiscal year",
+    "boardapprovaldate": "board approval date",
+    "closingdate": "closing date",
+    "p2a_updated_date": "update date",
     # lending
-    'lendinginstr': 'lending instrument',
-    'borrower': 'borrower',
-    'impagency': 'implementing agency',
-    'lendprojectcost': 'project cost',
-    'totalcommamt': 'total commitment',
-    'grantamt': 'grant amount',
-    'idacommamt': 'IDA commitment amount',
-    'ibrdcommamt': 'IBRD commitment amount',
-    'curr_total_commitment': 'current total IBRD and IDA commitment',
-    'curr_ibrd_commitment': 'current IBRD commitment',
-    'curr_ida_commitment': 'current IDA commitment',
-
+    "lendinginstr": "lending instrument",
+    "borrower": "borrower",
+    "impagency": "implementing agency",
+    "lendprojectcost": "project cost",
+    "totalcommamt": "total commitment",
+    "grantamt": "grant amount",
+    "idacommamt": "IDA commitment amount",
+    "ibrdcommamt": "IBRD commitment amount",
+    "curr_total_commitment": "current total IBRD and IDA commitment",
+    "curr_ibrd_commitment": "current IBRD commitment",
+    "curr_ida_commitment": "current IDA commitment",
     # sectors
-    'sector': 'sectors',
+    "sector": "sectors",
 }
 
 
@@ -249,37 +262,47 @@ class WorldBankProjects(ImportData):
     def _path(self):
         """Generate path based on version"""
 
-        start_date = f'_{self.start_date}' if self.start_date is not None else ''
-        end_date = f'_{self.end_date}' if self.end_date is not None else ''
+        start_date = f"_{self.start_date}" if self.start_date is not None else ""
+        end_date = f"_{self.end_date}" if self.end_date is not None else ""
 
         return BBPaths.raw_data / f"world_bank_projects{start_date}{end_date}.json"
 
     def _format_general_data(self) -> None:
         """Clean and format general data and store it in _data attribute with key 'general_data'"""
 
-        numeric_cols = ['lendprojectcost', 'totalcommamt', 'grantamt', 'idacommamt',
-                        'ibrdcommamt', 'curr_total_commitment', 'curr_ibrd_commitment',
-                        'curr_ida_commitment']
+        numeric_cols = [
+            "lendprojectcost",
+            "totalcommamt",
+            "grantamt",
+            "idacommamt",
+            "ibrdcommamt",
+            "curr_total_commitment",
+            "curr_ibrd_commitment",
+            "curr_ida_commitment",
+        ]
 
-        self._data['general_data'] = (pd
-                                      .DataFrame.from_dict(self._raw_data, orient='index')
-                                      .reset_index(drop=True)
-                                      .loc[:, general_fields.keys()]
-                                      # change fiscal year to int
-                                      .assign(
-            approvalfy=lambda d: clean.clean_numeric_series(d['approvalfy'], to=int))
-                                      # change numeric columns to float
-                                      .pipe(clean.clean_numeric_series, series_columns=numeric_cols)
-                                      .assign(  # format dates
-            boardapprovaldate=lambda d: clean.to_date_column(d['boardapprovaldate']),
-            closingdate=lambda d: clean.to_date_column(d['closingdate']),
-            p2a_updated_date=lambda d: clean.to_date_column(d['p2a_updated_date']),
-            # format sectors
-            sector=lambda d: clean_sector(d['sector'])
+        self._data["general_data"] = (
+            pd.DataFrame.from_dict(self._raw_data, orient="index")
+            .reset_index(drop=True)
+            .loc[:, general_fields.keys()]
+            # change fiscal year to int
+            .assign(
+                approvalfy=lambda d: clean.clean_numeric_series(d["approvalfy"], to=int)
+            )
+            # change numeric columns to float
+            .pipe(clean.clean_numeric_series, series_columns=numeric_cols)
+            .assign(  # format dates
+                boardapprovaldate=lambda d: clean.to_date_column(
+                    d["boardapprovaldate"]
+                ),
+                closingdate=lambda d: clean.to_date_column(d["closingdate"]),
+                p2a_updated_date=lambda d: clean.to_date_column(d["p2a_updated_date"]),
+                # format sectors
+                sector=lambda d: clean_sector(d["sector"]),
+            )
+            # rename columns
+            .rename(columns=general_fields)
         )
-                                      # rename columns
-                                      .rename(columns=general_fields)
-                                      )
 
     def _format_theme_data(self) -> None:
         """Format theme data and store it as a dataframe in _data attribute with key 'theme_data'"""
@@ -288,16 +311,17 @@ class WorldBankProjects(ImportData):
         for _, proj_data in self._raw_data.items():
             theme_data.extend(clean_theme(proj_data))
 
-        self._data['theme_data'] = pd.DataFrame(theme_data)
+        self._data["theme_data"] = pd.DataFrame(theme_data)
 
     def _download(self) -> None:
         """Download data from World Bank Projects API and save it as a json file"""
 
-        with open(self._path, 'w') as file:
-            data = (QueryAPI(start_date=self.start_date, end_date=self.end_date)
-                    .request_data()
-                    .get_data()
-                    )
+        with open(self._path, "w") as file:
+            data = (
+                QueryAPI(start_date=self.start_date, end_date=self.end_date)
+                .request_data()
+                .get_data()
+            )
             json.dump(data, file)
 
         logger.info(f"Successfully downloaded World Bank Projects")
@@ -352,9 +376,7 @@ class WorldBankProjects(ImportData):
         return self
 
     def get_data(
-            self, project_codes: str | list = 'all',
-            data_type: str = 'general',
-            **kwargs
+        self, project_codes: str | list = "all", data_type: str = "general", **kwargs
     ) -> pd.DataFrame:
         """Get the data as a dataframe
 
@@ -367,17 +389,17 @@ class WorldBankProjects(ImportData):
             data_type: type of data to retrieve. Either 'general' or 'theme'
         """
 
-        if data_type == 'general':
-            df = self._data['general_data']
-        elif data_type == 'theme':
-            df = self._data['theme_data']
+        if data_type == "general":
+            df = self._data["general_data"]
+        elif data_type == "theme":
+            df = self._data["theme_data"]
         else:
             raise ValueError("data_type must be either 'general' or 'theme'")
 
-        if project_codes != 'all':
+        if project_codes != "all":
             if isinstance(project_codes, str):
                 project_codes = [project_codes]
-            df = df[df['project ID'].isin(project_codes)]
+            df = df[df["project ID"].isin(project_codes)]
 
         return df
 
