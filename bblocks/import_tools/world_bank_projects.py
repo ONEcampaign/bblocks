@@ -125,18 +125,18 @@ class QueryAPI:
         return self.response_data
 
 
-def clean_theme(data: dict) -> list[dict]:
-    """Clean theme data from a nested list to a dataframe
-    If there are no themes, an empty dataframe will be returned
+def clean_theme(data: dict) -> list[dict] | list:
+    """Clean theme data from a nested list to a list of dictionaries with theme names and percentages
+    If there are no themes, an empty list will be returned
 
     Args:
         data: data from API
 
     Returns:
-        dict with theme names and percentages
+        list of dictionaries with theme names and percentages
     """
 
-    # if there are no themes, return an empty dataframe
+    # if there are no themes, return an empty list
     if 'theme_list' not in data.keys():
         # return [{'project ID': proj_id}]
         return []
@@ -149,7 +149,7 @@ def clean_theme(data: dict) -> list[dict]:
         name = theme1['name']
         theme_list.append({'project ID': proj_id,
                            'theme1': name,
-                           'percent': theme1['percent']})
+                           'percent': clean.clean_number(theme1['percent'])})
 
         # get 2nd theme
         if 'theme2' in theme1.keys():
@@ -158,7 +158,7 @@ def clean_theme(data: dict) -> list[dict]:
                 theme_list.append({'project ID': proj_id,
                                    'theme1': name,
                                    'theme2': name_2,
-                                   'percent': theme2['percent']})
+                                   'percent': clean.clean_number(theme2['percent'])})
 
                 # get 3rd theme
                 if 'theme3' in theme2.keys():
@@ -168,7 +168,7 @@ def clean_theme(data: dict) -> list[dict]:
                                            'theme1': name,
                                            'theme2': name_2,
                                            'theme3': name_3,
-                                           'percent': theme3['percent']})
+                                           'percent': clean.clean_number(theme3['percent'])})
     return theme_list
 
 
@@ -178,10 +178,14 @@ def clean_sector(sector_series: pd.Series) -> pd.Series:
 
     Args:
         sector_series: series of sector data
+
+    Returns:
+        series of sector data as a string separated by ' | '
     """
 
     return (sector_series
-            .apply(lambda x: ' | '.join([item['Name'] for item in x])if isinstance(x, list) else np.nan)
+            .apply(lambda x: ' | '.join([item['Name']
+                                         for item in x]) if isinstance(x, list) else np.nan)
             )
 
 
@@ -221,7 +225,22 @@ general_fields = {  # general info
 
 @dataclass
 class WorldBankProjects(ImportData):
-    """World Bank Projects Database Importer"""
+    """World Bank Projects Database Importer
+
+    This object will import the World Bank Projects database from the World Bank API.
+    To use, create an instance of the class. Optionally, you can specify the start and end dates
+    of the data to import. If no dates are specified, all data will be imported.
+    To import the data, call the load_data method. If the data has already downloaded, it will
+    be loaded to the object from disk, otherwise it will be downloaded from the API.
+    To retrieve the data, call the get_data method. You can specify the type of data to retrieve,
+    either 'general' or 'theme'. If no type is specified, 'general' data will be returned.
+    To update the data, call the update_data method. This will download the data from the API. if 'reload' is
+    set to True, the data will be reloaded to the object.
+
+    Parameters:
+        start_date: start date of data to import, in DD-MM-YYYY format
+        end_date: end date of data to import, in DD-MM-YYYY format
+    """
 
     start_date: str | None = None
     end_date: str | None = None
@@ -235,10 +254,8 @@ class WorldBankProjects(ImportData):
 
         return BBPaths.raw_data / f"world_bank_projects{start_date}{end_date}.json"
 
-    def _format_data(self):
-        """Cleaning and formatting"""
-
-        # create dataframe for general data
+    def _format_general_data(self) -> None:
+        """Clean and format general data and store it in _data attribute with key 'general_data'"""
 
         numeric_cols = ['lendprojectcost', 'totalcommamt', 'grantamt', 'idacommamt',
                         'ibrdcommamt', 'curr_total_commitment', 'curr_ibrd_commitment',
@@ -248,28 +265,30 @@ class WorldBankProjects(ImportData):
                                       .DataFrame.from_dict(self._raw_data, orient='index')
                                       .reset_index(drop=True)
                                       .loc[:, general_fields.keys()]
-        # change fiscal year to int
-                                      .assign(approvalfy=lambda d: clean.clean_numeric_series(d['approvalfy'], to=int))
-        # change numeric columns to float
-                                      .pipe(clean.clean_numeric_series,series_columns=numeric_cols)
-                                      .assign(#format dates
-                                              boardapprovaldate = lambda d: clean.to_date_column(d['boardapprovaldate']),
-                                              closingdate = lambda d: clean.to_date_column(d['closingdate']),
-                                              p2a_updated_date =lambda d: clean.to_date_column(d['p2a_updated_date']),
-                                              #format sectors
-                                              sector = lambda d: clean_sector(d['sector'])
-                                             )
-        # rename columns
+                                      # change fiscal year to int
+                                      .assign(
+            approvalfy=lambda d: clean.clean_numeric_series(d['approvalfy'], to=int))
+                                      # change numeric columns to float
+                                      .pipe(clean.clean_numeric_series, series_columns=numeric_cols)
+                                      .assign(  # format dates
+            boardapprovaldate=lambda d: clean.to_date_column(d['boardapprovaldate']),
+            closingdate=lambda d: clean.to_date_column(d['closingdate']),
+            p2a_updated_date=lambda d: clean.to_date_column(d['p2a_updated_date']),
+            # format sectors
+            sector=lambda d: clean_sector(d['sector'])
+        )
+                                      # rename columns
                                       .rename(columns=general_fields)
                                       )
+
+    def _format_theme_data(self) -> None:
+        """Format theme data and store it as a dataframe in _data attribute with key 'theme_data'"""
 
         theme_data = []
         for _, proj_data in self._raw_data.items():
             theme_data.extend(clean_theme(proj_data))
 
-        self._data['theme_data'] = (pd.DataFrame(theme_data)
-                                    .assign(percent=lambda d: clean.clean_numeric_series(d['percent'], to=float))
-                                    )
+        self._data['theme_data'] = pd.DataFrame(theme_data)
 
     def _download(self) -> None:
         """Download data from World Bank Projects API and save it as a json file"""
@@ -280,10 +299,20 @@ class WorldBankProjects(ImportData):
                     .get_data()
                     )
             json.dump(data, file)
-            logger.info(f"Successfully downloaded World Bank Projects")
 
-    def load_data(self, project_codes: str | list = 'all') -> ImportData:
-        """ """
+        logger.info(f"Successfully downloaded World Bank Projects")
+
+    def load_data(self) -> ImportData:
+        """Load data to the object
+
+        This method will load the World Bank Project data to the object.
+        If the data has already downloaded, it will be loaded to the object from disk,
+        otherwise it will be downloaded from the API and saved as a json file and  loaded
+        to the object.
+
+        returns:
+            object with loaded data
+        """
 
         # if file does not exist, download it and save it as a json file
         if not self._path.exists():
@@ -296,12 +325,25 @@ class WorldBankProjects(ImportData):
         if self._raw_data is None:
             raise EmptyDataException("No data was retrieved")
 
-        # format data
-        self._format_data()
+        # set data
+        self._format_general_data()
+        self._format_theme_data()
+
+        logger.info(f"Successfully loaded World Bank Projects")
         return self
 
     def update_data(self, reload: bool = True) -> ImportData:
-        """ """
+        """Force update of data
+
+        This method will download the data from the API.
+        If 'reload' is set to True, the data will be reloaded to the object.
+
+        Args:
+            reload: if True, reload data to object after downloading it
+
+        returns:
+            object with updated data
+        """
 
         self._download()
         if reload:
@@ -314,7 +356,16 @@ class WorldBankProjects(ImportData):
             data_type: str = 'general',
             **kwargs
     ) -> pd.DataFrame:
-        """ """
+        """Get the data as a dataframe
+
+        Get the the general data or the theme data for World Bank Projects as a dataframe.
+        Optionally, you can specify the project codes to retrieve data for. If no project codes
+        are specified, data for all projects will be returned.
+
+        Args:
+            project_codes: project codes to retrieve data for. If 'all', data for all projects will be returned
+            data_type: type of data to retrieve. Either 'general' or 'theme'
+        """
 
         if data_type == 'general':
             df = self._data['general_data']

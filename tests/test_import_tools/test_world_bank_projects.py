@@ -139,16 +139,16 @@ def test_clean_theme():
          ]
     }
 
-    formatted = [{'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'percent': '34'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'percent': '13'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'theme3': 'Energy Efficiency', 'percent': '13'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'theme3': 'Energy Policies & Reform', 'percent': '13'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental policies and institutions', 'percent': '13'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental Health and Pollution Management', 'percent': '13'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental Health and Pollution Management', 'theme3': 'Air quality management', 'percent': '13'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'percent': '34'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'theme3': 'Adaptation', 'percent': '8'},
-                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'theme3': 'Mitigation', 'percent': '26'}]
+    formatted = [{'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'percent': 34},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'percent': 13},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'theme3': 'Energy Efficiency', 'percent': 13},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'theme3': 'Energy Policies & Reform', 'percent': 13},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental policies and institutions', 'percent': 13},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental Health and Pollution Management', 'percent': 13},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental Health and Pollution Management', 'theme3': 'Air quality management', 'percent': 13},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'percent': 34},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'theme3': 'Adaptation', 'percent': 8},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'theme3': 'Mitigation', 'percent': 26}]
 
     assert world_bank_projects.clean_theme(test_data_dict) == formatted
 
