@@ -86,3 +86,94 @@ class TestQueryAPI:
                                          'P2': {'name': 'Test Project 2'},
                                          'P3': {'name': 'Test Project 3'}
                                          }
+
+
+def test_clean_theme():
+    """Test clean_theme function."""
+
+    test_data_dict = {'id': 'P1234',
+                      'theme_list':
+        [{'name': 'Environment and Natural Resource Management',
+          'code': '80',
+          'seqno': '14',
+          'percent': '34',
+          'theme2': [
+              {'name': 'Energy',
+               'code': '86',
+               'seqno': '18',
+               'percent': '13',
+               'theme3': [
+                   { 'name': 'Energy Efficiency',
+                     'code': '861',
+                     'seqno': '34',
+                     'percent': '13'},
+                   {'name': 'Energy Policies & Reform',
+                    'code': '862',
+                    'seqno': '35',
+                    'percent': '13'}]
+               },
+              {'name': 'Environmental policies and institutions',
+               'code': '84',
+               'seqno': '17',
+               'percent': '13'},
+
+              {'name': 'Environmental Health and Pollution Management',
+               'code': '82',
+               'seqno': '16',
+               'percent': '13',
+               'theme3': [
+                   {'name': 'Air quality management',
+                    'code': '821',
+                    'seqno': '33',
+                    'percent': '13'}]},
+              {'name': 'Climate change',
+               'code': '81',
+               'seqno': '15',
+               'percent': '34',
+               'theme3': [
+                   {'name': 'Adaptation',
+                    'code': '812',
+                    'seqno': '32',
+                    'percent': '8'},
+                   {'name': 'Mitigation', 'code': '811', 'seqno': '31', 'percent': '26'}]}]}
+         ]
+    }
+
+    formatted = [{'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'percent': '34'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'percent': '13'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'theme3': 'Energy Efficiency', 'percent': '13'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Energy', 'theme3': 'Energy Policies & Reform', 'percent': '13'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental policies and institutions', 'percent': '13'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental Health and Pollution Management', 'percent': '13'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Environmental Health and Pollution Management', 'theme3': 'Air quality management', 'percent': '13'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'percent': '34'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'theme3': 'Adaptation', 'percent': '8'},
+                 {'project ID': 'P1234', 'theme1': 'Environment and Natural Resource Management', 'theme2': 'Climate change', 'theme3': 'Mitigation', 'percent': '26'}]
+
+    assert world_bank_projects.clean_theme(test_data_dict) == formatted
+
+
+def test_clean_theme_no_theme():
+    """Test clean_theme function with no theme."""
+
+    test_data_dict = {'id': 'P1234'
+                      }
+    assert world_bank_projects.clean_theme(test_data_dict) == []
+
+
+def test_clean_sector():
+    """Test clean_sector function."""
+
+    test_series = pd.Series({0: [{'Name': 'Public Administration - Transportation'}, {'Name': 'Ports/Waterways'}],
+                             1: [{'Name': 'Public Administration - Agriculture, Fishing & Forestry'}, {'Name': 'Agricultural Extension, Research, and Other Support Activities'}, {'Name': 'Other Agriculture, Fishing and Forestry'}, {'Name': 'Irrigation and Drainage'}, {'Name': 'Agricultural markets, commercialization and agri-business'}],
+                             2: np.nan,
+                             3: np.nan})
+
+    expected = pd.Series({0: 'Public Administration - Transportation | Ports/Waterways',
+                          1: 'Public Administration - Agriculture, Fishing & Forestry | Agricultural Extension, Research, and Other Support Activities | Other Agriculture, Fishing and Forestry | Irrigation and Drainage | Agricultural markets, commercialization and agri-business',
+                          2: np.nan,
+                          3: np.nan})
+
+    assert world_bank_projects.clean_sector(test_series).equals(expected)
+
+

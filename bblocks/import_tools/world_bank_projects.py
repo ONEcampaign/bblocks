@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from bblocks.logger import logger
 from bblocks.import_tools.common import ImportData
 from bblocks.config import BBPaths
+from bblocks.cleaning_tools import clean
 
 
 class EmptyDataException(Exception):
@@ -26,7 +27,7 @@ class QueryAPI:
     def __init__(
             self, response_format: str = 'json', max_rows_per_response: int = 500,
             start_date: str | None = None, end_date: str | None = None
-            ):
+    ):
         """Initialize QueryAPI object"""
 
         self.response_format = response_format
@@ -124,24 +125,98 @@ class QueryAPI:
         return self.response_data
 
 
-fields = {
-    'id': 'id',
-    'regionname': 'region',
+def clean_theme(data: dict) -> list[dict]:
+    """Clean theme data from a nested list to a dataframe
+    If there are no themes, an empty dataframe will be returned
+
+    Args:
+        data: data from API
+
+    Returns:
+        dict with theme names and percentages
+    """
+
+    # if there are no themes, return an empty dataframe
+    if 'theme_list' not in data.keys():
+        # return [{'project ID': proj_id}]
+        return []
+
+    theme_list = []
+    proj_id = data['id']
+    for theme1 in data['theme_list']:
+
+        # get first theme
+        name = theme1['name']
+        theme_list.append({'project ID': proj_id,
+                           'theme1': name,
+                           'percent': theme1['percent']})
+
+        # get 2nd theme
+        if 'theme2' in theme1.keys():
+            for theme2 in theme1['theme2']:
+                name_2 = theme2['name']
+                theme_list.append({'project ID': proj_id,
+                                   'theme1': name,
+                                   'theme2': name_2,
+                                   'percent': theme2['percent']})
+
+                # get 3rd theme
+                if 'theme3' in theme2.keys():
+                    for theme3 in theme2['theme3']:
+                        name_3 = theme3['name']
+                        theme_list.append({'project ID': proj_id,
+                                           'theme1': name,
+                                           'theme2': name_2,
+                                           'theme3': name_3,
+                                           'percent': theme3['percent']})
+    return theme_list
+
+
+def clean_sector(sector_series: pd.Series) -> pd.Series:
+    """Format sector data from a nested list to a string separating sectors by ' | '
+    If there are no sectors, np.nan will be placed in the series row
+
+    Args:
+        sector_series: series of sector data
+    """
+
+    return (sector_series
+            .apply(lambda x: ' | '.join([item['Name'] for item in x])if isinstance(x, list) else np.nan)
+            )
+
+
+general_fields = {  # general info
+    'id': 'project ID',
     'project_name': 'project name',
     'countryshortname': 'country',
-    'projectstatusdisplay': 'project status',
+    'regionname': 'region name',
+    'url': 'url',
+    'teamleadname': 'team leader',
+    'status': 'status',
+    'envassesmentcategorycode': 'environmental assesment category',
 
+    # dates
+    'approvalfy': 'fiscal year',
+    'boardapprovaldate': 'board approval date',
+    'closingdate': 'closing date',
+    'p2a_updated_date': 'update date',
 
+    # lending
+    'lendinginstr': 'lending instrument',
+    'borrower': 'borrower',
+    'impagency': 'implementing agency',
+    'lendprojectcost': 'project cost',
+    'totalcommamt': 'total commitment',
+    'grantamt': 'grant amount',
+    'idacommamt': 'IDA commitment amount',
+    'ibrdcommamt': 'IBRD commitment amount',
+    'curr_total_commitment': 'current total IBRD and IDA commitment',
+    'curr_ibrd_commitment': 'current IBRD commitment',
+    'curr_ida_commitment': 'current IDA commitment',
 
-
-    'curr_total_commitment': 'total commitment',
-    'curr_ibrd_commitment': 'IBRD commitment',
-    'curr_ida_commitment': 'IDA commitment',
-
+    # sectors
+    'sector': 'sectors',
 }
-
-
-# df = pd.DataFrame.from_dict(proj._raw_data, orient='index')
 
 
 @dataclass
@@ -160,44 +235,102 @@ class WorldBankProjects(ImportData):
 
         return BBPaths.raw_data / f"world_bank_projects{start_date}{end_date}.json"
 
+    def _format_data(self):
+        """Cleaning and formatting"""
+
+        # create dataframe for general data
+
+        numeric_cols = ['lendprojectcost', 'totalcommamt', 'grantamt', 'idacommamt',
+                        'ibrdcommamt', 'curr_total_commitment', 'curr_ibrd_commitment',
+                        'curr_ida_commitment']
+
+        self._data['general_data'] = (pd
+                                      .DataFrame.from_dict(self._raw_data, orient='index')
+                                      .reset_index(drop=True)
+                                      .loc[:, general_fields.keys()]
+        # change fiscal year to int
+                                      .assign(approvalfy=lambda d: clean.clean_numeric_series(d['approvalfy'], to=int))
+        # change numeric columns to float
+                                      .pipe(clean.clean_numeric_series,series_columns=numeric_cols)
+                                      .assign(#format dates
+                                              boardapprovaldate = lambda d: clean.to_date_column(d['boardapprovaldate']),
+                                              closingdate = lambda d: clean.to_date_column(d['closingdate']),
+                                              p2a_updated_date =lambda d: clean.to_date_column(d['p2a_updated_date']),
+                                              #format sectors
+                                              sector = lambda d: clean_sector(d['sector'])
+                                             )
+        # rename columns
+                                      .rename(columns=general_fields)
+                                      )
+
+        theme_data = []
+        for _, proj_data in self._raw_data.items():
+            theme_data.extend(clean_theme(proj_data))
+
+        self._data['theme_data'] = (pd.DataFrame(theme_data)
+                                    .assign(percent=lambda d: clean.clean_numeric_series(d['percent'], to=float))
+                                    )
+
+    def _download(self) -> None:
+        """Download data from World Bank Projects API and save it as a json file"""
+
+        with open(self._path, 'w') as file:
+            data = (QueryAPI(start_date=self.start_date, end_date=self.end_date)
+                    .request_data()
+                    .get_data()
+                    )
+            json.dump(data, file)
+            logger.info(f"Successfully downloaded World Bank Projects")
+
     def load_data(self, project_codes: str | list = 'all') -> ImportData:
         """ """
 
         # if file does not exist, download it and save it as a json file
         if not self._path.exists():
-            with open(self._path, 'w') as file:
-                data = (QueryAPI(start_date=self.start_date, end_date=self.end_date)
-                        .request_data()
-                        .get_data()
-                        )
-                json.dump(data, file)
-                logger.info(f"Successfully downloaded World Bank Projects")
+            self._download()
 
+        # load data from json file
         with open(self._path, "r") as file:
             self._raw_data = json.load(file)
 
-        if project_codes == 'all':
-            self._data = self._raw_data
+        if self._raw_data is None:
+            raise EmptyDataException("No data was retrieved")
 
-        if isinstance(project_codes, str):
-            project_codes = [project_codes]
-
-        if isinstance(project_codes, list):
-            self._data = {k: v for k, v in self._raw_data.items()
-                          if k in project_codes}
-
-        if self._data == {}:
-            raise ValueError("No projects found with the given project codes")
-        logger.info(f"Successfully loaded World Bank Projects")
-
+        # format data
+        self._format_data()
         return self
 
     def update_data(self, reload: bool = True) -> ImportData:
         """ """
 
-        pass
+        self._download()
+        if reload:
+            self.load_data()
 
-    def get_data(self):
+        return self
+
+    def get_data(
+            self, project_codes: str | list = 'all',
+            data_type: str = 'general',
+            **kwargs
+    ) -> pd.DataFrame:
         """ """
 
-        print('test')
+        if data_type == 'general':
+            df = self._data['general_data']
+        elif data_type == 'theme':
+            df = self._data['theme_data']
+        else:
+            raise ValueError("data_type must be either 'general' or 'theme'")
+
+        if project_codes != 'all':
+            if isinstance(project_codes, str):
+                project_codes = [project_codes]
+            df = df[df['project ID'].isin(project_codes)]
+
+        return df
+
+    def get_json(self) -> dict:
+        """Return the raw data as a dictionary"""
+
+        return self._raw_data
