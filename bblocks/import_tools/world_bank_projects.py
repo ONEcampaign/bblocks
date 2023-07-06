@@ -18,7 +18,7 @@ class EmptyDataException(Exception):
     pass
 
 
-BASE_API_URL = "http://search.worldbank.org/api/v2/projects"
+BASE_API_URL = "https://search.worldbank.org/api/v2/projects"
 
 
 class QueryAPI:
@@ -53,7 +53,7 @@ class QueryAPI:
     def _check_params(self) -> None:
         """Check parameters"""
 
-        # if end_date is before start_date, raise error
+        # if end_date is before start_date, raise error.
         if self._params["strdate"] is not None and self._params["enddate"] is not None:
             if self._params["enddate"] < self._params["strdate"]:
                 raise ValueError("end date must be after start date")
@@ -72,7 +72,7 @@ class QueryAPI:
             self._params.pop("enddate")
 
     def _request(self) -> dict:
-        """Single request to API. Returns the rsponse json."""
+        """Single request to API. Returns the response json."""
 
         try:
             response = requests.get(BASE_API_URL, params=self._params)
@@ -120,7 +120,7 @@ class QueryAPI:
         return self
 
     def get_data(self) -> dict[dict]:
-        """Get the data, or request it if it hasn't been requested yet"""
+        """Get the data, or request it if it hasn't been requested yet."""
 
         if len(self.response_data) == 0:
             self.request_data()
@@ -129,8 +129,9 @@ class QueryAPI:
 
 
 def clean_theme(data: dict) -> list[dict] | list:
-    """Clean theme data from a nested list to a list of dictionaries with theme names and percentages
-    If there are no themes, an empty list will be returned
+    """Clean theme data from a nested list to a list of dictionaries with theme names and
+    percentages.
+    If there are no themes, an empty list will be returned.
 
     Args:
         data: data from API
@@ -189,7 +190,7 @@ def clean_theme(data: dict) -> list[dict] | list:
 
 def clean_sector(sector_series: pd.Series) -> pd.Series:
     """Format sector data from a nested list to a string separating sectors by ' | '
-    If there are no sectors, np.nan will be placed in the series row
+    If there are no sectors, np.nan will be placed in the series row.
 
     Args:
         sector_series: series of sector data
@@ -247,12 +248,12 @@ class WorldBankProjects(ImportData):
     be loaded to the object from disk, otherwise it will be downloaded from the API.
     To retrieve the data, call the get_data method. You can specify the type of data to retrieve,
     either 'general' or 'theme'. If no type is specified, 'general' data will be returned.
-    To update the data, call the update_data method. This will download the data from the API. if 'reload' is
-    set to True, the data will be reloaded to the object.
+    To update the data, call the update_data method. This will download the data from the API.
+    If 'reload' is set to True, the data will be reloaded to the object.
 
     Parameters:
         start_date: start date of data to import, in DD-MM-YYYY format
-        end_date: end date of data to import, in DD-MM-YYYY format
+        end_date: end date of data to import, in DD-MM-YYYY format.
     """
 
     start_date: str | None = None
@@ -285,7 +286,7 @@ class WorldBankProjects(ImportData):
             pd.DataFrame.from_dict(self._raw_data, orient="index")
             .reset_index(drop=True)
             .loc[:, general_fields.keys()]
-            # change fiscal year to int
+            # change the fiscal year to int
             .assign(
                 approvalfy=lambda d: clean.clean_numeric_series(d["approvalfy"], to=int)
             )
@@ -314,7 +315,7 @@ class WorldBankProjects(ImportData):
         self._data["theme_data"] = pd.DataFrame(theme_data)
 
     def _download(self) -> None:
-        """Download data from World Bank Projects API and save it as a json file"""
+        """Download data from World Bank Projects API and save it as a json file."""
 
         with open(self._path, "w") as file:
             data = (
@@ -334,7 +335,7 @@ class WorldBankProjects(ImportData):
         otherwise it will be downloaded from the API and saved as a json file and  loaded
         to the object.
 
-        returns:
+        Returns:
             object with loaded data
         """
 
@@ -363,9 +364,9 @@ class WorldBankProjects(ImportData):
         If 'reload' is set to True, the data will be reloaded to the object.
 
         Args:
-            reload: if True, reload data to object after downloading it
+            reload: if True, reload data to object after downloading it.
 
-        returns:
+        Returns:
             object with updated data
         """
 
@@ -380,12 +381,13 @@ class WorldBankProjects(ImportData):
     ) -> pd.DataFrame:
         """Get the data as a dataframe
 
-        Get the the general data or the theme data for World Bank Projects as a dataframe.
+        Get the general data, or the theme data for World Bank Projects as a dataframe.
         Optionally, you can specify the project codes to retrieve data for. If no project codes
         are specified, data for all projects will be returned.
 
         Args:
-            project_codes: project codes to retrieve data for. If 'all', data for all projects will be returned
+            project_codes: project codes to retrieve data for. If 'all', data for all projects
+            will be returned
             data_type: type of data to retrieve. Either 'general' or 'theme'
         """
 
