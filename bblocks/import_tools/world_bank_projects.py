@@ -5,6 +5,7 @@ import numpy as np
 import requests
 import json
 from dataclasses import dataclass
+import re
 
 from bblocks.logger import logger
 from bblocks.import_tools.common import ImportData
@@ -26,24 +27,24 @@ class QueryAPI:
 
     def __init__(
         self,
-        response_format: str = "json",
         max_rows_per_response: int = 500,
         start_date: str | None = None,
         end_date: str | None = None,
     ):
         """Initialize QueryAPI object"""
 
-        self.response_format = response_format
         self.max_rows_per_response = max_rows_per_response
         self.start_date = start_date
         self.end_date = end_date
 
         self._params = {
-            "format": self.response_format,
+            "format": 'json',
             "rows": self.max_rows_per_response,
             # 'os': 0, # offset
             "strdate": self.start_date,
             "enddate": self.end_date,
+            "fl": "*",
+            'apilang': 'en'
         }
 
         self._check_params()
@@ -188,22 +189,33 @@ def clean_theme(data: dict) -> list[dict] | list:
     return theme_list
 
 
-def clean_sector(sector_series: pd.Series) -> pd.Series:
-    """Format sector data from a nested list to a string separating sectors by ' | '
-    If there are no sectors, np.nan will be placed in the series row.
+def _get_sector_percentages(d: dict) -> dict:
+    """ """
 
-    Args:
-        sector_series: series of sector data
+    sectors_dict = {} # empty dict to store sector data as {sector_name: percent}
 
-    Returns:
-        series of sector data as a string separated by ' | '
-    """
+    sector_names = [v['Name'] for v in d['sector']] # get list of sector names
+    sectors = {key: value for key, value in d.items() if re.search(r'^sector\d+$', key)} # get sectors fields which should contain percentages
 
-    return sector_series.apply(
-        lambda x: " | ".join([item["Name"] for item in x])
-        if isinstance(x, list)
-        else np.nan
-    )
+    # get available sector percentages
+    for _, v in sectors.items():
+        if isinstance(v, dict):
+            sectors_dict[v['Name']] = v['Percent']
+
+    # check if there are missing sectors from the dict
+    if (len(sectors_dict)== len(sectors)-1) and (sum(sectors_dict.values())<100):
+
+        # loop through all the available sectors
+        for s in sector_names:
+
+            # if a sectors has not been picked up it must be the missing sector
+            if s not in sectors_dict.keys():
+                sectors_dict[s] = 100 - sum(sectors_dict.values())
+
+    if sum(sectors_dict.values())!=100:
+        raise ValueError("Sector percentages don't add up to 100%")
+
+    return sectors_dict
 
 
 general_fields = {  # general info
@@ -232,8 +244,6 @@ general_fields = {  # general info
     "curr_total_commitment": "current total IBRD and IDA commitment",
     "curr_ibrd_commitment": "current IBRD commitment",
     "curr_ida_commitment": "current IDA commitment",
-    # sectors
-    "sector": "sectors",
 }
 
 
@@ -298,8 +308,6 @@ class WorldBankProjects(ImportData):
                 ),
                 closingdate=lambda d: clean.to_date_column(d["closingdate"]),
                 p2a_updated_date=lambda d: clean.to_date_column(d["p2a_updated_date"]),
-                # format sectors
-                sector=lambda d: clean_sector(d["sector"]),
             )
             # rename columns
             .rename(columns=general_fields)
@@ -313,6 +321,23 @@ class WorldBankProjects(ImportData):
             theme_data.extend(clean_theme(proj_data))
 
         self._data["theme_data"] = pd.DataFrame(theme_data)
+
+    def _format_sector_data(self) -> None:
+        """Format sector data and store it as a dataframe in _data attribute
+        with key 'sector_data'"""
+
+        sector_data = []
+        for _, proj_data in self._raw_data.items():
+            if 'sector' in proj_data.keys():
+                proj_id = proj_data['id']
+
+                sectors = _get_sector_percentages(proj_data)
+                sector_data.extend([{'project ID': proj_id,
+                                     'sector': s,
+                                     'percent': p}
+                                    for s, p in sectors.items()])
+
+        self._data["sector_data"] = pd.DataFrame(sector_data)
 
     def _download(self) -> None:
         """Download data from World Bank Projects API and save it as a json file."""
@@ -353,6 +378,7 @@ class WorldBankProjects(ImportData):
         # set data
         self._format_general_data()
         self._format_theme_data()
+        self._format_sector_data()
 
         logger.info(f"Successfully loaded World Bank Projects")
         return self
