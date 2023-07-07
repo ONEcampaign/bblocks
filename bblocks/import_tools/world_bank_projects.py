@@ -190,12 +190,25 @@ def clean_theme(data: dict) -> list[dict] | list:
 
 
 def _get_sector_percentages(d: dict) -> dict:
-    """ """
+    """Get sector percentages from a project dictionary
+
+    the function first finds all available sectors
+    It then finds all  fields from the json starting with 'sector' and ending with a number
+    and gets a dictionary of the sector name and percentage
+    If there are any sectors missing from the dict and the total percentage is less than 100
+    the missing sector is added with the remaining percentage.
+    If the total is still not 100, it will raise an error to indicate a
+    problem with the data.
+
+    args:
+        d: project dictionary
+    """
 
     sectors_dict = {} # empty dict to store sector data as {sector_name: percent}
-
     sector_names = [v['Name'] for v in d['sector']] # get list of sector names
-    sectors = {key: value for key, value in d.items() if re.search(r'^sector\d+$', key)} # get sectors fields which should contain percentages
+
+    # get sectors fields which should contain percentages
+    sectors = {key: value for key, value in d.items() if re.search(r"^sector\d+$", key)}
 
     # get available sector percentages
     for _, v in sectors.items():
@@ -203,16 +216,15 @@ def _get_sector_percentages(d: dict) -> dict:
             sectors_dict[v['Name']] = v['Percent']
 
     # check if there are missing sectors from the dict
-    if (len(sectors_dict)== len(sectors)-1) and (sum(sectors_dict.values())<100):
+    if (len(sectors_dict) == len(sectors)-1) and (sum(sectors_dict.values())<100):
 
         # loop through all the available sectors
         for s in sector_names:
-
             # if a sectors has not been picked up it must be the missing sector
             if s not in sectors_dict.keys():
                 sectors_dict[s] = 100 - sum(sectors_dict.values())
 
-    if sum(sectors_dict.values())!=100:
+    if sum(sectors_dict.values()) != 100:
         raise ValueError("Sector percentages don't add up to 100%")
 
     return sectors_dict
