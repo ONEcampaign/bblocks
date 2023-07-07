@@ -1,8 +1,6 @@
 """Tests for the world_bank_projects module."""
 
 import pytest
-import pandas as pd
-import numpy as np
 import requests
 from unittest.mock import Mock, patch, MagicMock
 
@@ -25,18 +23,18 @@ class TestQueryAPI:
 
         # test that start_date is dropped if end_date is None
         assert (
-                "strdate"
-                not in world_bank_projects.QueryAPI(
-            end_date="2020-01-01", start_date=None
-        )._params
+            "strdate"
+            not in world_bank_projects.QueryAPI(
+                end_date="2020-01-01", start_date=None
+            )._params
         )
 
         # test that end_date is dropped if start_date is None
         assert (
-                "enddate"
-                not in world_bank_projects.QueryAPI(
-            start_date="2020-01-01", end_date=None
-        )._params
+            "enddate"
+            not in world_bank_projects.QueryAPI(
+                start_date="2020-01-01", end_date=None
+            )._params
         )
 
     def test_request(self):
@@ -274,41 +272,51 @@ def test_clean_theme_no_theme():
 def test_get_sector_data():
     """test the get_sector_data function."""
 
-    d = {'id': 'P1',
-         'sector': [{'Name': 'Agriculture, fishing, and forestry', 'code': 'BX'},
-                    {'Name': 'Agricultural extension and research', 'code': 'AX'}
-                    ],
-         'sector1': {'Name': 'Agriculture, fishing, and forestry',
-                     'Percent': 50},
-         'sector2': {'Name': 'Agricultural extension and research',
-                     'Percent': 50}
-         }
+    d = {
+        "id": "P1",
+        "sector": [
+            {"Name": "Agriculture, fishing, and forestry", "code": "BX"},
+            {"Name": "Agricultural extension and research", "code": "AX"},
+        ],
+        "sector1": {"Name": "Agriculture, fishing, and forestry", "Percent": 50},
+        "sector2": {"Name": "Agricultural extension and research", "Percent": 50},
+    }
 
-    expected = {'Agriculture, fishing, and forestry': 50,
-                'Agricultural extension and research': 50}
+    expected = {
+        "Agriculture, fishing, and forestry": 50,
+        "Agricultural extension and research": 50,
+    }
 
     assert world_bank_projects._get_sector_data(d) == expected
+
 
 def test_get_sector_data_missing_sector():
     """Test the get_sector_data function with missing sector."""
 
-    d = {'id': 'P2',
-         'sector': [{'Name': 'Agriculture, fishing, and forestry', 'code': 'BX'},
-                    {'Name': 'Agricultural extension and research', 'code': 'AX'},
-                    {'Name': 'Missing sector', 'code': 'XX'}
-                    ],
-         'sector1': {'Name': 'Agriculture, fishing, and forestry',
-                     'Percent': 40},
-         'sector2': {'Name': 'Agricultural extension and research',
-                     'Percent': 50},
-         'sector3': 'Missing sector',
-         }
+    d = {
+        "id": "P2",
+        "sector": [
+            {"Name": "Agriculture, fishing, and forestry", "code": "BX"},
+            {"Name": "Agricultural extension and research", "code": "AX"},
+            {"Name": "Missing sector", "code": "XX"},
+        ],
+        "sector1": {"Name": "Agriculture, fishing, and forestry", "Percent": 40},
+        "sector2": {"Name": "Agricultural extension and research", "Percent": 50},
+        "sector3": "Missing sector",
+    }
 
-    expected = {'Agriculture, fishing, and forestry': 40,
-                'Agricultural extension and research': 50,
-                'Missing sector': 10
-                }
+    expected = {
+        "Agriculture, fishing, and forestry": 40,
+        "Agricultural extension and research": 50,
+        "Missing sector": 10,
+    }
 
     assert world_bank_projects._get_sector_data(d) == expected
 
 
+def test_get_data_no_data_loaded():
+    """Test the get_data function with no data loaded."""
+
+    with pytest.raises(world_bank_projects.EmptyDataException):
+        proj = world_bank_projects.WorldBankProjects()
+        proj.get_data()

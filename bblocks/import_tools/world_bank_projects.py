@@ -1,7 +1,6 @@
 """World Bank Projects Database Importer"""
 
 import pandas as pd
-import numpy as np
 import requests
 import json
 from dataclasses import dataclass
@@ -30,21 +29,31 @@ class QueryAPI:
         max_rows_per_response: int = 500,
         start_date: str | None = None,
         end_date: str | None = None,
+        fields: list[str] | str = "*",
     ):
-        """Initialize QueryAPI object"""
+        """Initialize QueryAPI object
+
+        Args:
+            max_rows_per_response: maximum number of rows to return per request.
+                                Must be less than or equal to 1000.
+            start_date: start date of projects to return. Format: YYYY-MM-DD
+            end_date: end date of projects to return. Format: YYYY-MM-DD
+            fields: fields to return. Can be a list of strings or a single string.
+                    By default, all fields are returned ('*').
+        """
 
         self.max_rows_per_response = max_rows_per_response
         self.start_date = start_date
         self.end_date = end_date
+        self.fields = fields
 
         self._params = {
-            "format": 'json',
+            "format": "json",
             "rows": self.max_rows_per_response,
             # 'os': 0, # offset
             "strdate": self.start_date,
             "enddate": self.end_date,
-            "fl": "*",
-            'apilang': 'en'
+            "fl": self.fields,
         }
 
         self._check_params()
@@ -118,6 +127,7 @@ class QueryAPI:
         if len(self.response_data) == 0:
             raise EmptyDataException("No data was returned from API")
 
+        logger.info(f"Retrieved {len(self.response_data)} projects from API")
         return self
 
     def get_data(self) -> dict[dict]:
@@ -204,8 +214,8 @@ def _get_sector_data(d: dict) -> dict:
         d: project dictionary
     """
 
-    sectors_dict = {} # empty dict to store sector data as {sector_name: percent}
-    sector_names = [v['Name'] for v in d['sector']] # get list of sector names
+    sectors_dict = {}  # empty dict to store sector data as {sector_name: percent}
+    sector_names = [v["Name"] for v in d["sector"]]  # get list of sector names
 
     # get sectors fields which should contain percentages
     sectors = {key: value for key, value in d.items() if re.search(r"^sector\d+$", key)}
@@ -213,10 +223,10 @@ def _get_sector_data(d: dict) -> dict:
     # get available sector percentages
     for _, v in sectors.items():
         if isinstance(v, dict):
-            sectors_dict[v['Name']] = v['Percent']
+            sectors_dict[v["Name"]] = v["Percent"]
 
     # check if there are missing sectors from the dict
-    if (len(sectors_dict) == len(sectors)-1) and (sum(sectors_dict.values())<100):
+    if (len(sectors_dict) == len(sectors) - 1) and (sum(sectors_dict.values()) < 100):
 
         # loop through all the available sectors
         for s in sector_names:
@@ -238,7 +248,11 @@ general_fields = {  # general info
     "url": "url",
     "teamleadname": "team leader",
     "status": "status",
+    "last_stage_reached_name": "last stage reached",
+    "pdo": "project development objective",
+    "cons_serv_reqd_ind": "consulting services required",
     "envassesmentcategorycode": "environmental assesment category",
+    "esrc_ovrl_risk_rate": "environmental and social risk",
     # dates
     "approvalfy": "fiscal year",
     "boardapprovaldate": "board approval date",
@@ -246,6 +260,7 @@ general_fields = {  # general info
     "p2a_updated_date": "update date",
     # lending
     "lendinginstr": "lending instrument",
+    "projectfinancialtype": "financing type",
     "borrower": "borrower",
     "impagency": "implementing agency",
     "lendprojectcost": "project cost",
@@ -253,6 +268,7 @@ general_fields = {  # general info
     "grantamt": "grant amount",
     "idacommamt": "IDA commitment amount",
     "ibrdcommamt": "IBRD commitment amount",
+    "curr_project_cost": "current project cost",
     "curr_total_commitment": "current total IBRD and IDA commitment",
     "curr_ibrd_commitment": "current IBRD commitment",
     "curr_ida_commitment": "current IDA commitment",
@@ -274,8 +290,8 @@ class WorldBankProjects(ImportData):
     If 'reload' is set to True, the data will be reloaded to the object.
 
     Parameters:
-        start_date: start date of data to import, in DD-MM-YYYY format
-        end_date: end date of data to import, in DD-MM-YYYY format.
+        start_date: start date of data to import, in YYYY-MM-DD format
+        end_date: end date of data to import, in YYYY-MM-DD format.
     """
 
     start_date: str | None = None
@@ -302,6 +318,7 @@ class WorldBankProjects(ImportData):
             "curr_total_commitment",
             "curr_ibrd_commitment",
             "curr_ida_commitment",
+            "curr_project_cost",
         ]
 
         self._data["general_data"] = (
@@ -340,19 +357,23 @@ class WorldBankProjects(ImportData):
 
         sector_data = []
         for _, proj_data in self._raw_data.items():
-            if 'sector' in proj_data.keys():
-                proj_id = proj_data['id']
+            if "sector" in proj_data.keys():
+                proj_id = proj_data["id"]
 
                 sectors = _get_sector_data(proj_data)
-                sector_data.extend([{'project ID': proj_id,
-                                     'sector': s,
-                                     'percent': p}
-                                    for s, p in sectors.items()])
+                sector_data.extend(
+                    [
+                        {"project ID": proj_id, "sector": s, "percent": p}
+                        for s, p in sectors.items()
+                    ]
+                )
 
         self._data["sector_data"] = pd.DataFrame(sector_data)
 
     def _download(self) -> None:
         """Download data from World Bank Projects API and save it as a json file."""
+
+        logger.info(f"Starting download of World Bank Projects")
 
         with open(self._path, "w") as file:
             data = (
@@ -426,15 +447,24 @@ class WorldBankProjects(ImportData):
         Args:
             project_codes: project codes to retrieve data for. If 'all', data for all projects
             will be returned
-            data_type: type of data to retrieve. Either 'general' or 'theme'
+            data_type: type of data to retrieve. Either 'general', 'sector' or 'theme'
+
+        Returns:
+            dataframe with the requested data
         """
+
+        # check if data has been loaded
+        if len(self._data) == 0:
+            raise EmptyDataException("Data has not been loaded. Run load_data() first.")
 
         if data_type == "general":
             df = self._data["general_data"]
         elif data_type == "theme":
             df = self._data["theme_data"]
+        elif data_type == "sector":
+            df = self._data["sector_data"]
         else:
-            raise ValueError("data_type must be either 'general' or 'theme'")
+            raise ValueError("data_type must be either 'general', 'theme' or 'sector'")
 
         if project_codes != "all":
             if isinstance(project_codes, str):
