@@ -189,7 +189,7 @@ def clean_theme(data: dict) -> list[dict] | list:
     return theme_list
 
 
-def _get_sector_percentages(d: dict) -> dict:
+def _get_sector_data(d: dict) -> dict:
     """Get sector percentages from a project dictionary
 
     the function first finds all available sectors
@@ -343,7 +343,7 @@ class WorldBankProjects(ImportData):
             if 'sector' in proj_data.keys():
                 proj_id = proj_data['id']
 
-                sectors = _get_sector_percentages(proj_data)
+                sectors = _get_sector_data(proj_data)
                 sector_data.extend([{'project ID': proj_id,
                                      'sector': s,
                                      'percent': p}
