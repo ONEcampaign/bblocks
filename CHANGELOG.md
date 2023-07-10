@@ -1,6 +1,10 @@
 Changelog
 =========
 
+[1.1.1] - 2023-07-06
+--------------------
+- Updated requirements
+
 [1.1.0] - 2023-03-09
 --------------------
 - Added a new feature: `ilo` module in `import_tools` with an object 
