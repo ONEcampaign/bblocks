@@ -26,7 +26,7 @@ def clean_number(number: str | pd.Series, to: Type = float) -> float | int:
         number = pd.to_numeric(number, errors="coerce")
 
         if to == float:
-            return number
+            return number.astype(float)
 
         if to == int:
             return number.round().astype("Int64")
