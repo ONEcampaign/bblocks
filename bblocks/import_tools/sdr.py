@@ -70,7 +70,7 @@ def clean_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
 
     return (
         df.melt(id_vars="entity", value_vars=["holdings", "allocations"])
-        .pipe(clean_numeric_series, series_columns="value")
+        .pipe(clean_numeric_series, series_columns="value", to=float)
         .rename(columns={"variable": "indicator"})
         .reset_index(drop=True)
         .assign(date=date)
