@@ -45,7 +45,7 @@ class QueryAPI:
         self.max_rows_per_response = max_rows_per_response
         self.start_date = start_date
         self.end_date = end_date
-        self.fields = fields
+        self.fields = list(set(fields)) if isinstance(fields, list) else [fields]
 
         self._params = {
             "format": "json",
@@ -109,7 +109,6 @@ class QueryAPI:
         self._params["os"] = 0  # reset offset to 0
 
         while True:
-
             # request data
             data = self._request()
 
@@ -139,6 +138,58 @@ class QueryAPI:
         return self.response_data
 
 
+def _append_theme_to_list(
+    proj_id: str, theme_list: list[dict], theme_names: list[str], theme: dict
+) -> None:
+    """Appends a theme to the theme_list.
+
+    Args:
+        proj_id: The project ID.
+        theme_list: The list of theme dictionaries to append to.
+        theme_names): The names of the parent themes.
+        theme: The theme to append.
+    """
+    new_theme = {
+        "project ID": proj_id,
+        **{f"theme{idx + 1}": name for idx, name in enumerate(theme_names)},
+        "percent": clean.clean_number(theme["percent"]),
+    }
+    theme_list.append(new_theme)
+
+
+def _parse_themes(
+    proj_id: str,
+    theme_list: list[dict],
+    theme_names: list[str],
+    theme: dict,
+    theme_level: int,
+) -> None:
+    """Recursive function to handle nested themes.
+
+    Args:
+        proj_id (str): The project ID.
+        theme_list (list[dict]): The list of theme dictionaries to append to.
+        theme_names (list[str]): The names of the parent themes.
+        theme (dict): The current theme.
+        theme_level (int): The current level of theme nesting.
+    """
+    # Append the current theme to the list
+    _append_theme_to_list(
+        proj_id=proj_id, theme_list=theme_list, theme_names=theme_names, theme=theme
+    )
+
+    # Recursively call this function for each nested theme
+    nested_theme_key = f"theme{theme_level + 1}"
+    for nested_theme in theme.get(nested_theme_key, []):
+        _parse_themes(
+            proj_id=proj_id,
+            theme_list=theme_list,
+            theme_names=theme_names + [nested_theme["name"]],
+            theme=nested_theme,
+            theme_level=theme_level + 1,
+        )
+
+
 def clean_theme(data: dict) -> list[dict] | list:
     """Clean theme data from a nested list to a list of dictionaries with theme names and
     percentages.
@@ -152,50 +203,15 @@ def clean_theme(data: dict) -> list[dict] | list:
     """
 
     # if there are no themes, return an empty list
-    if "theme_list" not in data.keys():
+    if "theme_list" not in data:
         # return [{'project ID': proj_id}]
         return []
 
     theme_list = []
     proj_id = data["id"]
     for theme1 in data["theme_list"]:
+        _parse_themes(proj_id, theme_list, [theme1["name"]], theme1, 1)
 
-        # get first theme
-        name = theme1["name"]
-        theme_list.append(
-            {
-                "project ID": proj_id,
-                "theme1": name,
-                "percent": clean.clean_number(theme1["percent"]),
-            }
-        )
-
-        # get 2nd theme
-        if "theme2" in theme1.keys():
-            for theme2 in theme1["theme2"]:
-                name_2 = theme2["name"]
-                theme_list.append(
-                    {
-                        "project ID": proj_id,
-                        "theme1": name,
-                        "theme2": name_2,
-                        "percent": clean.clean_number(theme2["percent"]),
-                    }
-                )
-
-                # get 3rd theme
-                if "theme3" in theme2.keys():
-                    for theme3 in theme2["theme3"]:
-                        name_3 = theme3["name"]
-                        theme_list.append(
-                            {
-                                "project ID": proj_id,
-                                "theme1": name,
-                                "theme2": name_2,
-                                "theme3": name_3,
-                                "percent": clean.clean_number(theme3["percent"]),
-                            }
-                        )
     return theme_list
 
 
@@ -227,11 +243,10 @@ def _get_sector_data(d: dict) -> dict:
 
     # check if there are missing sectors from the dict
     if (len(sectors_dict) == len(sectors) - 1) and (sum(sectors_dict.values()) < 100):
-
         # loop through all the available sectors
         for s in sector_names:
             # if a sectors has not been picked up it must be the missing sector
-            if s not in sectors_dict.keys():
+            if s not in sectors_dict:
                 sectors_dict[s] = 100 - sum(sectors_dict.values())
 
     if sum(sectors_dict.values()) != 100:
@@ -240,7 +255,7 @@ def _get_sector_data(d: dict) -> dict:
     return sectors_dict
 
 
-general_fields = {  # general info
+GENERAL_FIELDS = {  # general info
     "id": "project ID",
     "project_name": "project name",
     "countryshortname": "country",
@@ -253,6 +268,9 @@ general_fields = {  # general info
     "cons_serv_reqd_ind": "consulting services required",
     "envassesmentcategorycode": "environmental assesment category",
     "esrc_ovrl_risk_rate": "environmental and social risk",
+    "transactiontype:": "transaction type",
+    "financier_loan": "financier loan",
+    "interestandcharges": "interest and charges",
     # dates
     "approvalfy": "fiscal year",
     "boardapprovaldate": "board approval date",
@@ -261,6 +279,8 @@ general_fields = {  # general info
     # lending
     "lendinginstr": "lending instrument",
     "projectfinancialtype": "financing type",
+    "loantype": "loan type",
+    "loantypedesc": "loan type description",
     "borrower": "borrower",
     "impagency": "implementing agency",
     "lendprojectcost": "project cost",
@@ -272,6 +292,31 @@ general_fields = {  # general info
     "curr_total_commitment": "current total IBRD and IDA commitment",
     "curr_ibrd_commitment": "current IBRD commitment",
     "curr_ida_commitment": "current IDA commitment",
+    "reapayment": "repayment",
+}
+
+OTHER_FIELDS = {
+    "projectstatusdisplay": "project status display",
+    "sector1": "sector1",
+    "sector2": "sector2",
+    "sector3": "sector3",
+    "sector4": "sector4",
+    "sector5": "sector5",
+    "sector6": "sector6",
+    "sector7": "sector7",
+    "sector8": "sector8",
+    "sector": "sector",
+    "theme1": "theme1",
+    "theme2": "theme2",
+    "theme3": "theme3",
+    "theme4": "theme4",
+    "theme5": "theme5",
+    "fiscal_year": "fiscal year",
+    "fiscalyear": "fiscal year",
+    "fiscalyear_budget": "fiscal year budget",
+    "project_abstract": "project abstract",
+    "sectorlist": "sectorlist",
+    "theme_list": "theme_list",
 }
 
 
@@ -324,7 +369,7 @@ class WorldBankProjects(ImportData):
         self._data["general_data"] = (
             pd.DataFrame.from_dict(self._raw_data, orient="index")
             .reset_index(drop=True)
-            .loc[:, general_fields.keys()]
+            .filter(list(GENERAL_FIELDS), axis=1)
             # change the fiscal year to int
             .assign(
                 approvalfy=lambda d: clean.clean_numeric_series(d["approvalfy"], to=int)
@@ -339,7 +384,7 @@ class WorldBankProjects(ImportData):
                 p2a_updated_date=lambda d: clean.to_date_column(d["p2a_updated_date"]),
             )
             # rename columns
-            .rename(columns=general_fields)
+            .rename(columns=GENERAL_FIELDS)
         )
 
     def _format_theme_data(self) -> None:
@@ -357,7 +402,7 @@ class WorldBankProjects(ImportData):
 
         sector_data = []
         for _, proj_data in self._raw_data.items():
-            if "sector" in proj_data.keys():
+            if "sector" in proj_data:
                 proj_id = proj_data["id"]
 
                 sectors = _get_sector_data(proj_data)
@@ -377,7 +422,11 @@ class WorldBankProjects(ImportData):
 
         with open(self._path, "w") as file:
             data = (
-                QueryAPI(start_date=self.start_date, end_date=self.end_date)
+                QueryAPI(
+                    start_date=self.start_date,
+                    end_date=self.end_date,
+                    fields=list(GENERAL_FIELDS) + list(OTHER_FIELDS),
+                )
                 .request_data()
                 .get_data()
             )
