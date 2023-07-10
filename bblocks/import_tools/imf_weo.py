@@ -380,22 +380,16 @@ class WEO(ImportData):
         logger.info("Data updated successfully")
         return self
 
-    def available_indicators(self) -> pd.DataFrame:
+    def available_indicators(self) -> dict[str, str]:
         """Returns a DataFrame of available indicators to load to the object"""
 
-        if self._raw_data is not None:
-            return (
-                self._raw_data.loc[:, ["concept_code", "concept"]]
-                .drop_duplicates()
-                .reset_index(drop=True)
-            )
-
-        else:
+        if self._raw_data is None:
             self._download_data()
             self._raw_data = pd.read_feather(self._path)
 
-            return (
-                self._raw_data.loc[:, ["concept_code", "concept"]]
-                .drop_duplicates()
-                .reset_index(drop=True)
-            )
+        return (
+            self._raw_data.loc[:, ["concept_code", "concept"]]
+            .drop_duplicates()
+            .set_index("concept_code")["concept"]
+            .to_dict()
+        )
