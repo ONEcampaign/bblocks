@@ -117,7 +117,7 @@ dictionary will have the following structure:
 debt.debt_stocks_indicators(detailed_category=True)
 ```
 
-![img.png](.img/stocks detailed.png)
+![img.png](.img/stocks_detailed.png)
 
 Otherwise, the dictionary will just specify whether the indicator is
 "bilateral", "multilateral" or "private" (all three PPG debt).
