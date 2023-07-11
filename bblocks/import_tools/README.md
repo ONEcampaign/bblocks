@@ -240,4 +240,9 @@ data = debt.get_data(indicators='all')
 ```
 
 Running the above code will return a DataFrame with the following structure:
+
+```python
+data.sample(8)
+```
+
 ![img.png](.img/debt_data.png)
