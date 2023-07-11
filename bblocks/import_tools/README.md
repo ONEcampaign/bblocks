@@ -80,7 +80,7 @@ debt.get_available_indicators()
 
 ![img.png](.img/debt_data_dict.png)
 
-##### DebtIDS().debt_service_indicators(detailed_category: bool = True)
+#### DebtIDS().debt_service_indicators(detailed_category: bool = True)
 
 The DebtIDS importer also has a couple of methods to get the indicator codes
 for **debt service** and debt stocks.
@@ -104,7 +104,7 @@ debt.debt_service_indicators(detailed_category=False)
 
 ![img_2.png](.img/service_dict_summary.png)
 
-##### DebtIDS().debt_stocks_indicators(detailed_category: bool = True)
+#### DebtIDS().debt_stocks_indicators(detailed_category: bool = True)
 
 The DebtIDS importer also has a couple of methods to get the indicator codes
 for **debt stocks** and debt service.
