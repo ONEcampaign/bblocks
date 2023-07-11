@@ -27,6 +27,10 @@ data = world_bank.get_data()
 
 The DataFrame will have this structure:
 
+```python
+data.sample(8)
+```
+
 ![img.png](.img/get_data_wb_example.png)
 
 Bblocks currently supports the following importers:
