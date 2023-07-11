@@ -76,6 +76,49 @@ debt.get_available_indicators()
 ```
 ![img.png](.img/debt_data_dict.png)
 
+##### DebtIDS().debt_service_indicators(detailed_category: bool = True)
+The DebtIDS importer also has a couple of methods to get the indicator codes
+for **debt service** and debt stocks.
+
+The `debt_service_indicators` method returns a dictionary of all available
+debt service indicators. If `detailed_category` is set to `True`, the
+dictionary will have the following structure:
+
+```python
+debt.debt_service_indicators(detailed_category=True)
+```
+![img.png](.img/service_dict.png)
+
+Otherwise, the dictionary will just specify whether the indicator is
+"bilateral", "multilateral" or "private" (all three PPG debt).
+    
+```python
+debt.debt_service_indicators(detailed_category=False)
+```
+![img_2.png](.img/service_dict_summary.png)
+
+##### DebtIDS().debt_stocks_indicators(detailed_category: bool = True)
+The DebtIDS importer also has a couple of methods to get the indicator codes
+for **debt stocks** and debt service.
+
+The `debt_stocks_indicators` method returns a dictionary of all available
+debt stocks indicators. If `detailed_category` is set to `True`, the
+dictionary will have the following structure:
+
+```python
+debt.debt_stocks_indicators(detailed_category=True)
+```
+![img.png](.img/stocks detailed.png)
+
+Otherwise, the dictionary will just specify whether the indicator is
+"bilateral", "multilateral" or "private" (all three PPG debt).
+
+```python
+debt.debt_stocks_indicators(detailed_category=False)
+```
+![img_1.png](.img/stocks_summary.png)
+
+#### DebtIDS().load_data()
 
 
 
