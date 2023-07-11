@@ -30,7 +30,7 @@ The DataFrame will have this structure:
 ![img.png](.img/get_data_wb_example.png)
 
 Bblocks currently supports the following importers:
-- **DebtIDS**: An importer to get data from the World Bank International Debt Statistics database.
+- **[DebtIDS](#debtids)**: An importer to get data from the World Bank International Debt Statistics database.
 - **get_fao_index**: A function to import the FAO Food Price Index.
 - **HDR**: An importer to get the _UNDP Human Development Report_ data.
 - **ILO**: An importer to get data from the International Labour Organization.
@@ -75,5 +75,8 @@ This method will return a dictionary of all available indicators.
 debt.get_available_indicators()
 ```
 ![img.png](.img/debt_data_dict.png)
+
+
+
 
 
