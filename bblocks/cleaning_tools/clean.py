@@ -7,7 +7,7 @@ import pandas as pd
 from numpy import nan
 
 
-def clean_number(number: str, to: Type = float) -> float | int:
+def clean_number(number: str | pd.Series, to: Type = float) -> float | int:
     """Clean a string and return as float or integer.
     When selecting to=int, the default python round behaviour is used.
 
@@ -17,9 +17,21 @@ def clean_number(number: str, to: Type = float) -> float | int:
 
     """
 
-    if not isinstance(number, str):
+    # If series, vectorize for speed
+    if pd.api.types.is_number(number):
         number = str(number)
 
+    if isinstance(number, pd.Series):
+        number = number.str.replace(r"[^\d.]", "", regex=True)
+        number = pd.to_numeric(number, errors="coerce")
+
+        if to == float:
+            return number.astype(float)
+
+        if to == int:
+            return number.round().astype("Int64")
+
+    # If string, clean
     number = re.sub(r"[^\d.]", "", number)
 
     if number == "":
@@ -50,6 +62,8 @@ def clean_numeric_series(
 
     """
 
+    data = data.copy(deep=True)
+
     if isinstance(data, pd.DataFrame) and (series_columns is None):
         raise ValueError("series_column must be specified when _data is a DataFrame")
 
@@ -57,13 +71,13 @@ def clean_numeric_series(
         if isinstance(series_columns, str):
             series_columns = [series_columns]
 
-        data[series_columns] = data[series_columns].apply(
-            lambda s: s.apply(clean_number, to=to), axis=1
-        )
+        for col in series_columns:
+            data[col] = clean_number(data[col], to=to)
+
         return data
 
     if isinstance(data, pd.Series):
-        return data.apply(clean_number, to=to)
+        return clean_number(data, to=to)
 
 
 def to_date_column(series: pd.Series, date_format: str | None = None) -> pd.Series:
