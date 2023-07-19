@@ -292,7 +292,7 @@ GENERAL_FIELDS = {  # general info
     "curr_total_commitment": "current total IBRD and IDA commitment",
     "curr_ibrd_commitment": "current IBRD commitment",
     "curr_ida_commitment": "current IDA commitment",
-    "reapayment": "repayment",
+    "repayment": "repayment",
 }
 
 OTHER_FIELDS = {
@@ -351,7 +351,7 @@ class WorldBankProjects(ImportData):
 
         return BBPaths.raw_data / f"world_bank_projects{start_date}{end_date}.json"
 
-    def _format_general_data(self) -> None:
+    def _format_general_data(self, additional_fields: list = None) -> None:
         """Clean and format general data and store it in _data attribute with key 'general_data'"""
 
         numeric_cols = [
@@ -369,7 +369,7 @@ class WorldBankProjects(ImportData):
         self._data["general_data"] = (
             pd.DataFrame.from_dict(self._raw_data, orient="index")
             .reset_index(drop=True)
-            .filter(list(GENERAL_FIELDS), axis=1)
+            .filter(list(GENERAL_FIELDS) + additional_fields, axis=1)
             # change the fiscal year to int
             .assign(
                 approvalfy=lambda d: clean.clean_numeric_series(d["approvalfy"], to=int)
@@ -415,17 +415,24 @@ class WorldBankProjects(ImportData):
 
         self._data["sector_data"] = pd.DataFrame(sector_data)
 
-    def _download(self) -> None:
+    def _download(self, additional_fields: list | None = None) -> None:
         """Download data from World Bank Projects API and save it as a json file."""
 
         logger.info(f"Starting download of World Bank Projects")
+
+        if additional_fields is None:
+            additional_fields = []
+        if isinstance(additional_fields, str):
+            additional_fields = [additional_fields]
 
         with open(self._path, "w") as file:
             data = (
                 QueryAPI(
                     start_date=self.start_date,
                     end_date=self.end_date,
-                    fields=list(GENERAL_FIELDS) + list(OTHER_FIELDS),
+                    fields=list(GENERAL_FIELDS)
+                    + list(OTHER_FIELDS)
+                    + additional_fields,
                 )
                 .request_data()
                 .get_data()
@@ -434,7 +441,7 @@ class WorldBankProjects(ImportData):
 
         logger.info(f"Successfully downloaded World Bank Projects")
 
-    def load_data(self) -> ImportData:
+    def load_data(self, *, additional_fields: str | list = None) -> ImportData:
         """Load data to the object
 
         This method will load the World Bank Project data to the object.
@@ -442,13 +449,34 @@ class WorldBankProjects(ImportData):
         otherwise it will be downloaded from the API and saved as a json file and  loaded
         to the object.
 
+        Args:
+            additional_fields: additional fields to download from the API. If the data has
+                already been downloaded, the additional fields may not be loaded if they do not
+                exist in the downloaded file. To force download of data with additional fields,
+                use the update_data method passing the additional fields as argument
+
         Returns:
             object with loaded data
         """
 
+        # check if additional fields is a string or None and convert to list
+        if additional_fields is None:
+            additional_fields = []
+        if isinstance(additional_fields, str):
+            additional_fields = [additional_fields]
+
         # if file does not exist, download it and save it as a json file
         if not self._path.exists():
-            self._download()
+            self._download(additional_fields=additional_fields)
+
+        # if file exists and additional fields are passed, log warning
+        else:
+            if not additional_fields:
+                logger.warning(
+                    "Data already exists in disk. The additional fields may not be "
+                    "loaded. To force download of data with additional fields, use the"
+                    " update_data method passing the additional fields as argument"
+                )
 
         # load data from json file
         with open(self._path, "r") as file:
@@ -458,14 +486,16 @@ class WorldBankProjects(ImportData):
             raise EmptyDataException("No data was retrieved")
 
         # set data
-        self._format_general_data()
+        self._format_general_data(additional_fields=additional_fields)
         self._format_theme_data()
         self._format_sector_data()
 
         logger.info(f"Successfully loaded World Bank Projects")
         return self
 
-    def update_data(self, reload: bool = True) -> ImportData:
+    def update_data(
+        self, reload: bool = True, *, additional_fields: str | list = None
+    ) -> ImportData:
         """Force update of data
 
         This method will download the data from the API.
@@ -473,14 +503,15 @@ class WorldBankProjects(ImportData):
 
         Args:
             reload: if True, reload data to object after downloading it.
+            additional_fields: additional fields to download
 
         Returns:
             object with updated data
         """
 
-        self._download()
+        self._download(additional_fields=additional_fields)
         if reload:
-            self.load_data()
+            self.load_data(additional_fields=additional_fields)
 
         return self
 
