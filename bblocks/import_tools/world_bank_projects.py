@@ -394,7 +394,10 @@ class WorldBankProjects(ImportData):
         for _, proj_data in self._raw_data.items():
             theme_data.extend(clean_theme(proj_data))
 
-        self._data["theme_data"] = pd.DataFrame(theme_data)
+        self._data["theme_data"] = pd.DataFrame(theme_data).filter(
+            ["project ID", "theme1", "theme2", "theme3", "theme4", "theme5", "percent"],
+            axis=1,
+        )
 
     def _format_sector_data(self) -> None:
         """Format sector data and store it as a dataframe in _data attribute
@@ -459,6 +462,15 @@ class WorldBankProjects(ImportData):
             object with loaded data
         """
 
+        # if additional fields are set but the data is read from disk, log a warning
+        if self._path.exists() and additional_fields is not None:
+            logger.warning(
+                "Data already exists in disk. The additional fields might not be "
+                "loaded if they do not exist in the downloaded data. To force download "
+                "of data with additional fields, use the update_data method passing the "
+                "additional fields as argument"
+            )
+
         # check if additional fields is a string or None and convert to list
         if additional_fields is None:
             additional_fields = []
@@ -468,15 +480,6 @@ class WorldBankProjects(ImportData):
         # if file does not exist, download it and save it as a json file
         if not self._path.exists():
             self._download(additional_fields=additional_fields)
-
-        # if file exists and additional fields are passed, log warning
-        else:
-            if not additional_fields:
-                logger.warning(
-                    "Data already exists in disk. The additional fields may not be "
-                    "loaded. To force download of data with additional fields, use the"
-                    " update_data method passing the additional fields as argument"
-                )
 
         # load data from json file
         with open(self._path, "r") as file:
