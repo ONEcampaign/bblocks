@@ -14,6 +14,7 @@ from bblocks.config import BBPaths
 from bblocks.logger import logger
 from bblocks.cleaning_tools import clean
 
+
 BASE_URL = "https://www.imf.org/"
 
 COLUMN_MAPPER = {
@@ -104,17 +105,6 @@ class Parser:
                 rows.append({**series.attrib, **obs.attrib})
 
         self.data = pd.DataFrame(rows)
-
-    # def _convert_series_codes(self, series: pd.Series, lookup_value: str) -> pd.Series:
-    #     """Converts a series of codes to the corresponding values in the schema file"""
-    #
-    #     query = self.schema_file.findall(
-    #         "./{http://www.w3.org/2001/XMLSchema}simpleType[@name="
-    #         + f'"{lookup_value}"'
-    #         + "]/"
-    #     )[0].findall("./")
-    #
-    #     return series.map({elem.attrib["value"]: elem[0][0].text for elem in query})
 
     def _convert_series_codes(self, series: pd.Series, lookup_value: str) -> pd.Series:
         """Converts a series of codes to the corresponding values in the schema file"""
