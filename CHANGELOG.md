@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.2.0] - 2023-07-20
+--------------------
+- Added new feature: `world_bank_projects` module in `import_tools` with an object 
+  to extract data from the World Bank Projects database.
+
 [1.1.1] - 2023-07-06
 --------------------
 - Updated requirements

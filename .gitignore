@@ -107,6 +107,7 @@ ENV/
 # downloaded files
 /bblocks/.raw_data/*.csv
 /bblocks/.raw_data/*.feather
+/bblocks/.raw_data/*.json
 
 # Sphinx documentation
 docs/_build/
