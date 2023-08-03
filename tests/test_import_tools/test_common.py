@@ -2,7 +2,11 @@
 
 import pytest
 import requests
-from unittest.mock import Mock, patch
+from unittest.mock import patch
+from zipfile import ZipFile
+import tempfile
+import os
+import io
 
 from bblocks.import_tools import common
 
@@ -48,3 +52,41 @@ def test_get_response_connection_error():
             common.get_response(url)
 
         mock_get.assert_called_once_with(url)
+
+
+def test_unzip():
+    """Test unzip with a valid file-like object"""
+
+    # create a mock file-like object
+    mock_zip = io.BytesIO()
+    with ZipFile(mock_zip, "w") as zf:
+        zf.writestr("test.txt", "This is a test file")
+
+    assert isinstance(common.unzip(mock_zip), ZipFile)
+
+
+def test_unzip_exceptions():
+    """Test unzip exceptions"""
+
+    # test file not found
+    with pytest.raises(FileNotFoundError, match="Could not find file"):
+        common.unzip("non_existent_file.zip")
+
+    # test bad zip file
+    mock_zip = io.BytesIO(b"invalid zip data")
+    with pytest.raises(ValueError, match="The file could not be unzipped"):
+        common.unzip(mock_zip)
+
+
+def test_unzip_valid_path():
+    """Test unzip when the path is valid"""
+
+    # create a temporary zipfile
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp:
+        with ZipFile(temp.name, "w") as zf:
+            zf.writestr("test.txt", "This is a test file")
+        temp.close()
+        # pass the path of the zipfile to the unzip function
+        assert isinstance(common.unzip(temp.name), ZipFile)
+    # remove the tempfile after the test
+    os.remove(temp.name)
