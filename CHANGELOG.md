@@ -1,7 +1,7 @@
 Changelog
 =========
 
-[1.2.1] - 2023-12-11
+[1.2.0] - 2023-12-11
 ---------------------
 ### Added
 - A custom function 'convert_to_datetime' that replaces the usage of native `pd.to_datetime`. This function handles various date formats, especially when the date presents only a year. This is to handle pandas >2.0 which deprecated `infer_datetime_format`.
@@ -11,7 +11,7 @@ Changelog
 - Minor code changes to improve structure and readability. This includes reducing explicit regex flag usage in `str.replace` and reordering some assignments.
 
 
-[1.2.0] - 2023-06-27
+[1.1.1] - 2023-06-27
 --------------------
 
 - Added a new feature: `imf_weo` module in `import_tools` with an object
