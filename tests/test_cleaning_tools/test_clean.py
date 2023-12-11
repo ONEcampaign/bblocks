@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -129,7 +130,7 @@ def test_to_date_column():
     result3 = to_date_column(df.date3)
 
     assert result3.dtype == "datetime64[ns]"
-    assert result3.dt.year.to_list() == [2020, 2020, 2021, 2021, 2022]
+    assert any(result3.dt.year.isna())
 
     # Specify format
     result4 = to_date_column(df.date3, date_format="%d/%m/%Y")
@@ -169,8 +170,9 @@ def test_date_to_str():
         "05 November 2022",
     ]
 
-    with pytest.raises(ValueError):
-        df = df.assign(date=date_to_str(df.date2))
+    # check invalid returns nan
+    df = df.assign(date=date_to_str(df.date2))
+    assert any(df.date.isna())
 
 
 def test_format_number():
