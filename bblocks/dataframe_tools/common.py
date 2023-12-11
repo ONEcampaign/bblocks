@@ -2,6 +2,7 @@ from functools import partial
 
 import pandas as pd
 
+from bblocks.cleaning_tools.clean import convert_to_datetime
 from bblocks.cleaning_tools.filter import filter_latest_by
 from bblocks.import_tools.imf import WorldEconomicOutlook
 from bblocks.import_tools.world_bank import WorldBankData
@@ -47,7 +48,6 @@ def _get_weo_indicator(
     update: bool,
     include_estimates: bool = True,
 ) -> pd.DataFrame:
-
     # Create a World Economic Outlook object
     weo = WorldEconomicOutlook().load_data(indicator=indicator)
 
@@ -57,7 +57,7 @@ def _get_weo_indicator(
 
     # Get the _data
     data = weo.get_data(keep_metadata=True).assign(
-        year=lambda d: pd.to_datetime(d.year, format="%Y")
+        year=lambda d: convert_to_datetime(d.year)
     )
 
     # Filter the _data to keep only non-estimates if needed

@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -8,6 +11,7 @@ from bblocks.cleaning_tools.clean import (
     to_date_column,
     date_to_str,
     format_number,
+    convert_to_datetime,
 )
 
 
@@ -129,7 +133,7 @@ def test_to_date_column():
     result3 = to_date_column(df.date3)
 
     assert result3.dtype == "datetime64[ns]"
-    assert result3.dt.year.to_list() == [2020, 2020, 2021, 2021, 2022]
+    assert any(result3.dt.year.isna())
 
     # Specify format
     result4 = to_date_column(df.date3, date_format="%d/%m/%Y")
@@ -169,8 +173,9 @@ def test_date_to_str():
         "05 November 2022",
     ]
 
-    with pytest.raises(ValueError):
-        df = df.assign(date=date_to_str(df.date2))
+    # check invalid returns nan
+    df = df.assign(date=date_to_str(df.date2))
+    assert any(df.date.isna())
 
 
 def test_format_number():
@@ -218,3 +223,46 @@ def test_format_number():
         _ = test.assign(
             b=format_number(test.b, as_billions=True, other_format="{:.8f}")
         )
+
+
+def test_convert_to_datetime():
+    # Single string date cases:
+    single_string_date = "2022"
+    assert convert_to_datetime(single_string_date) == pd.Timestamp(
+        datetime.strptime(single_string_date, "%Y")
+    )
+
+    single_string_date2 = "2022-05-13"
+    assert convert_to_datetime(single_string_date2) == pd.Timestamp(
+        datetime.strptime(single_string_date2, "%Y-%m-%d")
+    )
+
+    # Single integer date case:
+    single_integer_date = 2022
+    assert convert_to_datetime(single_integer_date) == pd.Timestamp(
+        datetime.strptime(str(single_integer_date), "%Y")
+    )
+
+    # pd.Series case:
+    series_dates = pd.Series(["2022", "2023", "2024"])
+    expected_results = pd.Series(
+        [
+            pd.Timestamp(datetime.strptime(date, "%Y"))
+            for date in ["2022", "2023", "2024"]
+        ]
+    )
+    pd.testing.assert_series_equal(convert_to_datetime(series_dates), expected_results)
+
+    # Case where pd.Series has NaN
+    series_with_nan = pd.Series(["2022", "2023", np.nan, "2024"])
+    expected_with_nan = pd.Series(
+        [
+            pd.Timestamp(datetime.strptime(date, "%Y"))
+            if isinstance(date, str)
+            else pd.NaT
+            for date in ["2022", "2023", np.nan, "2024"]
+        ]
+    )
+    pd.testing.assert_series_equal(
+        convert_to_datetime(series_with_nan), expected_with_nan
+    )

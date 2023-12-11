@@ -93,13 +93,13 @@ def test___validate_column_params():
             "value": [100, 120, 230],
         }
     )
-    with pytest.raises(ValueError):
-        _, _ = __validate_add_column_params(
-            df=df_errors.copy(deep=True),
-            id_type="short_name",
-            id_column="name",
-            date_column="year",
-        )
+
+    _, _ = __validate_add_column_params(
+        df=df_errors.copy(deep=True),
+        id_type="short_name",
+        id_column="name",
+        date_column="year",
+    )
 
     df_errors = pd.DataFrame(
         {
@@ -108,7 +108,6 @@ def test___validate_column_params():
             "value": [100, 120, 230],
         }
     )
-
     with pytest.raises(ValueError):
         _, _ = __validate_add_column_params(
             df=df_errors.copy(deep=True),

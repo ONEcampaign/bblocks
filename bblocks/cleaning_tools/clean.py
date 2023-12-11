@@ -3,6 +3,7 @@ import warnings
 from typing import Type
 
 import country_converter as coco
+import numpy as np
 import pandas as pd
 from numpy import nan
 
@@ -90,7 +91,7 @@ def to_date_column(series: pd.Series, date_format: str | None = None) -> pd.Seri
 
     if pd.api.types.is_numeric_dtype(series):
         try:
-            return pd.to_datetime(series, format="%Y")
+            return convert_to_datetime(series)
 
         except ValueError:
             raise ValueError(
@@ -98,7 +99,7 @@ def to_date_column(series: pd.Series, date_format: str | None = None) -> pd.Seri
                 f"To fix, convert column to datetime"
             )
     if date_format is None:
-        return pd.to_datetime(series, infer_datetime_format=True)
+        return convert_to_datetime(series)
     else:
         return pd.to_datetime(series, format=date_format)
 
@@ -162,7 +163,7 @@ def date_to_str(series: pd.Series, date_format: str = "%d %B %Y") -> pd.Series:
 
     if not pd.api.types.is_datetime64_any_dtype(series):
         try:
-            series = pd.to_datetime(series, infer_datetime_format=True)
+            series = convert_to_datetime(series)
         except ValueError:
             raise ValueError(
                 f"could not parse date format in. "
@@ -240,3 +241,33 @@ def format_number(
         return series.map(formats["as_billions"].format)
 
     return series.map(f"{other_format}".format)
+
+
+def convert_to_datetime(date: str | int | pd.Series) -> pd.Series | pd.Timestamp:
+    """
+    Custom function to convert values to datetime.
+    It handles integers or strings that represent only a year.
+    """
+
+    if isinstance(date, pd.Series):
+        # Find the first non-null element in the series to determine format
+        first_valid_index = date.first_valid_index()
+        if first_valid_index is None:
+            return date.apply(lambda x: pd.NaT)
+
+        # Get the first valid value
+        format_value = date[first_valid_index]
+    else:
+        format_value = date
+
+    # Determine if the value is a year (integer or 4-digit string)
+    if isinstance(format_value, (np.integer, int)) or (
+        isinstance(format_value, str)
+        and len(format_value) == 4
+        and format_value.isdigit()
+    ):
+        format_str = "%Y"
+    else:
+        format_str = None  # Let pd.to_datetime infer the format
+
+    return pd.to_datetime(date, errors="coerce", format=format_str)

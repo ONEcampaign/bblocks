@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bblocks"
-version = "1.1.1"
+version = "1.2.0"
 description = "A package with tools to download and analyse international development data. These tools are meant to be the building blocks of further analysis."
 authors = ["The ONE Campaign <data@one.org>"]
 readme = "README.md"
@@ -19,8 +19,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pandas = "^1.5.3"
-numpy = "^1.24.1"
+pandas = "^2.1"
+numpy = "^1"
 country-converter = "^1.0"
 openpyxl = "^3.0.10"
 requests = "^2.28.2"
@@ -28,18 +28,18 @@ opencv-python = "^4.7.0"
 weo = "^0.7.4"
 beautifulsoup4 = "^4.12"
 pyjstat = "^2.3.0"
-pyarrow = "^12.0"
+pyarrow = "^14"
 wbgapi = "<1.1"
-PyPDF2 = "^2"
-camelot-py = "^0.10.1"
+PyPDF2 = "^3.0"
+camelot-py = "^0.11"
 
 [tool.poetry.dev-dependencies]
 bump2version = "^1.0.1"
-black = "^22.12.0"
+black = "^23"
 pytest = "^7.2.1"
 pytest-cov = "^4.0.0"
-myst-nb = {version = "^0.17.1", python = "^3.9"}
-sphinx-autoapi = "^2.0.1"
+myst-nb = {version = "^1", python = "^3.1"}
+sphinx-autoapi = "^3.0"
 #sphinx-rtd-theme = "^1"
 
 [build-system]
