@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 import calendar
 
-from bblocks.cleaning_tools.clean import clean_numeric_series
+from bblocks.cleaning_tools.clean import clean_numeric_series, convert_to_datetime
 from bblocks.import_tools.common import ImportData
 from bblocks.config import BBPaths
 from bblocks.logger import logger
@@ -74,7 +74,7 @@ def clean_df(df: pd.DataFrame, date: str) -> pd.DataFrame:
         .rename(columns={"variable": "indicator"})
         .reset_index(drop=True)
         .assign(date=date)
-        .assign(date=lambda d: pd.to_datetime(d.date))
+        .assign(date=lambda d: convert_to_datetime(d.date))
     )
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import wbgapi as wb
 
+from bblocks.cleaning_tools.clean import convert_to_datetime
 from bblocks.config import BBPaths
 from bblocks.import_tools.common import ImportData
 
@@ -55,9 +56,7 @@ def _get_wb_data(
                 f"{indicator}:T": "date",
             }
         )
-        .assign(
-            indicator_code=indicator, date=lambda d: pd.to_datetime(d.date, format="%Y")
-        )
+        .assign(indicator_code=indicator, date=lambda d: convert_to_datetime(d.date))
         .sort_values(by=["iso_code", "date"])
         .reset_index(drop=True)
         .filter(["date", "iso_code", "indicator", "indicator_code", "value"], axis=1)
@@ -173,8 +172,8 @@ def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = df.iloc[3]
     unit_dict = (
         df.iloc[4]
-        .str.replace("(", "", regex=True)
-        .str.replace(")", "", regex=True)
+        .str.replace("(", "", regex=False)
+        .str.replace(")", "", regex=False)
         .dropna()
         .to_dict()
     )
@@ -185,14 +184,16 @@ def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
         .replace("..", np.nan)
         .reset_index(drop=True)
         .melt(id_vars="period", var_name="indicator", value_name="value")
-        .assign(
-            units=lambda d: d.indicator.map(unit_dict),
-            period=lambda d: pd.to_datetime(d.period, format="%YM%m"),
-            indicator=lambda d: d.indicator.str.replace(
-                "*", "", regex=True
-            ).str.strip(),
-            value=lambda d: pd.to_numeric(d.value, errors="coerce"),
-        )
+    )
+
+    df = df.assign(
+        units=lambda d: d.indicator.map(unit_dict),
+        period=lambda d: pd.to_datetime(d.period, format="%YM%m"),
+    )
+
+    df = df.assign(
+        indicator=lambda d: d.indicator.str.replace("*", "", regex=False).str.strip(),
+        value=lambda d: pd.to_numeric(d.value, errors="coerce"),
     )
 
     return df

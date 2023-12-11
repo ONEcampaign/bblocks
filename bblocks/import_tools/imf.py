@@ -9,7 +9,7 @@ import weo.dates
 from weo import all_releases, download, WEO
 
 from bblocks import config
-from bblocks.cleaning_tools.clean import clean_numeric_series
+from bblocks.cleaning_tools.clean import clean_numeric_series, convert_to_datetime
 from bblocks.import_tools.common import ImportData
 from bblocks.logger import logger
 
@@ -127,7 +127,7 @@ class WorldEconomicOutlook(ImportData):
             .rename(columns=names)
             .melt(id_vars=names.values(), var_name="year", value_name="value")
             .assign(
-                year=lambda d: pd.to_datetime(d.year, format="%Y"),
+                year=lambda d: convert_to_datetime(d.year),
                 value=lambda d: clean_numeric_series(d.value),
             )
             .dropna(subset=["value"])
@@ -135,7 +135,6 @@ class WorldEconomicOutlook(ImportData):
         )
 
     def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
-
         if self._raw_data is None:
             self.__load_data()
 
@@ -221,7 +220,6 @@ class WorldEconomicOutlook(ImportData):
     def get_data(
         self, indicators: str | list = "all", keep_metadata: bool = False
     ) -> pd.DataFrame:
-
         df = super().get_data(indicators=indicators)
 
         if not keep_metadata:

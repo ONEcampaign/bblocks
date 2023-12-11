@@ -1,7 +1,9 @@
+import datetime
 from operator import xor
 
 import pandas as pd
 
+from bblocks.cleaning_tools.clean import convert_to_datetime
 from bblocks.logger import logger
 
 
@@ -43,11 +45,11 @@ def __validate_cols(
         if col not in d.columns:
             raise ValueError(f"{col} not found in _data")
 
-    if not pd.api.types.is_datetime64_any_dtype(sdate):
-        sdate = pd.to_datetime(sdate, infer_datetime_format=True)
+    if not isinstance(sdate, datetime.datetime):
+        sdate = convert_to_datetime(sdate)
 
-    if not pd.api.types.is_datetime64_any_dtype(edate):
-        edate = pd.to_datetime(edate, infer_datetime_format=True)
+    if not isinstance(edate, datetime.datetime):
+        edate = convert_to_datetime(edate)
 
     return sdate, edate, date_col, value_col, grouper
 
@@ -81,9 +83,7 @@ def period_avg(
 
     # Check that date column is date and if not convert it
     if not pd.api.types.is_datetime64_any_dtype(data[date_column]):
-        data[date_column] = pd.to_datetime(
-            data[date_column], infer_datetime_format=True
-        )
+        data[date_column] = convert_to_datetime(data[date_column])
         logger.info(f"Converted {date_column} to datetime")
 
     # Validate args

@@ -2,7 +2,7 @@ from typing import Optional
 
 import pandas as pd
 
-from bblocks.cleaning_tools.clean import convert_id
+from bblocks.cleaning_tools.clean import convert_id, convert_to_datetime
 from bblocks.dataframe_tools.common import (
     get_population_df,
     get_poverty_ratio_df,
@@ -37,7 +37,6 @@ def __validate_add_column_params(
     df["id_"] = convert_id(df[id_column], id_type)
 
     if date_column is not None:
-
         if pd.api.types.is_numeric_dtype(df[date_column]):
             try:
                 df["merge_year"] = pd.to_datetime(df[date_column], format="%Y").dt.year
@@ -48,9 +47,7 @@ def __validate_add_column_params(
                 )
         else:
             try:
-                df["merge_year"] = pd.to_datetime(
-                    df[date_column], infer_datetime_format=True
-                ).dt.year
+                df["merge_year"] = convert_to_datetime(df[date_column]).dt.year
 
             except ValueError:
                 raise ValueError(

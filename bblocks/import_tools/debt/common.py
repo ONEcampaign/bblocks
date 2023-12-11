@@ -7,6 +7,7 @@ import pandas as pd
 import requests
 from numpy import nan
 
+from bblocks.cleaning_tools.clean import convert_to_datetime
 from bblocks.config import BBPaths
 
 
@@ -56,7 +57,7 @@ def __clean_dsa(df: pd.DataFrame) -> pd.DataFrame:
         )
         .dropna(subset=["country"])
         .replace({"…": nan, "": nan})
-        .assign(latest_publication=lambda d: pd.to_datetime(d.latest_publication))
+        .assign(latest_publication=lambda d: convert_to_datetime(d.latest_publication))
         .reset_index(drop=True)
     )
 
