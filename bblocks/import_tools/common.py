@@ -42,7 +42,6 @@ class ImportData(ABC):
             indicators_ = self._data.values()
 
         if isinstance(indicators, list):
-
             for _ in indicators:
                 if _ not in self._data:
                     logger.warning(f"{_} not loaded or is an invalid indicator.")

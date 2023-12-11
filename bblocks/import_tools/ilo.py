@@ -195,12 +195,10 @@ class ILO(ImportData):
             indicator = [indicator]
 
         for ind in indicator:  # loop through indicators
-
             path = BBPaths.raw_data / f"{ind}.csv"
 
             # download data if not saved to disk
             if not path.exists():
-
                 # download glossaries if not loaded to object
                 if self._glossaries is None:
                     self._load_glossaries()
@@ -245,7 +243,6 @@ class ILO(ImportData):
             self._load_area_dict()
 
         for ind in self._data:  # loop through loaded indicators
-
             # download data
             download_data(
                 ind, BBPaths.raw_data / f"{ind}.csv", self._glossaries, self._area_dict

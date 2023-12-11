@@ -63,7 +63,6 @@ def update_dictionaries() -> None:
 
 
 def g20_countries() -> dict:
-
     return Dict(
         {
             x: convert(x, src="ISO3", to="name_short", not_found=None)
