@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.2.1] - 2023-12-112
+---------------------
+### Updated
+- Updated pypdf2 dependency to pypdf.
+
 [1.2.0] - 2023-12-11
 ---------------------
 ### Added
