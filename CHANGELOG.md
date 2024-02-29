@@ -1,7 +1,12 @@
 Changelog
 =========
 
-[1.2.1] - 2023-12-112
+[1.2.2] - 2024-02-29
+---------------------
+### Updated
+- Updated dependencies.
+
+[1.2.1] - 2023-12-11
 ---------------------
 ### Updated
 - Updated pypdf2 dependency to pypdf.
