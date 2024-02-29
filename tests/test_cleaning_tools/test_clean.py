@@ -257,9 +257,11 @@ def test_convert_to_datetime():
     series_with_nan = pd.Series(["2022", "2023", np.nan, "2024"])
     expected_with_nan = pd.Series(
         [
-            pd.Timestamp(datetime.strptime(date, "%Y"))
-            if isinstance(date, str)
-            else pd.NaT
+            (
+                pd.Timestamp(datetime.strptime(date, "%Y"))
+                if isinstance(date, str)
+                else pd.NaT
+            )
             for date in ["2022", "2023", np.nan, "2024"]
         ]
     )
