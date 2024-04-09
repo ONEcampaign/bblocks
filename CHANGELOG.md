@@ -1,7 +1,7 @@
 Changelog
 =========
 
-[1.2.3] - 2024-04-9
+[1.3.0] - 2024-04-9
 ---------------------
 ### Updated
 - Fixed a bug with DSA data extraction from the IMF.
