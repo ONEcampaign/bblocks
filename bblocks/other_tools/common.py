@@ -2,7 +2,6 @@ from country_converter import convert
 
 
 class Dict(dict):
-
     """A wrapper that adds functionality to a standard dictionary"""
 
     def __repr__(self):
