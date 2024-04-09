@@ -1,5 +1,6 @@
 """Helper functions to generate the URL and extract the data from the
 IDS database."""
+
 import time
 
 import pandas as pd

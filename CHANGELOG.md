@@ -1,6 +1,12 @@
 Changelog
 =========
 
+[1.3.0] - 2024-04-9
+---------------------
+### Updated
+- Fixed a bug with DSA data extraction from the IMF.
+- Updated dependencies.
+
 [1.2.2] - 2024-02-29
 ---------------------
 ### Updated

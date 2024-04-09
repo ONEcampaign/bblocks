@@ -167,9 +167,9 @@ class WorldEconomicOutlook(ImportData):
                 self._raw_data.query(f"indicator == '{ind_}'")
                 .assign(
                     estimate=lambda d: d.apply(
-                        lambda r: True
-                        if r.year.year >= r.estimates_start_after
-                        else False,
+                        lambda r: (
+                            True if r.year.year >= r.estimates_start_after else False
+                        ),
                         axis=1,
                     ),
                 )
