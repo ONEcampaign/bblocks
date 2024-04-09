@@ -47,7 +47,7 @@ def __clean_dsa(df: pd.DataFrame) -> pd.DataFrame:
         logging.ERROR
     )  # silence country_converter
 
-    columns = {0: "country", 1: "latest_publication", 2: "risk_of_debt_distress"}
+    columns = {1: "country", 2: "latest_publication", 3: "risk_of_debt_distress"}
 
     return (
         df.filter(columns.keys())
