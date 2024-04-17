@@ -393,25 +393,27 @@ class WEO(ImportData):
         this should not cause issues are they are metadata columns not used in analysis.
         """
 
-        logger.warning("This method is a temporary fix used to patch the output format that weo-reader returns. "
-                      "It will be removed in the future.")
+        logger.warning(
+            "This method is a temporary fix used to patch the output format that weo-reader returns. "
+            "It will be removed in the future."
+        )
 
-        col_mapper = {'concept_code': 'WEO Subject Code',
-                      'ref_area_code': 'WEO Country Code',
-                      'lastactualdate': 'Estimates Start After',
-                      'notes': 'Country/Series-specific Notes',
-                      'unit': 'Units',
-                      'concept': 'Subject Descriptor',
-                      'ref_area': 'Country',
-                      'scale': 'Scale'
-                      }
+        col_mapper = {
+            "concept_code": "WEO Subject Code",
+            "ref_area_code": "WEO Country Code",
+            "lastactualdate": "Estimates Start After",
+            "notes": "Country/Series-specific Notes",
+            "unit": "Units",
+            "concept": "Subject Descriptor",
+            "ref_area": "Country",
+            "scale": "Scale",
+        }
 
         return (
-            self._raw_data
-            .rename(columns = col_mapper)
-            .pivot(index=col_mapper.values(), columns='time_period', values='obs_value')
+            self._raw_data.rename(columns=col_mapper)
+            .pivot(index=col_mapper.values(), columns="time_period", values="obs_value")
             .reset_index()
-            .assign(ISO = lambda d: clean.convert_id(d.Country, not_found = np.nan))
-            .dropna(subset = 'ISO')
+            .assign(ISO=lambda d: clean.convert_id(d.Country, not_found=np.nan))
+            .dropna(subset="ISO")
             .reset_index()
         )
