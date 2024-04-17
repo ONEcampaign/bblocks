@@ -410,10 +410,11 @@ class WEO(ImportData):
         }
 
         return (
-            self._raw_data.rename(columns=col_mapper)
+            self.get_data()
+            .rename(columns=col_mapper)
             .pivot(index=col_mapper.values(), columns="time_period", values="obs_value")
             .reset_index()
             .assign(ISO=lambda d: clean.convert_id(d.Country, not_found=np.nan))
             .dropna(subset="ISO")
-            .reset_index()
+            .reset_index(drop=True)
         )
