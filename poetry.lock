@@ -23,28 +23,6 @@ files = [
 ]
 
 [[package]]
-name = "anyio"
-version = "4.3.0"
-description = "High level compatibility layer for multiple asynchronous event loop implementations"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "anyio-4.3.0-py3-none-any.whl", hash = "sha256:048e05d0f6caeed70d731f3db756d35dcc1f35747c8c403364a8332c630441b8"},
-    {file = "anyio-4.3.0.tar.gz", hash = "sha256:f75253795a87df48568485fd18cdd2a3fa5c4f7c5be8e5e36637733fce06fed6"},
-]
-
-[package.dependencies]
-exceptiongroup = {version = ">=1.0.2", markers = "python_version < \"3.11\""}
-idna = ">=2.8"
-sniffio = ">=1.1"
-typing-extensions = {version = ">=4.1", markers = "python_version < \"3.11\""}
-
-[package.extras]
-doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
-test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.17)"]
-trio = ["trio (>=0.23)"]
-
-[[package]]
 name = "appnope"
 version = "0.1.4"
 description = "Disable App Nap on macOS >= 10.9"
@@ -771,61 +749,6 @@ docs = ["Sphinx", "furo"]
 test = ["objgraph", "psutil"]
 
 [[package]]
-name = "h11"
-version = "0.14.0"
-description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "h11-0.14.0-py3-none-any.whl", hash = "sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761"},
-    {file = "h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d"},
-]
-
-[[package]]
-name = "httpcore"
-version = "0.16.3"
-description = "A minimal low-level HTTP client."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "httpcore-0.16.3-py3-none-any.whl", hash = "sha256:da1fb708784a938aa084bde4feb8317056c55037247c787bd7e19eb2c2949dc0"},
-    {file = "httpcore-0.16.3.tar.gz", hash = "sha256:c5d6f04e2fc530f39e0c077e6a30caa53f1451096120f1f38b954afd0b17c0cb"},
-]
-
-[package.dependencies]
-anyio = ">=3.0,<5.0"
-certifi = "*"
-h11 = ">=0.13,<0.15"
-sniffio = "==1.*"
-
-[package.extras]
-http2 = ["h2 (>=3,<5)"]
-socks = ["socksio (==1.*)"]
-
-[[package]]
-name = "httpx"
-version = "0.23.3"
-description = "The next generation HTTP client."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "httpx-0.23.3-py3-none-any.whl", hash = "sha256:a211fcce9b1254ea24f0cd6af9869b3d29aba40154e947d2a07bb499b3e310d6"},
-    {file = "httpx-0.23.3.tar.gz", hash = "sha256:9818458eb565bb54898ccb9b8b251a28785dd4a55afbc23d0eb410754fe7d0f9"},
-]
-
-[package.dependencies]
-certifi = "*"
-httpcore = ">=0.15.0,<0.17.0"
-rfc3986 = {version = ">=1.3,<2", extras = ["idna2008"]}
-sniffio = "*"
-
-[package.extras]
-brotli = ["brotli", "brotlicffi"]
-cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<13)"]
-http2 = ["h2 (>=3,<5)"]
-socks = ["socksio (==1.*)"]
-
-[[package]]
 name = "idna"
 version = "3.7"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -947,17 +870,6 @@ parallel = ["ipyparallel"]
 qtconsole = ["qtconsole"]
 test = ["pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "testpath"]
 test-extra = ["curio", "ipython[test]", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.23)", "pandas", "trio"]
-
-[[package]]
-name = "iso3166"
-version = "2.1.1"
-description = "Self-contained ISO 3166-1 country definitions."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "iso3166-2.1.1-py3-none-any.whl", hash = "sha256:263660b36f8471c42acd1ff673d28a3715edbce7d24b1550d0cf010f6816c47f"},
-    {file = "iso3166-2.1.1.tar.gz", hash = "sha256:fcd551b8dda66b44e9f9e6d6bbbee3a1145a22447c0a556e5d0fb1ad1e491719"},
-]
 
 [[package]]
 name = "jedi"
@@ -2059,23 +1971,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
-name = "rfc3986"
-version = "1.5.0"
-description = "Validating URI References per RFC 3986"
-optional = false
-python-versions = "*"
-files = [
-    {file = "rfc3986-1.5.0-py2.py3-none-any.whl", hash = "sha256:a86d6e1f5b1dc238b218b012df0aa79409667bb209e58da56d0b94704e712a97"},
-    {file = "rfc3986-1.5.0.tar.gz", hash = "sha256:270aaf10d87d0d4e095063c65bf3ddbc6ee3d0b226328ce21e036f946e421835"},
-]
-
-[package.dependencies]
-idna = {version = "*", optional = true, markers = "extra == \"idna2008\""}
-
-[package.extras]
-idna2008 = ["idna"]
-
-[[package]]
 name = "rpds-py"
 version = "0.18.0"
 description = "Python bindings to Rust's persistent data structures (rpds)"
@@ -2192,17 +2087,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
-]
-
-[[package]]
-name = "sniffio"
-version = "1.3.1"
-description = "Sniff out which async library your code is running under"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
-    {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
 ]
 
 [[package]]
@@ -2613,22 +2497,6 @@ files = [
 ]
 
 [[package]]
-name = "weo"
-version = "0.7.4"
-description = "Python client to download IMF World Economic Outlook (WEO) dataset as pandas dataframes."
-optional = false
-python-versions = ">=3.7.13"
-files = [
-    {file = "weo-0.7.4-py3-none-any.whl", hash = "sha256:e6fcf1789e3f14dd9138e661ff1da048297d4dde800394bd767dfcfbb815e1e0"},
-    {file = "weo-0.7.4.tar.gz", hash = "sha256:edc313a7bba0df7116c47b3aefb8552b27e3792605d355c05f1e2c792343a38e"},
-]
-
-[package.dependencies]
-httpx = ">=0.22,<0.24"
-iso3166 = ">=2.0.2,<3.0.0"
-pandas = ">=1.3.5"
-
-[[package]]
 name = "zipp"
 version = "3.18.1"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -2646,4 +2514,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "e60bcd8309a1eed1168892e223c84f2777aef21af992a529bfbc0dc388ab58ad"
+content-hash = "e2944f12d3e49c62db580e9a73e4aa4fc3c0783ffa59800144bd8963c2ec06a1"

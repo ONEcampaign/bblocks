@@ -1,6 +1,12 @@
 Changelog
 =========
 
+[1.3.1] - 2024-04-18
+---------------------
+### Updated
+- Switched the backend of the WorldEconomicOutlook importer to remove the
+weo-reader dependency.
+
 [1.3.0] - 2024-04-9
 ---------------------
 ### Updated
