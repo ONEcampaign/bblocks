@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bblocks"
-version = "1.3.0"
+version = "1.3.1"
 description = "A package with tools to download and analyse international development data. These tools are meant to be the building blocks of further analysis."
 authors = ["The ONE Campaign <data@one.org>"]
 readme = "README.md"
