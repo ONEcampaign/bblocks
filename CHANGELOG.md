@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.3.2] - 2024-05-06
+---------------------
+### Updated
+- Updated pyarrow dependency (more flexible)
+
 [1.3.1] - 2024-04-18
 ---------------------
 ### Updated
