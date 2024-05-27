@@ -252,10 +252,10 @@ class WEO(ImportData):
             "ref_area_code": "WEO Country Code",
             "lastactualdate": "Estimates Start After",
             "notes": "Country/Series-specific Notes",
-            "unit": "Units",
-            "concept": "Subject Descriptor",
-            "ref_area": "Country",
-            "scale": "Scale",
+            "unit_label": "Units",
+            "concept_label": "Subject Descriptor",
+            "ref_area_label": "Country",
+            "scale_label": "Scale",
         }
 
         return (
