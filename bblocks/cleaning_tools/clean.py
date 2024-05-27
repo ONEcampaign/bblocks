@@ -23,6 +23,7 @@ def clean_number(number: str | pd.Series, to: Type = float) -> float | int:
         number = str(number)
 
     if isinstance(number, pd.Series):
+        number = number.astype(str)
         number = number.str.replace(r"[^\d.]", "", regex=True)
         number = pd.to_numeric(number, errors="coerce")
 
