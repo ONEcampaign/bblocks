@@ -31,7 +31,8 @@ pyarrow = ">=14, <17"
 wbgapi = "<1.1"
 camelot-py = "^0.11"
 pypdf = "^3.17"
-imf-reader = { git = "https://github.com/lpicci96/imf-reader.git", rev = "main" }
+imf-reader = "1.0.0b1"
+
 
 [tool.poetry.dev-dependencies]
 bump2version = "^1.0.1"

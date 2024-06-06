@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from imf_reader.weo.extract import fetch_data, gen_latest_version
+from imf_reader.weo import fetch_data
 
 from bblocks.cleaning_tools import clean
 from bblocks.config import BBPaths
@@ -22,33 +22,6 @@ COLUMN_MAPPER = {
 }
 
 
-def roll_back_version(version: tuple[int, int]) -> tuple[int, int]:
-    """Roll back version to the previous version"""
-
-    if version[1] == 2:
-        return version[0], 1
-
-    elif version[1] == 1:
-        return version[0] - 1, 2
-
-    else:
-        raise ValueError(
-            f"Release must be either 1 or 2. Invalid release: {version[1]}"
-        )
-
-
-def extract_data(version) -> pd.DataFrame | None:
-    """Downloads latest data or data for specified version
-
-    Args:
-        version (tuple[int, int]): version to download
-    """
-
-    logger.info(f"Extracting data for version {version}")
-
-    return fetch_data(version=version)
-
-
 @dataclass
 class WEO(ImportData):
     """An object to extract WEO data from the IMF website using SDMX
@@ -63,7 +36,7 @@ class WEO(ImportData):
         version: tuple of (year, release) or "latest". Default is "latest"
     """
 
-    version: str | tuple[int, int] = "latest"
+    version = "latest"
 
     def __post_init__(self):
         """check that version is valid"""
@@ -89,30 +62,16 @@ class WEO(ImportData):
         """
 
         if self.version == "latest":
-            # set version to expected latest version
-            self.version = gen_latest_version()
-            # if the path does not exist yet, try download the data
-            if not self._path.exists():
-                df = extract_data(self.version)
+            self.version = None
 
-                # if data is not None, save to disk
-                if df is not None:
-                    df.to_feather(self._path)
-                    logger.info(f"Data downloaded to disk for version {self.version}")
-                else:
-                    self.version = roll_back_version(self.version)
-                    logger.debug(
-                        f"Data not available for expected version. "
-                        f"Rolling back version to {self.version}"
-                    )
+        # if the path does not exist yet, try download the data
 
-        if not self._path.exists():
-            df = extract_data(self.version)
-            if df is not None:
-                df.to_feather(self._path)
-                logger.info(f"Data downloaded to disk for version {self.version}")
-            else:
-                raise ValueError(f"No data found for version {self.version}")
+        df = fetch_data(self.version)
+
+        # if data is not None, save to disk
+        if df is not None:
+            df.to_feather(self._path)
+            logger.info(f"Data downloaded to disk for version {self.version}")
 
     def _clean_data(self) -> None:
         """Clean and format the dataframe"""
@@ -182,33 +141,8 @@ class WEO(ImportData):
         Returns:
             same object with updated data to allow chaining
         """
-        if self.version == "latest":
-            # set version to expected latest version
-            self.version = gen_latest_version()
-            # try download the data
-            df = extract_data(self.version)
-            # if data is not None, save to disk, otherwise roll back version
-            if df is not None:
-                df.to_feather(self._path)
-                logger.info(f"Data downloaded to disk for version {self.version}")
 
-                return self
-
-            else:
-                self.version = roll_back_version(self.version)
-                logger.info(
-                    f"Data not available for expected version. "
-                    f"Rolling back version to {self.version}"
-                )
-
-        # exctract data for a specific version or if version was rolled back
-        df = extract_data(self.version)
-        # if data is not None, save to disk otherwise raise error
-        if df is not None:
-            df.to_feather(self._path)
-            logger.info(f"Data downloaded to disk for version {self.version}")
-        else:
-            raise ValueError(f"No data found for version {self.version}")
+        self._download_data()
 
         # load raw data to object
         self._raw_data = pd.read_feather(self._path)
@@ -267,3 +201,10 @@ class WEO(ImportData):
             .dropna(subset="ISO")
             .reset_index(drop=True)
         )
+
+
+if __name__ == "__main__":
+    weo = WEO()
+    weo.available_indicators()
+    weo.load_data()
+    weo.update_data()
