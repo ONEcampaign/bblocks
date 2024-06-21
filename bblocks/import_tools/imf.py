@@ -4,31 +4,13 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
+import numpy as np
+from imf_reader import weo
 
 from bblocks import config
-from bblocks.cleaning_tools.clean import clean_numeric_series, convert_to_datetime
+from bblocks.cleaning_tools.clean import clean_numeric_series, convert_to_datetime, convert_id
 from bblocks.import_tools.common import ImportData
-from bblocks.import_tools.imf_weo import WEO
 from bblocks.logger import logger
-
-
-def _check_parameters(latest_y: int | None, latest_r: int | None) -> str | tuple:
-    if latest_y is None and latest_r is None:
-        release = "latest"
-
-    else:
-        release = (latest_y, latest_r)
-
-    return release
-
-
-def _update_weo(latest_y: int = None, latest_r: int = None) -> None:
-    """Update _data from the World Economic Outlook, using WEO package"""
-
-    release = _check_parameters(latest_y, latest_r)
-
-    # Download the file from the IMF website and store in directory
-    WEO(release).update_data()
 
 
 @dataclass
@@ -38,12 +20,17 @@ class WorldEconomicOutlook(ImportData):
     year: Optional[int] = None
     release: Optional[int] = None
 
+    # if year and release are not both None or both not None raise error
+    def __post_init__(self) -> None:
+        if (self.year is None and self.release is not None) or (
+            self.year is not None and self.release is None
+        ):
+            raise ValueError("Both year and release must be specified.")
+
     def __repr__(self) -> str:
         return f"IMF WEO(year={self.year}, release={self.release})"
 
-    def __load_data(
-        self, latest_y: int | None = None, latest_r: int | None = None
-    ) -> None:
+    def __load_data(self) -> None:
         """loading WEO as a clean dataframe
 
         Args:
@@ -54,32 +41,42 @@ class WorldEconomicOutlook(ImportData):
         """
 
         names = {
-            "ISO": "iso_code",
-            "WEO Subject Code": "indicator",
-            "Subject Descriptor": "indicator_name",
-            # "Country/Series-specific Notes": "indicator_description",
-            "Units": "units",
-            "Scale": "scale",
-            "Estimates Start After": "estimates_start_after",
+            "CONCEPT_CODE": "indicator",
+            "CONCEPT_LABEL": "indicator_name",
+            "UNIT_LABEL": "units",
+            "SCALE_LABEL": "scale",
+            "LASTACTUALDATE": "estimates_start_after",
+            "OBS_VALUE": "value",
+            "TIME_PERIOD": "year",
+            "REF_AREA_LABEL": "entity_name",
         }
 
-        to_drop = [
-            "WEO Country Code",
-            "Country",
-            "Country/Series-specific Notes",
-        ]
+        if self.release is not None:
+            if self.release == 1:
+                version = ("April", self.year)
+            else:
+                version = ("October", self.year)
+        else:
+            version = None
 
-        release = _check_parameters(latest_y, latest_r)
-        df = WEO(version=release).load_data().get_old_format_data()
+        df = weo.fetch_data(version=version)
+        version = weo.fetch_data.last_version_fetched # get the version just fetched
+
+        # set the version
+        if version[0] == "April":
+            self.release = 1
+        elif version[0] == "October":
+            self.release = 2
+        self.year = version[1]
 
         # Load _data into _data object
         self._raw_data = (
-            df.drop(
-                columns=to_drop,
-            )
+            df
+            .loc[:, names.keys()]
             .rename(columns=names)
-            .melt(id_vars=names.values(), var_name="year", value_name="value")
             .assign(year=lambda d: convert_to_datetime(d.year))
+            .assign(iso_code = lambda d: convert_id(d.entity_name, not_found = np.NaN))
+            .dropna(subset=["iso_code"])
             .dropna(subset=["value"])
             .reset_index(drop=True)
         )
@@ -141,22 +138,27 @@ class WorldEconomicOutlook(ImportData):
         return self
 
     def update_data(
-        self, year: int | None, release: int | None, reload_data: bool = True
+        self, reload_data: bool = True
     ) -> None:
         """Update the stored WEO _data, using WEO package.
 
         Args:
         """
-        _update_weo(latest_y=year, latest_r=release)
+        # clear cache
+        weo.clear_cache()
 
         # Reset the _data
         self._raw_data = None
-        self._data = {}
-
-        logger.info("WEO data updated.")
 
         if reload_data:
-            self.load_data(indicator=list(self._data.keys()))
+            indicators_to_load = list(self._data.keys())
+            self._data = {}
+            self.load_data(indicator=indicators_to_load)
+
+        else:
+            self._data = {}
+
+        logger.info("WEO data updated.")
 
     def available_indicators(self) -> None:
         """Print the available indicators in the dataset"""
