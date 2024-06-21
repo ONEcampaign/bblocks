@@ -8,7 +8,7 @@ import numpy as np
 from imf_reader import weo
 
 from bblocks import config
-from bblocks.cleaning_tools.clean import clean_numeric_series, convert_to_datetime, convert_id
+from bblocks.cleaning_tools.clean import convert_to_datetime, convert_id
 from bblocks.import_tools.common import ImportData
 from bblocks.logger import logger
 
@@ -60,7 +60,7 @@ class WorldEconomicOutlook(ImportData):
             version = None
 
         df = weo.fetch_data(version=version)
-        version = weo.fetch_data.last_version_fetched # get the version just fetched
+        version = weo.fetch_data.last_version_fetched  # get the version just fetched
 
         # set the version
         if version[0] == "April":
@@ -71,11 +71,10 @@ class WorldEconomicOutlook(ImportData):
 
         # Load _data into _data object
         self._raw_data = (
-            df
-            .loc[:, names.keys()]
+            df.loc[:, names.keys()]
             .rename(columns=names)
             .assign(year=lambda d: convert_to_datetime(d.year))
-            .assign(iso_code = lambda d: convert_id(d.entity_name, not_found = np.NaN))
+            .assign(iso_code=lambda d: convert_id(d.entity_name, not_found=np.NaN))
             .dropna(subset=["iso_code"])
             .dropna(subset=["value"])
             .reset_index(drop=True)
@@ -137,9 +136,7 @@ class WorldEconomicOutlook(ImportData):
 
         return self
 
-    def update_data(
-        self, reload_data: bool = True
-    ) -> None:
+    def update_data(self, reload_data: bool = True) -> None:
         """Update the stored WEO _data, using WEO package.
 
         Args:
