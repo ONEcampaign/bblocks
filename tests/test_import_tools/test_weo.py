@@ -14,14 +14,14 @@ def test_smdx_query_url():
 
     # test April version
     assert (
-        imf_weo._smdx_query_url((2023, 1))
-        == f"{imf_weo.BASE_URL}/en/Publications/WEO/weo-database/2023/April/download-entire-database"
+            imf_weo._smdx_query_url((2023, 1))
+            == f"{imf_weo.BASE_URL}/en/Publications/WEO/weo-database/2023/April/download-entire-database"
     )
 
     # test October version
     assert (
-        imf_weo._smdx_query_url((2023, 2))
-        == f"{imf_weo.BASE_URL}/en/Publications/WEO/weo-database/2023/October/download-entire-database"
+            imf_weo._smdx_query_url((2023, 2))
+            == f"{imf_weo.BASE_URL}/en/Publications/WEO/weo-database/2023/October/download-entire-database"
     )
 
     # test invalid version

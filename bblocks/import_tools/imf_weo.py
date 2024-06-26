@@ -316,7 +316,7 @@ class WEO(ImportData):
             else:
                 self._data[indicator] = self._raw_data[
                     self._raw_data["concept_code"] == indicator
-                ].reset_index(drop=True)
+                    ].reset_index(drop=True)
 
         logger.info("Data loaded to object")
         return self
