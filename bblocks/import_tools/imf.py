@@ -6,6 +6,7 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 from imf_reader import weo
+import os
 
 from bblocks import config
 from bblocks.cleaning_tools.clean import convert_to_datetime, convert_id
@@ -51,11 +52,19 @@ class WorldEconomicOutlook(ImportData):
             "REF_AREA_LABEL": "entity_name",
         }
 
-        if self.release is not None:
+        if self.release is not None and self.year is not None:
+
+            # try read from disk
+            if os.path.exists(f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"):
+                self._raw_data = pd.read_feather(f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather")
+                return
+
+            # if data not in disk, set the version
             if self.release == 1:
                 version = ("April", self.year)
             else:
                 version = ("October", self.year)
+
         else:
             version = None
 
@@ -79,6 +88,9 @@ class WorldEconomicOutlook(ImportData):
             .dropna(subset=["value"])
             .reset_index(drop=True)
         )
+
+        # save data to disk`
+        self._raw_data.to_feather(f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather")
 
     def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
         if self._raw_data is None:
