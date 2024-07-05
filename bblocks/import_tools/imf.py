@@ -26,7 +26,7 @@ class WorldEconomicOutlook(ImportData):
         if (self.year is None and self.release is not None) or (
             self.year is not None and self.release is None
         ):
-            raise ValueError("Both year and release must be specified.")
+            raise ValueError("Both year and release must be specified or must both be `None`")
 
     def __repr__(self) -> str:
         return f"IMF WEO(year={self.year}, release={self.release})"
