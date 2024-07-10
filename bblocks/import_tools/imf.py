@@ -8,6 +8,8 @@ import numpy as np
 from imf_reader import weo
 import os
 
+from imf_reader.weo.reader import gen_latest_version
+
 from bblocks import config
 from bblocks.cleaning_tools.clean import convert_to_datetime, convert_id
 from bblocks.import_tools.common import ImportData
@@ -26,7 +28,9 @@ class WorldEconomicOutlook(ImportData):
         if (self.year is None and self.release is not None) or (
             self.year is not None and self.release is None
         ):
-            raise ValueError("Both year and release must be specified or must both be `None`")
+            raise ValueError(
+                "Both year and release must be specified or must both be `None`"
+            )
 
     def __repr__(self) -> str:
         return f"IMF WEO(year={self.year}, release={self.release})"
@@ -52,31 +56,33 @@ class WorldEconomicOutlook(ImportData):
             "REF_AREA_LABEL": "entity_name",
         }
 
-        if self.release is not None and self.year is not None:
+        # If year and release are not specified, get the latest version
+        if self.year is None and self.release is None:
+            version = gen_latest_version()
+            self.release, self.year = version
 
-            # try read from disk
-            if os.path.exists(f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"):
-                self._raw_data = pd.read_feather(f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather")
-                return
+        # For compatibility, if the version is provided as int, convert
+        if self.release == 1:
+            version = ("April", self.year)
+        elif self.release == 2:
+            version = ("October", self.year)
 
-            # if data not in disk, set the version
-            if self.release == 1:
-                version = ("April", self.year)
-            else:
-                version = ("October", self.year)
+        # Define the path where the data will be stored (or should be stored)
+        path = f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"
 
-        else:
-            version = None
+        # try read from disk
+        if os.path.exists(path):
+            self._raw_data = pd.read_feather(path)
+            return
 
+        # If not found, fetch the data
         df = weo.fetch_data(version=version)
-        version = weo.fetch_data.last_version_fetched  # get the version just fetched
 
-        # set the version
-        if version[0] == "April":
-            self.release = 1
-        elif version[0] == "October":
-            self.release = 2
-        self.year = version[1]
+        # Check if the fetched version is the same as the requested version
+        fetched_version = weo.fetch_data.last_version_fetched
+        if fetched_version != version:
+            self.release, self.year = version
+            path = f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"
 
         # Load _data into _data object
         self._raw_data = (
@@ -90,7 +96,7 @@ class WorldEconomicOutlook(ImportData):
         )
 
         # save data to disk`
-        self._raw_data.to_feather(f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather")
+        self._raw_data.to_feather(path)
 
     def _check_indicators(self, indicators: str | list | None = None) -> None | dict:
         if self._raw_data is None:
