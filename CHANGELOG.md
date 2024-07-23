@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.4.0] - 2024-05-06
+---------------------
+### Updated
+- Fixed issues with the WorldEconomicOutlook importer. Switches to using imf-reader,
+a new package we have developed to read the WEO data using the SDMX standard, rather than
+the excel files.
+
 [1.3.2] - 2024-05-06
 ---------------------
 ### Updated
