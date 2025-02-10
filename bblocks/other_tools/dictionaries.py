@@ -6,20 +6,29 @@ from country_converter import convert
 from bblocks import config
 from bblocks.import_tools.world_bank import WorldBankData
 from bblocks.other_tools.common import Dict
+from bblocks_data_importers import WorldBank
 
 
 def __download_income_levels():
     """Downloads fresh version of income levels from WB"""
-    url = "https://databank.worldbank.org/data/download/site-content/CLASS.xlsx"
+    wb = WorldBank()
+    income = wb.get_countries_by_income_level()
 
-    df = pd.read_excel(
-        io=url,
-        sheet_name="List of economies",
-        usecols=["Code", "Income group"],
-        na_values=None,
-    )
+    country_to_income = {
+        country: income_level
+        for income_level, countries in income.items()
+        for country in countries
+        if income_level
+        in [
+            "Low income",
+            "Lower middle income",
+            "Upper middle income",
+            "High income",
+            "Not classified",
+        ]
+    }
 
-    df = df.dropna(subset=["Income group"])
+    df = pd.DataFrame(country_to_income.items(), columns=["Code", "Income group"])
 
     df.to_csv(config.BBPaths.raw_data / "income_levels.csv", index=False)
     print("Downloaded income levels")

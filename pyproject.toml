@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bblocks"
-version = "1.4.0"
+version = "1.4.1"
 description = "A package with tools to download and analyse international development data. These tools are meant to be the building blocks of further analysis."
 authors = ["The ONE Campaign <data@one.org>"]
 readme = "README.md"
@@ -32,6 +32,7 @@ wbgapi = "<1.1"
 camelot-py = "^0.11"
 pypdf = "^3.17"
 imf-reader = "^1.0.0"
+bblocks-data-importers = "^0.2.1"
 
 [tool.poetry.dev-dependencies]
 bump2version = "^1.0.1"
