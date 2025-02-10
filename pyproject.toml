@@ -32,6 +32,7 @@ wbgapi = "<1.1"
 camelot-py = "^0.11"
 pypdf = "^3.17"
 imf-reader = "^1.0.0"
+bblocks-data-importers = "^0.2.1"
 
 [tool.poetry.dev-dependencies]
 bump2version = "^1.0.1"

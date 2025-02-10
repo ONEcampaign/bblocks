@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.4.1] - 2025-02-10
+---------------------
+### Updated
+- Changes how income levels are fetched.
+
 [1.4.0] - 2024-05-06
 ---------------------
 ### Updated
