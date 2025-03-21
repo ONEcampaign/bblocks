@@ -1,4 +1,6 @@
-__version__ = "__version__ = "1.4.2""
+from importlib.metadata import version
+
+__version__ = version("bblocks")
 
 # Easy access to importers
 from bblocks.import_tools.world_bank import WorldBankData
