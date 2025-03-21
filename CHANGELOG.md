@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.4.2] - 2025-03-21
+---------------------
+### Updated
+- Updates dependencies, especially camelot-py.
+
 [1.4.1] - 2025-02-10
 ---------------------
 ### Updated
