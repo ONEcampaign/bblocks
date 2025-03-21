@@ -1,29 +1,23 @@
-name: release
+name: Publish to PyPI
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 jobs:
-
-  release:
-    name: Create Release
+  publish:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-versions: [ "3.10" ]
+        python-versions: ["3.10"]
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Get version from tag (new)
-        run: echo "{current_version}={${GITHUB_REF#refs/tags/v}}" >> $GITHUB_OUTPUT
+      - name: Check out the repository
+        uses: actions/checkout@v4
 
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-versions }}
 
@@ -32,27 +26,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
-      - name: Build wheels and source tarball
-        run: >-
-          poetry build
-      - name: show temporary files
-        run: >-
-          ls -l
-      - name: create github release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: dist/*.whl
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-      - name: publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Build the package
+        run: poetry build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.10.3
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip_existing: true
           verify_metadata: true
-          verbose: true
