@@ -1,6 +1,11 @@
 Changelog
 =========
 
+[1.4.3] - 2025-03-21
+---------------------
+### Fixed
+- Fixes a bug where the WEO importer used the deprecated np.NaN instead of np.nan
+
 [1.4.2] - 2025-03-21
 ---------------------
 ### Updated
