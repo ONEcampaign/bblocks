@@ -89,7 +89,7 @@ class WorldEconomicOutlook(ImportData):
             df.loc[:, names.keys()]
             .rename(columns=names)
             .assign(year=lambda d: convert_to_datetime(d.year))
-            .assign(iso_code=lambda d: convert_id(d.entity_name, not_found=np.NaN))
+            .assign(iso_code=lambda d: convert_id(d.entity_name, not_found=np.nan))
             .dropna(subset=["iso_code"])
             .dropna(subset=["value"])
             .reset_index(drop=True)
