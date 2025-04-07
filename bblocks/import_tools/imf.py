@@ -58,7 +58,7 @@ class WorldEconomicOutlook(ImportData):
 
         # If year and release are not specified, get the latest version
         if self.year is None and self.release is None:
-            version = None # set version to None to get the latest version, after need to set the year and release in the object
+            version = None  # set version to None to get the latest version, after need to set the year and release in the object
 
         # if year and release are specified, use them
         else:
