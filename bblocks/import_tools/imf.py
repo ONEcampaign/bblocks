@@ -58,30 +58,41 @@ class WorldEconomicOutlook(ImportData):
 
         # If year and release are not specified, get the latest version
         if self.year is None and self.release is None:
-            version = gen_latest_version()
-            self.release, self.year = version
+            version = None # set version to None to get the latest version, after need to set the year and release in the object
 
-        # For compatibility, if the version is provided as int, convert
-        if self.release == 1:
-            version = ("April", self.year)
-        elif self.release == 2:
-            version = ("October", self.year)
+        # if year and release are specified, use them
+        else:
 
-        # Define the path where the data will be stored (or should be stored)
-        path = f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"
+            # For compatibility, if the version is provided as int, convert
+            if self.release == 1:
+                version = ("April", self.year)
+            elif self.release == 2:
+                version = ("October", self.year)
+            else:
+                raise ValueError(
+                    f"Release must be 1 (April) or 2 (October), not {self.release}"
+                )
 
-        # try read from disk
-        if os.path.exists(path):
-            self._raw_data = pd.read_feather(path)
-            return
+            # Define the path where the data will be stored (or should be stored)
+            path = f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"
+
+            # try read from disk
+            if os.path.exists(path):
+                self._raw_data = pd.read_feather(path)
+                return
 
         # If not found, fetch the data
         df = weo.fetch_data(version=version)
 
-        # Check if the fetched version is the same as the requested version
-        fetched_version = weo.fetch_data.last_version_fetched
-        if fetched_version != version:
-            self.release, self.year = version
+        if version is None:
+            # If no version is specified, set the version to the fetched version
+            fetched_version = weo.fetch_data.last_version_fetched
+            self.year = fetched_version[1]
+            if fetched_version[0] == "April":
+                self.release = 1
+            elif fetched_version[0] == "October":
+                self.release = 2
+
             path = f"{config.BBPaths.raw_data}/weo_{self.year}_{self.release}.feather"
 
         # Load _data into _data object
