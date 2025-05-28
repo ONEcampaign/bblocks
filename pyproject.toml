@@ -1,6 +1,5 @@
 [project]
 name = "bblocks"
-version = "1.4.3"
 description = "Building blocks for international development data."
 authors = [
     {name = "ONE Campaign"},
