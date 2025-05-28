@@ -1,0 +1,6 @@
+site_name: tools/bblocks
+
+nav:
+  - index.md
+  - Getting started: getting-started.md
+  - bblocks packages: bblocks-packages.md
