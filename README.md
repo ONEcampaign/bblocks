@@ -19,6 +19,12 @@ pipeline, `bblocks` offers practical, tested tools that are easy to plug into yo
 Read the [documentation](https://docs.one.org/tools/bblocks/) for more details on how to use `bblocks` packages 
 and the motivation for their creation.
 
+## Packages
+`bblocks` is an umbrella package that includes several specialized sub-packages, 
+each designed to address specific data tasks.
+
+- [__`bblocks-places`__](https://github.com/ONEcampaign/bblocks-places): Resolve and standardize place names, including countries, regions, and other geographic entities.
+
 ## Installation
 
 It’s easy to get started with bblocks. Whether you want the full distribution or only specific 
