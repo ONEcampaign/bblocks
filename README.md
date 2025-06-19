@@ -86,6 +86,6 @@ print(gdp_africa.head())
 ## Contributing
 
 We welcome contributions to `bblocks`! If you have ideas for new packages, improvements, or bug fixes, 
-please check out our [contributing guidelines](https://github.com/ONEcampaign/bblocks-places/blob/main/CONTRIBUTING.md) 
+please check out our [contributing guidelines](https://github.com/ONEcampaign/bblocks/blob/main/CONTRIBUTING.md) 
 for details on how to get involved.
 
