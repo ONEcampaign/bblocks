@@ -34,7 +34,7 @@ tools, installation is flexible and straightforward.
 This is recommended for most users who want access to all the tools in the `bblocks` ecosystem.
 
 ```bash
-pip install bblocks
+pip install bblocks[all]
 ```
 
 ### Install specific `bblocks` packages
@@ -42,16 +42,13 @@ pip install bblocks
 Install only the packages you need without unnecessary dependencies. For example, to install the `places` package:
 
 ```bash
-pip install bblocks-places
+pip install bblocks[places]
 ```
 
-### Install with extras
-
-You can also install `bblocks` with optional extras for specific use cases. 
-For example, to include the `places` package:
+You can also install individual packages directly:
 
 ```bash
-pip install bblocks[places]
+pip install bblocks-places
 ```
 
 ## Basic Usage
