@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v2.1.0-beta.1 (2025-06-18)
+---------------------
+- Beta release for testing of upcoming v2.1.0 changes including access to sub-package `bblocks-places`
+
 v2.0.0 (2025-06-19)
 ---------------------
 - Major refactor of the `bblocks` package structure. 
