@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v2.0.0 (2025-06-19)
+---------------------
+- Major refactor of the `bblocks` package structure. 
+The package is now split into multiple sub-packages, each with its own functionality.
+- the `bblocks` package now only exists to provide a unified interface to the sub-packages.
+
 v1.4.3 (2025-03-21)
 ---------------------
 - Fixes a bug where the WEO importer used the deprecated np.NaN instead of np.nan
