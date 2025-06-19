@@ -1,38 +1,25 @@
 [project]
 name = "bblocks"
 version = "1.4.3"
-description = "A package with tools to download and analyse international development data. These tools are meant to be the building blocks of further analysis."
+description = "Building blocks for development data."
 authors = [
-    {name = "The ONE Campaign",email = "data@one.org"}
+    {name = "ONE Campaign"},
+    {name = "Luca Picci",email = "lpicci96@gmail.com"},
+    {name = "Jorge Rivera", email = "jorge.rivera@one.org"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.10, <4.0"
-dependencies = [
-    "pandas (>=2.0,<3.0.0)",
-    "numpy (>=1.24.1,<3.0.0)",
-    "country-converter (>=1.1,<2.0)",
-    "requests (>=2.32,<3.0.0)",
-    "openpyxl (>=3,<4.0.0)",
-    "beautifulsoup4 (>=4,<5.0.0)",
-    "pyjstat (>=2.3,<3.0.0)",
-    "pyarrow (>=14,<20.0.0)",
-    "wbgapi (>=1.0.12,<2.0.0)",
-    "camelot-py (>=1.0.0,<2.0.0)",
-    "imf-reader (>=1.3.0,<2.0.0)",
-    "bblocks-data-importers (>=0.2.1,<1.0.0)",
-]
+requires-python = ">=3.11,<4.0"
+dependencies = []
 
-[tool.poetry.group.dev.dependencies]
-pytest-cov = "^6.0.0"
-pytest = "^8.3.5"
-black = "^25.1.0"
-
+[tool.poetry]
+packages = [{include = "bblocks", from = "src"}]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry-dynamic-versioning]
-enable = true
-style = "pep440"
+[project.urls]
+repository = "https://github.com/ONEcampaign/bblocks"
+documentation = "https://docs.one.org/tools/bblocks/"
+homepage = "https://docs.one.org/tools/bblocks/"
