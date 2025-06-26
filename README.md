@@ -23,7 +23,10 @@ and the motivation for their creation.
 `bblocks` is an umbrella package that includes several specialized sub-packages, 
 each designed to address specific data tasks.
 
-- [__`bblocks-places`__](https://github.com/ONEcampaign/bblocks-places): Resolve and standardize place names, including countries, regions, and other geographic entities.
+- [__`bblocks-places`__](https://github.com/ONEcampaign/bblocks-places): Resolve and standardize place names, including countries, regions,
+and other geographic entities.
+- [__`bblocks-data-importers`__](https://github.com/ONEcampaign/bblocks_data_importers): Tools to import data from different
+international development sources such as IMF, World Bank and many others.
 
 ## Installation
 
