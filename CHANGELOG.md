@@ -1,6 +1,12 @@
 Changelog
 =========
 
+v2.1.0-beta.2 (2025-06-26)
+---------------------
+- Beta release 2 for testing
+- Adds `bblocks-data-importers` to the namespace
+- Addresses bugs in `bblocks-places`
+
 v2.1.0-beta.1 (2025-06-19)
 ---------------------
 - Beta release for testing of upcoming v2.1.0 changes including access to sub-package `bblocks-places`
