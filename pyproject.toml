@@ -15,9 +15,11 @@ dependencies = []
 [project.optional-dependencies]
 places = ["bblocks-places>=0.0.2,<0.1.0"]
 data-importers = ["bblocks-data-importers>=0.4.0,<0.5.0"]
+datacommons-tools = ["bblocks-datacommons-tools>=0.0.2,<0.1.0"]
 all = [
     "bblocks-places>=0.0.2,<0.1.0",
-    "bblocks-data-importers>=0.4.0,<0.5.0"
+    "bblocks-data-importers>=0.4.0,<0.5.0",
+    "bblocks-datacommons-tools>=0.0.2,<0.1.0"
 ]
 
 [tool.poetry]
