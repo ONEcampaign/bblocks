@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v2.1.0 (2025-07-15)
+---------------------
+- Adds `bblocks-datacommons-tools` to the namespace
+
 v2.1.0-beta.2 (2025-06-26)
 ---------------------
 - Beta release 2 for testing
