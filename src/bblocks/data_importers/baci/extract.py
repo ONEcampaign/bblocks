@@ -154,8 +154,6 @@ class BaciDataManager:
         """
 
         try:
-            logger.info(f"Extracting BACI data")
-
             response = requests.get(self._url)
             response.raise_for_status()
 
@@ -255,23 +253,13 @@ class BaciDataManager:
         self._metadata = metadata
 
 
-    def parse_data(self):
+    def read_data(self):
         """Parse data and save to object"""
-
-        logger.info(f"Parsing BACI data")
 
         self._read_data_files()
         self._read_product_codes()
         self._read_country_codes()
         self._read_readme()
-
-
-    def load_data(self):
-        """Extract and load all data to the object"""
-
-        self.extract_zip_file()
-        self.parse_data()
-        logger.info(f"Successfully loaded BACI data")
 
 
 
