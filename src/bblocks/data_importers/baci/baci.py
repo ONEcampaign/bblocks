@@ -1,9 +1,21 @@
 """BACI importer"""
 
 import pandas as pd
+from diskcache import Cache
+from platformdirs import user_cache_dir
+import atexit
 
 from bblocks.data_importers.config import Fields, logger
 from bblocks.data_importers.baci.extract import extract_data_links, BaciDataManager
+
+
+_CACHE_EXPIRY_SECONDS: int = 48 * 60 * 60  # cache expiry after 48 hours
+_CACHE_DIR = user_cache_dir("bblocks/baci")
+_DATA_CACHE = Cache(_CACHE_DIR)
+_DATA_CACHE.stats(enable=True)  # Enable hit/miss tracking
+
+# Ensure cache is properly closed on exit to persist WAL data to disk
+atexit.register(_DATA_CACHE.close)
 
 
 def _add_product_labels(data_manager: BaciDataManager) -> None:
@@ -51,6 +63,7 @@ def _add_country_labels(data_manager: BaciDataManager) -> None:
             })
             )
 
+@_DATA_CACHE.memoize(expire=_CACHE_EXPIRY_SECONDS)
 def _load_data(hs_version: str) -> BaciDataManager:
     """Helper function to load data for a specific HS version
     Verify the correct HS version is provided, and ensure the data link is available.
