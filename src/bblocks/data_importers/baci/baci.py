@@ -1,4 +1,10 @@
-"""BACI importer"""
+"""BACI importer
+
+This module provides an importer for the CEPII-BACI dataset, which contains
+annual data on bilateral trade flows at the product level, classified using the
+Harmonized System (HS). The BACI dataset harmonizes and reconciles trade data
+from the United Nations COMTRADE database.
+"""
 
 import pandas as pd
 from diskcache import Cache
@@ -262,7 +268,12 @@ class BACI:
         self._data: dict[str, BaciDataManager] = dict()
 
     def _load_data(self, hs_version: str) -> None:
-        """Load data to object"""
+        """Load data to object. This method checks if data for the specified HS version
+        is already loaded. If not, it extracts and loads the data.
+
+        Args:
+            hs_version: The HS version to load data for (e.g., "HS22")
+        """
 
         hs_version = _validate_hs_version(hs_version)  # validate HS version
 
@@ -288,7 +299,16 @@ class BACI:
                  include_product_labels: bool = False,
                  include_country_labels: bool = False
                  ) -> pd.DataFrame:
-        """ """
+        """Get the BACI trade data DataFrame for the specified HS version
+
+        Args:
+            hs_version: The HS version to get data for (default is "HS22"). To see available versions, use `available_hs_versions()`.
+            include_product_labels: Whether to include product labels in the DataFrame (default is False).
+            include_country_labels: Whether to include country labels in the DataFrame (default is False).
+
+        Returns:
+            A DataFrame containing the BACI trade data for the specified HS version.
+        """
         hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
 
@@ -303,7 +323,14 @@ class BACI:
         return df
 
     def get_country_codes(self, hs_version: str = "HS22") -> pd.DataFrame:
-        """Get the country codes DataFrame for the specified HS version"""
+        """Get the country codes for the specified HS version, including country names and ISO3 codes.
+
+        Args:
+            hs_version: The HS version to get data for (default is "HS22"). To see available versions, use `available_hs_versions()`.
+
+        Returns:
+            A DataFrame containing the country codes for the specified HS version.
+        """
 
         hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
@@ -311,7 +338,14 @@ class BACI:
         return self._data[hs_version].country_codes
 
     def get_product_codes(self, hs_version: str = "HS22") -> pd.DataFrame:
-        """Get the product codes DataFrame for the specified HS version"""
+        """Get the product codes for the specified HS version, including product descriptions.
+
+        Args:
+            hs_version: The HS version to get data for (default is "HS22"). To see available versions, use `available_hs_versions()`.
+
+        Returns:
+            A DataFrame containing the product codes for the specified HS version.
+        """
 
         hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
@@ -319,7 +353,14 @@ class BACI:
         return self._data[hs_version].product_codes
 
     def get_metadata(self, hs_version: str = "HS22") -> dict:
-        """Get metadata for the specified HS version"""
+        """Get metadata for the specified HS version
+
+        Args:
+            hs_version: The HS version to get data for (default is "HS22"). To see available versions, use `available_hs_versions()`.
+
+        Returns:
+            A dictionary containing metadata for the specified HS version.
+        """
 
         hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
