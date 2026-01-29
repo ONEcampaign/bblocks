@@ -203,6 +203,8 @@ class BaciDataExtractor:
             .to_pandas(split_blocks=True, self_destruct=True)
         )
 
+        self.data = convert_dtypes(self.data)
+
     def _read_product_codes(self) -> None:
         """Read product codes"""
 
@@ -216,6 +218,7 @@ class BaciDataExtractor:
         self.product_codes = (pd.read_csv(self.zip_file.open(product_code_file))
                                .rename(columns ={"code": Fields.product_code,
                                                  "description": Fields.product_description})
+                              .pipe(convert_dtypes, casts={Fields.product_description: pa.large_string()})
                                )
 
     def _read_country_codes(self) -> None:
@@ -235,6 +238,7 @@ class BaciDataExtractor:
                                                   "country_name": Fields.country_name,
                                                   "country_iso3": Fields.iso3_code,
                                                   })
+                              .pipe(convert_dtypes)
                                )
 
     def _read_readme(self) -> None:
@@ -273,14 +277,12 @@ def _add_product_labels(data_manager: BaciDataExtractor) -> None:
         DataFrame with product labels added
     """
 
-    prod_mapping = (data_manager.product_codes
-                    .set_index(Fields.product_code)
-                    [Fields.product_description]
-                    .to_dict()
-                    )
-
     data_manager.data = (data_manager.data
-                          .assign(**{Fields.product_description: lambda d: d[Fields.product_code].map(prod_mapping)})
+                          .merge(data_manager.product_codes,
+                                 how="left",
+                                 on=Fields.product_code,
+                                 validate="many_to_one",
+                                 )
                           )
 
 def _add_country_labels(data_manager: BaciDataExtractor) -> None:
@@ -290,26 +292,20 @@ def _add_country_labels(data_manager: BaciDataExtractor) -> None:
         DataFrame with country labels added
     """
 
-    country_name_mapping = (data_manager.country_codes
-                            .set_index(Fields.country_code)
-                            [Fields.country_name]
-                            .to_dict()
-                            )
-
-    iso3_mapping = (data_manager.country_codes
-                    .set_index(Fields.country_code)
-                    [Fields.iso3_code]
-                    .to_dict()
-                    )
-
     data_manager.data = (data_manager.data
-            .assign(**{
-                Fields.exporter_name: lambda d: d[Fields.exporter_code].map(country_name_mapping),
-                Fields.importer_name: lambda d: d[Fields.importer_code].map(country_name_mapping),
-                Fields.exporter_iso3_code: lambda d: d[Fields.exporter_code].map(iso3_mapping),
-                Fields.importer_iso3_code: lambda d: d[Fields.importer_code].map(iso3_mapping),
-            })
-            )
+                         .merge(data_manager.country_codes.rename(columns={Fields.country_code: Fields.exporter_code,
+                                                                            Fields.country_name: Fields.exporter_name,
+                                                                            Fields.iso3_code: Fields.exporter_iso3_code
+                                                                           }),
+                                how="left", on=Fields.exporter_code, validate="many_to_one"
+                                )
+                            .merge(data_manager.country_codes.rename(columns={Fields.country_code: Fields.importer_code,
+                                                                                Fields.country_name: Fields.importer_name,
+                                                                                Fields.iso3_code: Fields.importer_iso3_code
+                                                                            }),
+                                      how="left", on=Fields.importer_code, validate="many_to_one"
+                                   )
+                         )
 
 
 def _validate_hs_version(hs_version: str) -> str:
@@ -366,37 +362,34 @@ def extract_data(hs_version: str) -> dict:
     _add_product_labels(data_manager) # add product labels
     _add_country_labels(data_manager) # add country labels
 
-    # convert dtypes
-    data_manager.data = convert_dtypes(data_manager.data,
-                                       casts={Fields.product_description: pa.large_string()})
-    data_manager.product_codes = convert_dtypes(data_manager.product_codes,
-                                                casts={Fields.product_description: pa.large_string()})
-    data_manager.country_codes = convert_dtypes(data_manager.country_codes,)
-
     # validation checks
-    DataFrameValidator().validate(data_manager.data,
+    logger.info("Validating BACI data")
+    validator = DataFrameValidator()
+    validator.validate(data_manager.data,
                                   required_cols=[Fields.year,
                                                     Fields.exporter_code,
                                                     Fields.importer_code,
                                                     Fields.product_code,
                                                     Fields.value,
                                                     Fields.quantity,
-                                                 Fields.product_description,
+                                                    Fields.product_description,
                                                     Fields.exporter_name,
                                                     Fields.importer_name,
                                                  # additional country fields should exist but not required
                                                  ])
 
-    DataFrameValidator().validate(data_manager.product_codes,
+    validator.validate(data_manager.product_codes,
                                   required_cols=[Fields.product_code, Fields.product_description]
                                   )
-    DataFrameValidator().validate(data_manager.country_codes,
+    validator.validate(data_manager.country_codes,
                                   required_cols=[Fields.country_code, Fields.country_name, Fields.iso3_code]
                                   )
 
     # validate metadata
     if not data_manager.metadata:
         raise DataExtractionError("No metadata found after parsing")
+
+    logger.info("Loading BACI data")
 
     return {
         "data": data_manager.data,
