@@ -95,14 +95,14 @@ def extract_data_links() -> dict[str, str]:
     return _parse_data_links(soup)
 
 
-def _add_product_labels(data_manager: BaciDataManager) -> pd.DataFrame:
+def _add_product_labels(df: pd.DataFrame, data_manager: BaciDataManager) -> pd.DataFrame:
     """Add product labels to the data DataFrame
 
     Returns:
         DataFrame with product labels added
     """
 
-    return data_manager.data.merge(
+    return df.merge(
         data_manager.product_codes,
         how="left",
         on=Fields.product_code,
@@ -110,14 +110,14 @@ def _add_product_labels(data_manager: BaciDataManager) -> pd.DataFrame:
     )
 
 
-def _add_country_labels(data_manager: BaciDataManager) -> pd.DataFrame:
+def _add_country_labels(df: pd.DataFrame, data_manager: BaciDataManager) -> pd.DataFrame:
     """Add country labels to the data DataFrame including country name and ISO3 code
 
     Returns:
         DataFrame with country labels added
     """
 
-    return data_manager.data.merge(
+    return df.merge(
         data_manager.country_codes.rename(
             columns={
                 Fields.country_code: Fields.exporter_code,
@@ -330,10 +330,10 @@ class BACI:
         df = self._data[hs_version].data
 
         if include_product_labels:
-            df = _add_product_labels(self._data[hs_version])
+            df = _add_product_labels(df, self._data[hs_version])
 
         if include_country_labels:
-            df = _add_country_labels(self._data[hs_version])
+            df = _add_country_labels(df, self._data[hs_version])
 
         return df
 
