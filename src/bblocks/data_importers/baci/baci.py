@@ -199,7 +199,7 @@ def extract_data(hs_version: str) -> BaciDataManager:
     data_manager.extract()  # extract and read data
 
     # validation checks
-    logger.info("Validating BACI data")
+    logger.debug("Validating BACI data")
     validator = DataFrameValidator()
     validator.validate(
         data_manager.data,
@@ -210,10 +210,6 @@ def extract_data(hs_version: str) -> BaciDataManager:
             Fields.product_code,
             Fields.value,
             Fields.quantity,
-            # Fields.product_description,
-            # Fields.exporter_name,
-            # Fields.importer_name,
-            # additional country fields should exist but not required
         ],
     )
 
@@ -229,8 +225,6 @@ def extract_data(hs_version: str) -> BaciDataManager:
     # validate metadata
     if not data_manager.metadata:
         raise DataExtractionError("No metadata found after parsing")
-
-    logger.info("Loading BACI data")
 
     return data_manager
 
