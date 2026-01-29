@@ -2,6 +2,7 @@
 
 import pytest
 import pandas as pd
+import pyarrow as pa
 
 from bblocks.data_importers import utilities
 
@@ -13,6 +14,15 @@ def test_convert_dtypes_with_default_backend():
 
     assert result.dtypes["col1"].name == "int64[pyarrow]"
     assert result.dtypes["col2"].name == "double[pyarrow]"
+
+def test_convert_dtypes_cast():
+    """Test conversion with the specific casts"""
+    df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["A", "B", "C"], "col3": ["C", "D", "E"]})
+    result = utilities.convert_dtypes(df, casts={"col3": pa.large_string()})
+
+    assert result.dtypes["col1"].name == "int64[pyarrow]"
+    assert result.dtypes["col2"].name == "string[pyarrow]"
+    assert result.dtypes["col3"].name == "large_string[pyarrow]"
 
 
 def test_convert_dtypes_with_numpy_nullable_backend():
