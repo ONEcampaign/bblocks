@@ -12,6 +12,8 @@ import pyarrow.csv as pv
 import pyarrow as pa
 
 from bblocks.data_importers.config import Fields, logger, DataExtractionError
+from bblocks.data_importers.data_validators import DataFrameValidator
+from bblocks.data_importers.utilities import convert_dtypes
 
 
 _CACHE_EXPIRY_SECONDS: int = 48 * 60 * 60  # cache expiry after 48 hours
@@ -364,7 +366,37 @@ def extract_data(hs_version: str) -> dict:
     _add_product_labels(data_manager) # add product labels
     _add_country_labels(data_manager) # add country labels
 
-    # TODO: validation checks
+    # convert dtypes
+    data_manager.data = convert_dtypes(data_manager.data,
+                                       casts={Fields.product_description: pa.large_string()})
+    data_manager.product_codes = convert_dtypes(data_manager.product_codes,
+                                                casts={Fields.product_description: pa.large_string()})
+    data_manager.country_codes = convert_dtypes(data_manager.country_codes,)
+
+    # validation checks
+    DataFrameValidator().validate(data_manager.data,
+                                  required_cols=[Fields.year,
+                                                    Fields.exporter_code,
+                                                    Fields.importer_code,
+                                                    Fields.product_code,
+                                                    Fields.value,
+                                                    Fields.quantity,
+                                                 Fields.product_description,
+                                                    Fields.exporter_name,
+                                                    Fields.importer_name,
+                                                 # additional country fields should exist but not required
+                                                 ])
+
+    DataFrameValidator().validate(data_manager.product_codes,
+                                  required_cols=[Fields.product_code, Fields.product_description]
+                                  )
+    DataFrameValidator().validate(data_manager.country_codes,
+                                  required_cols=[Fields.country_code, Fields.country_name, Fields.iso3_code]
+                                  )
+
+    # validate metadata
+    if not data_manager.metadata:
+        raise DataExtractionError("No metadata found after parsing")
 
     return {
         "data": data_manager.data,
