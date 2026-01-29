@@ -12,7 +12,6 @@ import pyarrow.csv as pv
 import pyarrow as pa
 
 from bblocks.data_importers.config import Fields, logger, DataExtractionError
-# from bblocks.data_importers.baci.extract import extract_data_links, BaciDataExtractor
 
 
 _CACHE_EXPIRY_SECONDS: int = 48 * 60 * 60  # cache expiry after 48 hours
@@ -52,8 +51,6 @@ def _get_soup() -> BeautifulSoup:
         raise DataExtractionError(f"Failed to fetch BACI page: {e}")
 
 
-
-
 def _parse_data_links(soup: BeautifulSoup) -> dict[str, str]:
     """Parse the BACI data links from the BeautifulSoup object.
 
@@ -91,9 +88,14 @@ def _parse_data_links(soup: BeautifulSoup) -> dict[str, str]:
 def extract_data_links() -> dict[str, str]:
     """Extract the BACI data links from the CEPII BACI page.
 
+    HS versions and data links are cached to improve performance and reduce redundant requests.
+    Cache will persist for 48 hours.
+
     Returns:
         A dictionary mapping the HS version to the download link.
     """
+
+    logger.info(f"Extracting BACI data links")
 
     soup = _get_soup()
     return _parse_data_links(soup)
@@ -132,7 +134,11 @@ def _parse_readme(readme_content: str) -> dict:
 
 
 class BaciDataExtractor:
-    """ """
+    """Class to extract and parse BACI data for a given HS version and download url
+
+    The class handles downloading the BACI zip file, extracting relevant data files,
+    reading them into pandas DataFrames, and parsing metadata from the Readme.txt file.
+    """
 
 
     def __init__(self, hs_version: str, url: str):
@@ -303,17 +309,51 @@ def _add_country_labels(data_manager: BaciDataExtractor) -> None:
             })
             )
 
-@_DATA_CACHE.memoize(expire=_CACHE_EXPIRY_SECONDS)
-def _extract_data(hs_version: str) -> dict:
-    """Helper function to load data for a specific HS version
-    Verify the correct HS version is provided, and ensure the data link is available.
+
+def _validate_hs_version(hs_version: str) -> str:
+    """Validate a user provided HS version.
+
+    String cleaning - remove leading/trailing whitespace and convert to uppercase.
+    Validation - check if the HS version is available in the BACI dataset.
+
+    Raises:
+        ValueError: If the HS version is not available/valid.
+
+    Returns:
+        The cleaned HS version string.
     """
 
+    hs_version_cleaned = hs_version.strip().upper()
+    available_versions = extract_data_links().keys()
+
+    if hs_version_cleaned not in available_versions:
+        raise ValueError(f"HS version {hs_version} not available. "
+                         f"Available versions: {list(available_versions)}")
+
+    return hs_version_cleaned
+
+@_DATA_CACHE.memoize(expire=_CACHE_EXPIRY_SECONDS)
+def extract_data(hs_version: str) -> dict:
+    """Helper function to load data for a specific HS version
+
+    Data is cached to improve performance and reduce redundant downloads.
+    Cache will persist for 48 hours.
+
+    Args:
+        hs_version: The HS version to extract data for (e.g., "HS22")
+
+    Returns:
+        A dictionary containing:
+            - data: DataFrame with trade data
+            - country_codes: DataFrame with country codes
+            - product_codes: DataFrame with product codes
+            - metadata: Dictionary with metadata
+    """
+
+    # get available data links
     data_links = extract_data_links()
 
-    if hs_version not in list(data_links.keys()):
-        raise ValueError(f"HS version {hs_version} not available. "
-                         f"Available versions: {list(data_links.keys())}")
+    # Extract and parse data
 
     logger.info(f"Extracting BACI data for HS version {hs_version}")
     data_manager = BaciDataExtractor(hs_version=hs_version, url=data_links[hs_version])
@@ -333,36 +373,87 @@ def _extract_data(hs_version: str) -> dict:
         "metadata": data_manager.metadata,
     }
 
+
 class BACI:
-    """BACI data importer class"""
+    """importer for CEPII-BACI data
+
+    BACI provides annual data on bilateral trade flows at the product level,
+    with products classified using the Harmonized System (HS). BACI harmonizes and
+    reconciles trade data from the United Nations COMTRADE database.
+
+    Visit the BACI website for more information: https://www.cepii.fr/DATA_DOWNLOAD/baci/doc/baci_webpage.html
+
+    Usage:
+
+    Instantiate the BACI importer:
+    >>> baci = BACI()
+
+    Get available HS versions:
+    >>> baci.available_hs_versions()
+
+    Get trade data:
+    >>> df = baci.get_data()
+
+    By default, the HS22 version is used. You can specify a different HS version:
+    >>> df_hs12 = baci.get_data(hs_version="HS12")
+
+    You can also choose to include product and country labels:
+    >>> df_with_labels = baci.get_data(include_product_labels=True, include_country_labels=True)
+
+    Note: Including labels increases memory usage. It may be preferable to join labels separately.
+    You can retrieve product and country codes separately:
+    >>> product_codes = baci.get_product_codes()
+    >>> country_codes = baci.get_country_codes()
+
+    You can equally specify the HS version when retrieving codes:
+    >>> product_codes_hs12 = baci.get_product_codes(hs_version="HS12")
+    >>> country_codes_hs12 = baci.get_country_codes(hs_version="HS12")
+
+    Get metadata:
+    >>> metadata = baci.get_metadata()
+
+    Get metadata for a specific HS version:
+    >>> metadata_hs12 = baci.get_metadata(hs_version="HS12")
+
+    Data is cached by default to improve performance and to reduce redundant downloads.
+    Cached data will persist for 48 hours. You can clear the cache if needed:
+    >>> baci.clear_cache()
+    """
 
     def __init__(self):
 
         self._hs_versions: dict | None = None
         self._data: dict[str, dict] = dict()
 
-    def _load_data(self, hs_version: str):
+    def _load_data(self, hs_version: str) -> None:
         """Load data to object"""
 
+        hs_version = _validate_hs_version(hs_version)  # validate HS version
+
         if hs_version not in self._data:
-            self._data[hs_version] = _extract_data(hs_version)
-            logger.info("Successfully loaded BACI data for HS version {hs_version}")
+            self._data[hs_version] = extract_data(hs_version)
+            logger.info(f"Successfully loaded BACI data for HS version {hs_version}")
 
 
     def available_hs_versions(self) -> list[str]:
-        """Get a list of available HS versions in the BACI dataset"""
+        """Get a list of available HS versions in the BACI dataset
+
+        Returns:
+            A list of available HS versions as strings.
+        """
 
         if self._hs_versions is None:
             self._hs_versions = extract_data_links()
 
         return list(self._hs_versions.keys())
 
-    def get_data(self, hs_version: str = "HS22",
+    def get_data(self,
+                 hs_version: str = "HS22",
                  include_product_labels: bool = False,
                  include_country_labels: bool = False
                  ) -> pd.DataFrame:
         """ """
-
+        hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
 
         df = self._data[hs_version]["data"]
@@ -385,6 +476,7 @@ class BACI:
     def get_country_codes(self, hs_version: str = "HS22") -> pd.DataFrame:
         """Get the country codes DataFrame for the specified HS version"""
 
+        hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
 
         return self._data[hs_version]["country_codes"]
@@ -392,6 +484,7 @@ class BACI:
     def get_product_codes(self, hs_version: str = "HS22") -> pd.DataFrame:
         """Get the product codes DataFrame for the specified HS version"""
 
+        hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
 
         return self._data[hs_version]["product_codes"]
@@ -399,6 +492,7 @@ class BACI:
     def get_metadata(self, hs_version: str = "HS22") -> dict:
         """Get metadata for the specified HS version"""
 
+        hs_version = _validate_hs_version(hs_version)
         self._load_data(hs_version)
 
         return self._data[hs_version]["metadata"]
