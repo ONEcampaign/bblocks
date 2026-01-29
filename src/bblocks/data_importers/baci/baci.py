@@ -95,7 +95,9 @@ def extract_data_links() -> dict[str, str]:
     return _parse_data_links(soup)
 
 
-def _add_product_labels(df: pd.DataFrame, data_manager: BaciDataManager) -> pd.DataFrame:
+def _add_product_labels(
+    df: pd.DataFrame, data_manager: BaciDataManager
+) -> pd.DataFrame:
     """Add product labels to the data DataFrame
 
     Returns:
@@ -110,7 +112,9 @@ def _add_product_labels(df: pd.DataFrame, data_manager: BaciDataManager) -> pd.D
     )
 
 
-def _add_country_labels(df: pd.DataFrame, data_manager: BaciDataManager) -> pd.DataFrame:
+def _add_country_labels(
+    df: pd.DataFrame, data_manager: BaciDataManager
+) -> pd.DataFrame:
     """Add country labels to the data DataFrame including country name and ISO3 code
 
     Returns:
