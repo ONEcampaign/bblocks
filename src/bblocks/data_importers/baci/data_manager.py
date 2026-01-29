@@ -13,13 +13,13 @@ from bblocks.data_importers.utilities import convert_dtypes
 
 
 BACI_DATA_COLUMNS = {
-        "t": Fields.year,
-        "i": Fields.exporter_code,
-        "j": Fields.importer_code,
-        "k": Fields.product_code,
-        "v": Fields.value,
-        "q": Fields.quantity,
-    }
+    "t": Fields.year,
+    "i": Fields.exporter_code,
+    "j": Fields.importer_code,
+    "k": Fields.product_code,
+    "v": Fields.value,
+    "q": Fields.quantity,
+}
 
 
 def _parse_readme(readme_content: str) -> dict:
@@ -50,7 +50,6 @@ def _parse_readme(readme_content: str) -> dict:
             value = " ".join(line.strip() for line in value_lines).strip()
             metadata[key] = value
 
-
     return metadata
 
 
@@ -60,7 +59,6 @@ class BaciDataManager:
     The class handles downloading the BACI zip file, extracting relevant data files,
     reading them into pandas DataFrames, and parsing metadata from the Readme.txt file.
     """
-
 
     def __init__(self, hs_version: str, url: str):
 
@@ -116,11 +114,9 @@ class BaciDataManager:
 
         table = pa.concat_tables(tables, unicode_promote_options="default")
 
-        self.data = (
-            table
-            .rename_columns([BACI_DATA_COLUMNS.get(c, c) for c in table.schema.names])
-            .to_pandas(split_blocks=True, self_destruct=True)
-        )
+        self.data = table.rename_columns(
+            [BACI_DATA_COLUMNS.get(c, c) for c in table.schema.names]
+        ).to_pandas(split_blocks=True, self_destruct=True)
 
         self.data = convert_dtypes(self.data)
 
@@ -128,43 +124,58 @@ class BaciDataManager:
         """Read product codes"""
 
         # Find the product codes file in the ZIP archive
-        product_code_file = next((f for f in self._zip_file.namelist() if f.startswith("product_codes")), None)
+        product_code_file = next(
+            (f for f in self._zip_file.namelist() if f.startswith("product_codes")),
+            None,
+        )
 
         if not product_code_file:
             raise FileNotFoundError("No product codes found")
 
         # Read the product codes CSV file into a DataFrame
-        self.product_codes = (pd.read_csv(self._zip_file.open(product_code_file))
-                               .rename(columns ={"code": Fields.product_code,
-                                                 "description": Fields.product_description})
-                              .pipe(convert_dtypes, casts={Fields.product_description: pa.large_string()})
-                               )
+        self.product_codes = (
+            pd.read_csv(self._zip_file.open(product_code_file))
+            .rename(
+                columns={
+                    "code": Fields.product_code,
+                    "description": Fields.product_description,
+                }
+            )
+            .pipe(convert_dtypes, casts={Fields.product_description: pa.large_string()})
+        )
 
     def _read_country_codes(self) -> None:
         """Read country codes"""
 
         country_codes_file = next(
-            (f for f in self._zip_file.namelist() if f.startswith("country_codes")), None
+            (f for f in self._zip_file.namelist() if f.startswith("country_codes")),
+            None,
         )
 
         if not country_codes_file:
             raise FileNotFoundError("No country codes file found in the ZIP file.")
 
         # Read the country codes CSV file into a DataFrame
-        self.country_codes = (pd.read_csv(self._zip_file.open(country_codes_file))
-                               .drop(columns = "country_iso2") # drop duplicate iso2 column
-                               .rename(columns = {"country_code": Fields.country_code,
-                                                  "country_name": Fields.country_name,
-                                                  "country_iso3": Fields.iso3_code,
-                                                  })
-                              .pipe(convert_dtypes)
-                               )
+        self.country_codes = (
+            pd.read_csv(self._zip_file.open(country_codes_file))
+            .drop(columns="country_iso2")  # drop duplicate iso2 column
+            .rename(
+                columns={
+                    "country_code": Fields.country_code,
+                    "country_name": Fields.country_name,
+                    "country_iso3": Fields.iso3_code,
+                }
+            )
+            .pipe(convert_dtypes)
+        )
 
     def _read_readme(self) -> None:
         """Read metadata from the Readme.txt file in the ZIP archive."""
 
         # Find the Readme.txt file in the ZIP archive
-        readme_file = next((f for f in self._zip_file.namelist() if f.startswith("Readme.txt")), None)
+        readme_file = next(
+            (f for f in self._zip_file.namelist() if f.startswith("Readme.txt")), None
+        )
 
         if not readme_file:
             raise FileNotFoundError("No metadata found")
@@ -178,7 +189,6 @@ class BaciDataManager:
             raise DataExtractionError("No metadata found")
 
         self.metadata = metadata
-
 
     def read_data(self) -> None:
         """Parse data and save to object"""

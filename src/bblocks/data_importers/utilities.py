@@ -7,10 +7,10 @@ from bblocks.data_importers.config import logger
 
 
 def convert_dtypes(
-        df: pd.DataFrame,
-        backend: Literal["pyarrow", "numpy_nullable"] = "pyarrow",
-        *,
-        casts: Mapping[str, pa.DataType] | None = None,
+    df: pd.DataFrame,
+    backend: Literal["pyarrow", "numpy_nullable"] = "pyarrow",
+    *,
+    casts: Mapping[str, pa.DataType] | None = None,
 ) -> pd.DataFrame:
     """Converts the DataFrame to the specified backend dtypes
 
@@ -51,7 +51,9 @@ def convert_dtypes(
         arr = pa.array(out[col], type=pa_type)
 
         # Wrap back into an ArrowDtype Series so pandas keeps Arrow-backed storage.
-        out[col] = pd.Series(arr, index=out.index, name=col, dtype=pd.ArrowDtype(pa_type))
+        out[col] = pd.Series(
+            arr, index=out.index, name=col, dtype=pd.ArrowDtype(pa_type)
+        )
 
     return out
 

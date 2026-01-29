@@ -28,7 +28,6 @@ _DATA_CACHE.stats(enable=True)  # Enable hit/miss tracking
 atexit.register(_DATA_CACHE.close)
 
 
-
 # URL to the BACI data page
 URL: str = "https://www.cepii.fr/DATA_DOWNLOAD/baci/doc/baci_webpage.html"
 
@@ -66,10 +65,9 @@ def _parse_data_links(soup: BeautifulSoup) -> dict[str, str]:
         # find the section with download links
         section = soup.find("section", {"id": "download-links"})
 
-        data_links_dict = {a.text: a["href"]
-                           for a in section.find_all("a")
-                           if a.text.startswith("HS")
-                           }
+        data_links_dict = {
+            a.text: a["href"] for a in section.find_all("a") if a.text.startswith("HS")
+        }
 
         if not data_links_dict:
             raise DataExtractionError("No BACI data links found")
@@ -104,13 +102,13 @@ def _add_product_labels(data_manager: BaciDataManager) -> pd.DataFrame:
         DataFrame with product labels added
     """
 
-    return (data_manager.data
-                          .merge(data_manager.product_codes,
-                                 how="left",
-                                 on=Fields.product_code,
-                                 validate="many_to_one",
-                                 )
-                          )
+    return data_manager.data.merge(
+        data_manager.product_codes,
+        how="left",
+        on=Fields.product_code,
+        validate="many_to_one",
+    )
+
 
 def _add_country_labels(data_manager: BaciDataManager) -> pd.DataFrame:
     """Add country labels to the data DataFrame including country name and ISO3 code
@@ -119,20 +117,29 @@ def _add_country_labels(data_manager: BaciDataManager) -> pd.DataFrame:
         DataFrame with country labels added
     """
 
-    return (data_manager.data
-                         .merge(data_manager.country_codes.rename(columns={Fields.country_code: Fields.exporter_code,
-                                                                            Fields.country_name: Fields.exporter_name,
-                                                                            Fields.iso3_code: Fields.exporter_iso3_code
-                                                                           }),
-                                how="left", on=Fields.exporter_code, validate="many_to_one"
-                                )
-                            .merge(data_manager.country_codes.rename(columns={Fields.country_code: Fields.importer_code,
-                                                                                Fields.country_name: Fields.importer_name,
-                                                                                Fields.iso3_code: Fields.importer_iso3_code
-                                                                            }),
-                                      how="left", on=Fields.importer_code, validate="many_to_one"
-                                   )
-                         )
+    return data_manager.data.merge(
+        data_manager.country_codes.rename(
+            columns={
+                Fields.country_code: Fields.exporter_code,
+                Fields.country_name: Fields.exporter_name,
+                Fields.iso3_code: Fields.exporter_iso3_code,
+            }
+        ),
+        how="left",
+        on=Fields.exporter_code,
+        validate="many_to_one",
+    ).merge(
+        data_manager.country_codes.rename(
+            columns={
+                Fields.country_code: Fields.importer_code,
+                Fields.country_name: Fields.importer_name,
+                Fields.iso3_code: Fields.importer_iso3_code,
+            }
+        ),
+        how="left",
+        on=Fields.importer_code,
+        validate="many_to_one",
+    )
 
 
 def _validate_hs_version(hs_version: str) -> str:
@@ -152,10 +159,13 @@ def _validate_hs_version(hs_version: str) -> str:
     available_versions = extract_data_links().keys()
 
     if hs_version_cleaned not in available_versions:
-        raise ValueError(f"HS version {hs_version} not available. "
-                         f"Available versions: {list(available_versions)}")
+        raise ValueError(
+            f"HS version {hs_version} not available. "
+            f"Available versions: {list(available_versions)}"
+        )
 
     return hs_version_cleaned
+
 
 @_DATA_CACHE.memoize(expire=_CACHE_EXPIRY_SECONDS)
 def extract_data(hs_version: str) -> BaciDataManager:
@@ -182,30 +192,35 @@ def extract_data(hs_version: str) -> BaciDataManager:
 
     logger.info(f"Extracting BACI data for HS version {hs_version}")
     data_manager = BaciDataManager(hs_version=hs_version, url=data_links[hs_version])
-    data_manager.extract() #extract and read data
+    data_manager.extract()  # extract and read data
 
     # validation checks
     logger.info("Validating BACI data")
     validator = DataFrameValidator()
-    validator.validate(data_manager.data,
-                                  required_cols=[Fields.year,
-                                                    Fields.exporter_code,
-                                                    Fields.importer_code,
-                                                    Fields.product_code,
-                                                    Fields.value,
-                                                    Fields.quantity,
-                                                    # Fields.product_description,
-                                                    # Fields.exporter_name,
-                                                    # Fields.importer_name,
-                                                 # additional country fields should exist but not required
-                                                 ])
+    validator.validate(
+        data_manager.data,
+        required_cols=[
+            Fields.year,
+            Fields.exporter_code,
+            Fields.importer_code,
+            Fields.product_code,
+            Fields.value,
+            Fields.quantity,
+            # Fields.product_description,
+            # Fields.exporter_name,
+            # Fields.importer_name,
+            # additional country fields should exist but not required
+        ],
+    )
 
-    validator.validate(data_manager.product_codes,
-                                  required_cols=[Fields.product_code, Fields.product_description]
-                                  )
-    validator.validate(data_manager.country_codes,
-                                  required_cols=[Fields.country_code, Fields.country_name, Fields.iso3_code]
-                                  )
+    validator.validate(
+        data_manager.product_codes,
+        required_cols=[Fields.product_code, Fields.product_description],
+    )
+    validator.validate(
+        data_manager.country_codes,
+        required_cols=[Fields.country_code, Fields.country_name, Fields.iso3_code],
+    )
 
     # validate metadata
     if not data_manager.metadata:
@@ -281,7 +296,6 @@ class BACI:
             self._data[hs_version] = extract_data(hs_version)
             logger.info(f"Successfully loaded BACI data for HS version {hs_version}")
 
-
     def available_hs_versions(self) -> list[str]:
         """Get a list of available HS versions in the BACI dataset
 
@@ -294,11 +308,12 @@ class BACI:
 
         return list(self._hs_versions.keys())
 
-    def get_data(self,
-                 hs_version: str = "HS22",
-                 include_product_labels: bool = False,
-                 include_country_labels: bool = False
-                 ) -> pd.DataFrame:
+    def get_data(
+        self,
+        hs_version: str = "HS22",
+        include_product_labels: bool = False,
+        include_country_labels: bool = False,
+    ) -> pd.DataFrame:
         """Get the BACI trade data DataFrame for the specified HS version
 
         Args:
@@ -375,4 +390,3 @@ class BACI:
         self._data = dict()
 
         logger.info("BACI cache cleared.")
-
