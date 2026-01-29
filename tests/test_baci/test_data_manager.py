@@ -127,9 +127,7 @@ def test_read_data_files_renames_and_converts():
     ):
         manager._read_data_files()
 
-    expected_columns = [
-        BACI_DATA_COLUMNS[c] for c in ["t", "i", "j", "k", "v", "q"]
-    ]
+    expected_columns = [BACI_DATA_COLUMNS[c] for c in ["t", "i", "j", "k", "v", "q"]]
     assert list(manager.data.columns) == expected_columns
     assert all(isinstance(dtype, pd.ArrowDtype) for dtype in manager.data.dtypes)
 
@@ -138,9 +136,7 @@ def test_read_product_codes_success():
     zip_bytes = _build_zip_bytes(
         {
             "product_codes.csv": (
-                "code,description\n"
-                "100,Widgets\n"
-                "200,Gadgets\n"
+                "code,description\n" "100,Widgets\n" "200,Gadgets\n"
             ).encode("utf-8")
         }
     )
@@ -206,9 +202,7 @@ def test_read_readme_success():
     zip_bytes = _build_zip_bytes(
         {
             "Readme.txt": (
-                "Title: BACI data\n\n"
-                "Notes: Line one\n"
-                "Line two"
+                "Title: BACI data\n\n" "Notes: Line one\n" "Line two"
             ).encode("utf-8")
         }
     )

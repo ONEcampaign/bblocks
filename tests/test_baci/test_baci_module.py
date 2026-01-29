@@ -45,9 +45,7 @@ def test_get_soup_success():
 
 
 def test_get_soup_failure():
-    with mock.patch(
-        "requests.get", side_effect=requests.RequestException("boom")
-    ):
+    with mock.patch("requests.get", side_effect=requests.RequestException("boom")):
         with pytest.raises(DataExtractionError, match="Failed to fetch BACI page"):
             baci._get_soup()
 
@@ -92,7 +90,9 @@ def test_parse_data_links_empty_results():
 
 def test_extract_data_links_calls_helpers():
     with (
-        mock.patch("bblocks.data_importers.baci.baci._get_soup", return_value="soup") as mock_soup,
+        mock.patch(
+            "bblocks.data_importers.baci.baci._get_soup", return_value="soup"
+        ) as mock_soup,
         mock.patch(
             "bblocks.data_importers.baci.baci._parse_data_links",
             return_value={"HS22": "link"},
@@ -218,9 +218,7 @@ def test_extract_data_raises_without_metadata():
             "bblocks.data_importers.baci.baci.extract_data_links",
             return_value={"HS22": "link"},
         ),
-        mock.patch(
-            "bblocks.data_importers.baci.baci.BaciDataManager", DummyManager
-        ),
+        mock.patch("bblocks.data_importers.baci.baci.BaciDataManager", DummyManager),
         mock.patch("bblocks.data_importers.baci.baci.DataFrameValidator"),
     ):
         with pytest.raises(DataExtractionError, match="No metadata found"):
@@ -311,7 +309,9 @@ def test_baci_get_data_includes_labels():
     )
 
     with (
-        mock.patch("bblocks.data_importers.baci.baci._validate_hs_version", return_value="HS22"),
+        mock.patch(
+            "bblocks.data_importers.baci.baci._validate_hs_version", return_value="HS22"
+        ),
         mock.patch.object(importer, "_load_data"),
     ):
         labeled = importer.get_data(
@@ -335,7 +335,9 @@ def test_baci_get_country_codes_product_codes_metadata():
     importer._data["HS22"] = manager
 
     with (
-        mock.patch("bblocks.data_importers.baci.baci._validate_hs_version", return_value="HS22"),
+        mock.patch(
+            "bblocks.data_importers.baci.baci._validate_hs_version", return_value="HS22"
+        ),
         mock.patch.object(importer, "_load_data"),
     ):
         assert importer.get_country_codes("HS22").equals(manager.country_codes)
