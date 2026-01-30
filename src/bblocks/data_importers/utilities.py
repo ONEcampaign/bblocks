@@ -34,7 +34,7 @@ def convert_dtypes(
     if backend != "pyarrow":
         return df.convert_dtypes(dtype_backend=backend)
 
-        # Convert all columns to Arrow-backed dtypes once
+    # Convert all columns to Arrow-backed dtypes once
     out = df.convert_dtypes(dtype_backend="pyarrow")
 
     if not casts:
@@ -44,13 +44,9 @@ def convert_dtypes(
     if missing:
         raise KeyError(f"Columns not found: {missing}")
 
-    # Cast only specified columns; avoid full DataFrame -> pa.Table -> DataFrame conversion
+    # Cast only specified columns
     for col, pa_type in casts.items():
-        # Build a pyarrow Array from the column with an explicit target type.
-        # This is public API and preserves nulls.
         arr = pa.array(out[col], type=pa_type)
-
-        # Wrap back into an ArrowDtype Series so pandas keeps Arrow-backed storage.
         out[col] = pd.Series(
             arr, index=out.index, name=col, dtype=pd.ArrowDtype(pa_type)
         )
