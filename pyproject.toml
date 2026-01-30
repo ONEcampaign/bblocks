@@ -1,6 +1,6 @@
 [project]
 name = "bblocks-data-importers"
-version = "0.4.2"
+version = "0.5.0"
 description = "Tools to import data from different sources. Part of the bblocks project."
 authors = [
     {name = "ONE Campaign"},
