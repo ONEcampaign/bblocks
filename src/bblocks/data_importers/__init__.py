@@ -14,5 +14,6 @@ from bblocks.data_importers.world_bank.international_debt_statistics import (
 )
 from bblocks.data_importers.undp.hdi import HumanDevelopmentIndex
 from bblocks.data_importers.unaids.unaids import UNAIDS
+from bblocks.data_importers.baci.baci import BACI
 
 __version__ = version("bblocks-data-importers")
