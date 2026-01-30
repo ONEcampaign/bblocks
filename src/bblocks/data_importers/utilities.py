@@ -1,33 +1,61 @@
 import pandas as pd
-from typing import Literal
+from typing import Literal, Mapping
 import country_converter as coco
+import pyarrow as pa
 
 from bblocks.data_importers.config import logger
 
 
 def convert_dtypes(
-    df: pd.DataFrame, backend: Literal["pyarrow", "numpy_nullable"] = "pyarrow"
+    df: pd.DataFrame,
+    backend: Literal["pyarrow", "numpy_nullable"] = "pyarrow",
+    *,
+    casts: Mapping[str, pa.DataType] | None = None,
 ) -> pd.DataFrame:
     """Converts the DataFrame to the specified backend dtypes
 
     Args:
         df: The DataFrame to convert
         backend: The backend to use for the conversion. Default is "pyarrow"
+        casts: Optional mapping of column names to pyarrow DataTypes for explicit casting
 
     Returns:
         A DataFrame with the pyarrow dtypes
     """
 
-    supported_backends = {"pyarrow", "numpy_nullable"}
-
     # Check if the backend is valid
+    supported_backends = {"pyarrow", "numpy_nullable"}
     if backend not in supported_backends:
         raise ValueError(
             f"Unsupported backend '{backend}'. Supported backends are {supported_backends}."
         )
 
-    # Convert dtypes using the specified backend
-    return df.convert_dtypes(dtype_backend=backend)
+    # Non-arrow path stays unchanged
+    if backend != "pyarrow":
+        return df.convert_dtypes(dtype_backend=backend)
+
+        # Convert all columns to Arrow-backed dtypes once
+    out = df.convert_dtypes(dtype_backend="pyarrow")
+
+    if not casts:
+        return out
+
+    missing = [c for c in casts if c not in out.columns]
+    if missing:
+        raise KeyError(f"Columns not found: {missing}")
+
+    # Cast only specified columns; avoid full DataFrame -> pa.Table -> DataFrame conversion
+    for col, pa_type in casts.items():
+        # Build a pyarrow Array from the column with an explicit target type.
+        # This is public API and preserves nulls.
+        arr = pa.array(out[col], type=pa_type)
+
+        # Wrap back into an ArrowDtype Series so pandas keeps Arrow-backed storage.
+        out[col] = pd.Series(
+            arr, index=out.index, name=col, dtype=pd.ArrowDtype(pa_type)
+        )
+
+    return out
 
 
 def convert_countries_to_unique_list(
