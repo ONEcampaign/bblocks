@@ -144,3 +144,4 @@ dmypy.json
 # ignore files in .data folder
 src/bblocks/data_importers/.data/*
 src/dev_tests.py
+/CLAUDE.md
