@@ -51,11 +51,11 @@ feedback and ensure your work aligns with the project's goals.
 
 2. Fork `bblocks_data_importers` and clone your fork.
 
-3. Dependencies are managed using `poetry`. 
-Install `poetry` in your virtual environment and install `bblocks-data-importers`
+3. Dependencies are managed using `uv`.
+Install `uv` ([docs](https://docs.astral.sh/uv/getting-started/installation/)) and install `bblocks-data-importers`
 
     ```console
-    $ poetry install
+    $ uv sync
     ```
 
 4. Ensure tests are written for any new functionality and that existing tests pass. 
