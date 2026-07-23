@@ -1,6 +1,6 @@
 [project]
 name = "bblocks"
-version = "2.2.0"
+version = "2.3.0"
 description = "Building blocks for development data."
 authors = [
     {name = "ONE Campaign"},
@@ -15,11 +15,11 @@ dependencies = []
 [project.optional-dependencies]
 places = ["bblocks-places>=0.0.5"]
 data-importers = ["bblocks-data-importers>=0.5.0"]
-datacommons-tools = ["bblocks-datacommons-tools>=0.0.2,<0.1.0"]
+datacommons-tools = ["dcp-tools>=1.0.0rc1"]
 all = [
     "bblocks-places>=0.0.5",
     "bblocks-data-importers>=0.5.0",
-    "bblocks-datacommons-tools>=0.0.2,<0.1.0"
+    "dcp-tools>=1.0.0rc1"
 ]
 
 [tool.poetry]
