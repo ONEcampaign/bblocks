@@ -4,6 +4,7 @@ Changelog
 v2.3.0 (2026-08-11)
 ---------------------
 - Repoints the `datacommons-tools` extra from `bblocks-datacommons-tools` (renamed, no longer maintained under that name) to `dcp-tools`
+- Raises the minimum supported Python to 3.13, since `dcp-tools` requires it. Installing on Python 3.11 or 3.12 now resolves to bblocks 2.2.0
 
 v2.2.0 (2026-08-11)
 ---------------------
