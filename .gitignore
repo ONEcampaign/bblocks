@@ -104,6 +104,11 @@ ENV/
 .vscode/
 .idea/
 
+# AI
+.claude/
+CLAUDE.md
+AGENTS.md
+
 # downloaded files
 /bblocks/.raw_data/*.csv
 /bblocks/.raw_data/*.feather
