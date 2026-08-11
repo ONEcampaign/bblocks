@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v2.2.0 (2026-08-11)
+---------------------
+- Drops the upper version caps on the `places` and `data-importers` extras and raises their floors to the current releases, so `pip install bblocks[all]` picks up current `bblocks-places` and `bblocks-data-importers` releases
+
 v2.1.0 (2025-07-15)
 ---------------------
 - Adds `bblocks-datacommons-tools` to the namespace
