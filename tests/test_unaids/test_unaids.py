@@ -1,13 +1,86 @@
 import io
+import subprocess
+import sys
+import warnings
 from zipfile import ZipFile
 from unittest import mock
 
 import pandas as pd
 import pytest
+import urllib3
 
 from bblocks.importers.unaids import unaids
 from bblocks.importers.config import DataExtractionError, Fields
 from bblocks.importers.protocols import DataImporter
+
+
+def test_importing_unaids_leaves_warning_filters_unchanged_subprocess():
+    """Importing bblocks.importers.unaids.unaids must not install a
+    process-wide InsecureRequestWarning filter (previously done via a
+    module-level urllib3.disable_warnings() call).
+
+    Run out-of-process: pytest collection has already imported this module,
+    and other dependencies (numpy, urllib3, requests) install their own
+    unrelated filters as an import-time side effect, so an in-process
+    before/after diff of the full filter list would be noisy. Checking
+    specifically for an InsecureRequestWarning filter isolates the behavior
+    this test cares about.
+    """
+    script = (
+        "import warnings\n"
+        "import urllib3\n"
+        "import bblocks.importers.unaids.unaids\n"
+        "leaked = [f for f in warnings.filters if f[2] is urllib3.exceptions.InsecureRequestWarning]\n"
+        "assert leaked == [], "
+        "f'importing unaids installed a process-wide filter: {leaked!r}'\n"
+        "print('OK')\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip() == "OK"
+
+
+def test_get_response_unverified_does_not_leak_warning_filter():
+    """A call with verify=False must not leave a lingering filter behind."""
+    mock_response = mock.Mock()
+    mock_response.raise_for_status = mock.Mock()
+
+    before = list(warnings.filters)
+    with mock.patch(
+        "bblocks.importers.unaids.unaids.requests.get",
+        return_value=mock_response,
+    ):
+        unaids.get_response("http://example.com", verify=False)
+    after = list(warnings.filters)
+
+    assert before == after
+
+
+def test_get_response_unverified_suppresses_insecure_request_warning():
+    """The InsecureRequestWarning raised for the unverified request itself
+    must be suppressed, without leaking a filter afterwards."""
+    mock_response = mock.Mock()
+    mock_response.raise_for_status = mock.Mock()
+
+    def fake_get(url, verify):
+        warnings.warn(
+            "unverified HTTPS request", urllib3.exceptions.InsecureRequestWarning
+        )
+        return mock_response
+
+    with mock.patch(
+        "bblocks.importers.unaids.unaids.requests.get", side_effect=fake_get
+    ):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            unaids.get_response("http://example.com", verify=False)
+
+    assert caught == []
 
 
 def test_protocol():
