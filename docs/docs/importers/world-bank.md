@@ -25,7 +25,7 @@ Before getting data you should know which database you want to access (there are
 you can easily get the available databases
 
 ```python
-from bblocks.data_importers import get_wb_databases
+from bblocks import get_wb_databases
 
 print(get_wb_databases())
 ```
@@ -37,7 +37,7 @@ necessary to specify which database you want to access.
 To start accessing World Bank data, first instantiate a `WorldBank` importer.
 
 ```python
-from bblocks.data_importers import WorldBank
+from bblocks import WorldBank
 
 wb = WorldBank()
 ```
@@ -159,7 +159,7 @@ wb.clear_cache()
 Alternatively, you can use the `clear_wb_cache` function.
 
 ```python
-from bblocks.data_importers import clear_wb_cache
+from bblocks import clear_wb_cache
 
 clear_wb_cache()
 ```
@@ -173,7 +173,7 @@ If you want to quickly access available indicators, entities, and metadata witho
 instantiating a WorldBank object, you can use the following convenience functions:
 
 ```python
-from bblocks.data_importers import (
+from bblocks.importers.world_bank import (
     get_wb_entities,
     get_wb_indicator_metadata,
     get_wb_indicators,
@@ -199,7 +199,7 @@ To access data from the International Debt Statistics (IDS) database, use the
 `InternationalDebtStatistics` importer.
 
 ```python
-from bblocks.data_importers import InternationalDebtStatistics
+from bblocks import InternationalDebtStatistics
 
 ids = InternationalDebtStatistics()
 ```

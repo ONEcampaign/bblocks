@@ -1,4 +1,4 @@
-from bblocks.data_importers import WFPFoodSecurity
+from bblocks import WFPFoodSecurity
 
 # World Food Programme (WFP) Importers
 
@@ -22,7 +22,7 @@ Instantiate the object and call the `get_data()` method to retrieve a pandas Dat
 contain all indicators and countries.
 
 ```python
-from bblocks.data_importers import WFPInflation
+from bblocks import WFPInflation
 
 # Create an importer instance
 wfp_infl = WFPInflation()
@@ -55,7 +55,7 @@ Instantiate the object and call the `get_data()` method to retrieve a pandas Dat
 country using ISO3 codes and chose data at the national or subnational level. 
 
 ```python
-from bblocks.data_importers import WFPFoodSecurity
+from bblocks import WFPFoodSecurity
 
 # Create an importer instance
 wfp_fs = WFPFoodSecurity()

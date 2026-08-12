@@ -1,4 +1,4 @@
-# Design philosophy for `bblocks-data-importers`
+# Design philosophy for the `bblocks` importers
 
 
 Development data is uniquely challenging. While some sources provide structured access through APIs or databases, 
@@ -16,7 +16,7 @@ to clean and standardize each dataset.
 
 <h2> A predictable interface for unpredictable data </h2>
 
-The `bblocks-data-importers` package is designed to tackle this complexity with a clear and consistent interface, 
+The `bblocks` package is designed to tackle this complexity with a clear and consistent interface, 
 while still allowing the flexibility needed to handle source-specific quirks.
 
 Every data importer in the package follows a shared protocol that governs how data is accessed, cached, and returned.
@@ -32,7 +32,7 @@ Key fields â€” like country codes and names, time periods, values, and metadataâ
 sources. This consistency reduces the need for custom parsing or transformation logic in downstream analysis.
 
 
-By following this design, `bblocks-data-importers` allows you to:
+By following this design, `bblocks` allows you to:
 
 - Work confidently across diverse datasets
 - Reuse the same downstream logic across sources

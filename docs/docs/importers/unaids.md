@@ -14,7 +14,7 @@ Visit the [UNAIDS data portal](https://aidsinfo.unaids.org/) for more informatio
 To start using the importer, instantiate the importer and use the `get_data` method to get the latest UNAIDS data.
 
 ```python
-from bblocks.data_importers import UNAIDS
+from bblocks import UNAIDS
 
 # Create an importer instance
 unaids = UNAIDS()
