@@ -494,6 +494,7 @@ class TestInflation:
             # Assert that no messages are logged
             mock_logger.assert_not_called()
 
+    @pytest.mark.network
     def test_load_data_country_not_available(self, wfp_inflation_pre_load):
         """
         Test that WFPInflation's `load_data` method logs a warning and sets data to None for unavailable countries.
@@ -719,6 +720,7 @@ class TestInflation:
 
             # mock_convert.assert_called_once_with(["InvalidCountry"], to="ISO3")
 
+    @pytest.mark.network
     def test_get_data_no_data_found(self, wfp_inflation_post_load):
         """
         Test that WFPInflation's `get_data` method returns an empty DataFrame and logs a warning when no data is found.
