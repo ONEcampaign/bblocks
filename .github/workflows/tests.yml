@@ -10,6 +10,10 @@ on:
   # targeting main, so in a stack every PR except the bottom one runs no
   # tests and shows a reviewer no checks at all.
   pull_request:
+  schedule:
+    # v2-resolvability depends on live PyPI state, not on anything in this
+    # repo, so a weekly run is what actually catches drift between releases.
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -83,3 +87,52 @@ jobs:
           fi
 
           echo "wheel contents OK"
+
+  v2-resolvability:
+    runs-on: ubuntu-latest
+    name: bblocks 2.x still resolves to the same install set
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Dry-run resolve bblocks[all]==2.2.0 against real PyPI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --dry-run --quiet --report report.json "bblocks[all]==2.2.0"
+
+      - name: Assert bblocks-data-importers still resolves to 0.5.0
+        run: |
+          python - <<'EOF'
+          import json
+          import sys
+
+          with open("report.json") as f:
+              report = json.load(f)
+
+          resolved = {
+              item["metadata"]["name"]: item["metadata"]["version"]
+              for item in report["install"]
+          }
+
+          got = resolved.get("bblocks-data-importers")
+          expected = "0.5.0"
+
+          if got != expected:
+              print(
+                  "::error::pip install 'bblocks[all]==2.2.0' resolved "
+                  f"bblocks-data-importers=={got!r}, expected {expected!r}. "
+                  "This means the bblocks 2.x install set has drifted from "
+                  "what it resolved to when 2.2.0 was released -- #209 "
+                  "requires 'pip install bblocks==2.*' to keep resolving to "
+                  "the same package set indefinitely, since the 3.0 rewrite "
+                  "assumes old installs are pinned in place. Investigate "
+                  "what changed on PyPI (e.g. bblocks-data-importers 0.5.0 "
+                  "was yanked) and, if needed, re-release a corrected "
+                  "bblocks 2.2.x."
+              )
+              sys.exit(1)
+
+          print(f"OK: bblocks[all]==2.2.0 still resolves bblocks-data-importers=={got}")
+          EOF
