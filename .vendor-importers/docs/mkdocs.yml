@@ -1,0 +1,17 @@
+site_name: tools/bblocks/data-importers
+
+nav:
+    - index.md
+    - Getting started: getting-started.md
+    - Design philosophy: design-philosophy.md
+    - Available data importers:
+        - importers/index.md
+        - World Economic Outlook: importers/weo.md
+        - World Bank: importers/world-bank.md
+        - International Debt Statistics: importers/ids.md
+        - Global Health Expenditure Database: importers/ghed.md
+        - UNAIDS: importers/unaids.md
+        - Human Development Report: importers/hdr.md
+        - World Food Programme: importers/wfp.md
+        - CEPII-BACI: importers/baci.md
+    - Changelog: changelog.md
