@@ -10,7 +10,7 @@ systems. Even when data is programmatically accessible, it often suffers from:
 - Poor or missing metadata
 - Inconsistent naming conventions for common fields
 - Structural differences in how data is organized (e.g., long vs. wide format, different grouping levels)
-- 
+
 These issues create friction and fragility in analysis workflows, forcing teams to repeatedly write one-off code 
 to clean and standardize each dataset.
 

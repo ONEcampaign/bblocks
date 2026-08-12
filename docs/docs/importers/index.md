@@ -14,15 +14,9 @@ interface while adapting to the quirks of each source.
 | __World Bank - [International Debt Statistics](./ids)__ | Comprehensive external debt data from the World Bank                          |
 | __WHO - [Global Health Expenditure Database](./ghed)__  | Comprehensive country health expenditure data                                 |
 | __[UNAIDS](./unaids)__                                  | Extensive data on the HIV epidemic                                            |
-| __UNDP - [Human Development Report](./hdi)__            | Insights on key dimensions of human development                               |
-| __[WFP - Inflation and food security](./wfp)__          | Key inflation and food security data from WFP VAM and the HungerMap platform] |   
-
-
-## Upcoming Importers
-
-| Source             | Description                                                                                    |
-|--------------------|------------------------------------------------------------------------------------------------|
-| CEPII - BACI trade | Harmonized trade data                                                                          |
+| __UNDP - [Human Development Report](./hdr)__            | Insights on key dimensions of human development                               |
+| __[WFP - Inflation and food security](./wfp)__          | Key inflation and food security data from WFP VAM and the HungerMap platform  |
+| __CEPII - [BACI](./baci)__                              | Harmonized international trade data                                           |
 
 
 ## See Also
