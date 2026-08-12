@@ -81,6 +81,7 @@ class Fields:
     iso2_code = "iso2_code"
     iso3_code = "iso3_code"
     entity_code = "entity_code"
+    imf_code = "imf_code"
     counterpart_code = "counterpart_code"
     counterpart_name = "counterpart_name"
     region_code = "region_code"

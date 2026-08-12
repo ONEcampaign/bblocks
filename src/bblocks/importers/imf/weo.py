@@ -61,9 +61,25 @@ class WEO:
     >>> weo.clear_cache()
     """
 
-    def __init__(self):
+    def __init__(self, *, legacy_entity_codes: bool = False):
+        """Instantiate a WEO importer.
+
+        Args:
+            legacy_entity_codes: migration aid for pipelines keyed on the old
+                numeric IMF area codes. When True, `entity_code` is populated
+                from the legacy numeric code (imf-reader's `REF_AREA_IMF_CODE`,
+                also exposed here as `imf_code`) instead of the ISO3 code.
+                Default is False, meaning `entity_code` is ISO3. This is
+                temporary: imf-reader documents `REF_AREA_IMF_CODE` as a
+                compatibility column slated for removal in its 3.0 release,
+                at which point this flag will stop working. A small number of
+                entities, such as Liechtenstein, never had a legacy numeric
+                code. For those, `entity_code` is null under this flag, and a
+                warning names the affected entities.
+        """
         self._data: dict = {}
         self._latest_version = None
+        self._legacy_entity_codes = legacy_entity_codes
 
     def __repr__(self) -> str:
         """String representation of the WEO object"""
@@ -71,17 +87,17 @@ class WEO:
         imported = list(self._data.keys())
         return f"{self.__class__.__name__}(imported versions = {imported!r})"
 
-    @staticmethod
-    def _format_data(df: pd.DataFrame):
+    def _format_data(self, df: pd.DataFrame):
         """Format WEO data"""
 
-        return (
+        df = (
             df.pipe(convert_dtypes)
             .rename(
                 columns={
                     "OBS_VALUE": Fields.value,
                     "TIME_PERIOD": Fields.year,
                     "REF_AREA_CODE": Fields.entity_code,
+                    "REF_AREA_IMF_CODE": Fields.imf_code,
                     "REF_AREA_LABEL": Fields.entity_name,
                     "CONCEPT_CODE": Fields.indicator_code,
                     "CONCEPT_LABEL": Fields.indicator_name,
@@ -92,6 +108,31 @@ class WEO:
             # convert other columns to lowercase
             .rename(columns={col: col.lower() for col in df.columns})
         )
+
+        if self._legacy_entity_codes:
+            if Fields.imf_code not in df.columns:
+                raise ValueError(
+                    "legacy_entity_codes=True requires the legacy IMF numeric "
+                    f"area code column, but imf-reader did not return one "
+                    f"(no '{Fields.imf_code}' column after formatting). This "
+                    "flag is a migration aid tied to imf-reader's "
+                    "REF_AREA_IMF_CODE column, which its docstring marks as "
+                    "slated for removal; if it has been dropped, switch to "
+                    "the default ISO3 entity_code."
+                )
+            df[Fields.entity_code] = df[Fields.imf_code]
+
+            null_entities = df.loc[
+                df[Fields.entity_code].isna(), Fields.entity_name
+            ].unique()
+            if len(null_entities) > 0:
+                logger.warning(
+                    "legacy_entity_codes=True: no legacy IMF numeric code for "
+                    f"{', '.join(sorted(null_entities))}. entity_code is null "
+                    "for these rows."
+                )
+
+        return df
 
     def _load_data(self, version=None) -> None:
         """Load WEO data to the object for a specific version
