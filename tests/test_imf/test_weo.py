@@ -27,28 +27,44 @@ def test_protocol():
 
 @pytest.fixture
 def mock_weo_data():
-    """Fixture for simulating WEO data as a DataFrame"""
+    """Fixture for simulating WEO data as a DataFrame, matching imf-reader 2.0's schema.
+
+    REF_AREA_CODE is a string: ISO3 for real countries (USA, LIE), a synthetic
+    G-prefixed code for aggregates (G001, World). REF_AREA_IMF_CODE carries
+    the pre-translation legacy numeric IMF code for every row, and is null for
+    entities that never had a legacy code, such as Liechtenstein.
+    """
     data = {
-        "UNIT_CODE": ["B", "B"],
-        "CONCEPT_CODE": ["NGDP_D", "NGDP_D"],
-        "REF_AREA_CODE": [111, 111],
-        "FREQ_CODE": ["A", "A"],
-        "LASTACTUALDATE": [2023, 2023],
-        "SCALE_CODE": [1, 1],
+        "UNIT_CODE": ["B", "B", "B", "B"],
+        "CONCEPT_CODE": ["NGDP_D", "NGDP_D", "NGDP_D", "NGDP_D"],
+        "REF_AREA_CODE": ["USA", "USA", "G001", "LIE"],
+        "REF_AREA_IMF_CODE": pd.array([111, 111, 1, None], dtype="Int64"),
+        "FREQ_CODE": ["A", "A", "A", "A"],
+        "LASTACTUALDATE": [2023, 2023, 2023, 2023],
+        "SCALE_CODE": [1, 1, 1, 1],
         "NOTES": [
             "See notes for: Gross domestic product, constant prices (National currency) Gross domestic product, current prices (National currency).",
             "See notes for: Gross domestic product, constant prices (National currency) Gross domestic product, current prices (National currency).",
+            "See notes for: Gross domestic product, constant prices (National currency) Gross domestic product, current prices (National currency).",
+            "See notes for: Gross domestic product, constant prices (National currency) Gross domestic product, current prices (National currency).",
         ],
-        "TIME_PERIOD": [1980, 1981],
-        "OBS_VALUE": [39.372, 43.097],
-        "UNIT_LABEL": ["Index", "Index"],
+        "TIME_PERIOD": [1980, 1981, 1981, 1981],
+        "OBS_VALUE": [39.372, 43.097, 41.5, 21.0],
+        "UNIT_LABEL": ["Index", "Index", "Index", "Index"],
         "CONCEPT_LABEL": [
             "Gross domestic product, deflator",
             "Gross domestic product, deflator",
+            "Gross domestic product, deflator",
+            "Gross domestic product, deflator",
         ],
-        "REF_AREA_LABEL": ["United States", "United States"],
-        "FREQ_LABEL": ["Annual", "Annual"],
-        "SCALE_LABEL": ["Units", "Units"],
+        "REF_AREA_LABEL": [
+            "United States",
+            "United States",
+            "World",
+            "Liechtenstein, Principality of",
+        ],
+        "FREQ_LABEL": ["Annual", "Annual", "Annual", "Annual"],
+        "SCALE_LABEL": ["Units", "Units", "Units", "Units"],
     }
     return pd.DataFrame(data)
 
@@ -98,6 +114,7 @@ def test_format_data(mock_weo_data):
         "obs_value": Fields.value,
         "time_period": Fields.year,
         "ref_area_code": Fields.entity_code,
+        "ref_area_imf_code": Fields.imf_code,
         "ref_area_label": Fields.entity_name,
         "concept_code": Fields.indicator_code,
         "concept_label": Fields.indicator_name,
@@ -358,6 +375,89 @@ def test_get_data_with_specific_version(
     assert weo_importer._latest_version is None, (
         "Latest version should not be updated when fetching a specific version"
     )
+
+
+# entity_code / imf_code (imf-reader 2.0 schema) tests
+
+
+def test_entity_code_is_iso3_by_default(mock_weo_data):
+    """entity_code should carry the ISO3 / G-prefixed code by default"""
+
+    weo_importer = WEO()
+    formatted = weo_importer._format_data(mock_weo_data)
+
+    assert formatted[Fields.entity_code].tolist() == ["USA", "USA", "G001", "LIE"]
+
+
+def test_imf_code_carries_legacy_numeric_code(mock_weo_data):
+    """imf_code should carry the legacy numeric IMF area code, null where there is none"""
+
+    weo_importer = WEO()
+    formatted = weo_importer._format_data(mock_weo_data)
+
+    assert formatted[Fields.imf_code].tolist()[:3] == [111, 111, 1]
+    assert pd.isna(formatted[Fields.imf_code].tolist()[3])
+
+
+def test_aggregates_keep_g_prefixed_entity_code(mock_weo_data):
+    """Aggregate rows (e.g. World) should keep their G-prefixed entity_code"""
+
+    weo_importer = WEO()
+    formatted = weo_importer._format_data(mock_weo_data)
+
+    aggregate_rows = formatted[formatted[Fields.entity_name] == "World"]
+    assert (aggregate_rows[Fields.entity_code] == "G001").all()
+    assert (aggregate_rows[Fields.imf_code] == 1).all()
+
+
+def test_legacy_entity_codes_true_uses_numeric_entity_code(mock_weo_data):
+    """legacy_entity_codes=True should populate entity_code from the legacy numeric code"""
+
+    weo_importer = WEO(legacy_entity_codes=True)
+    formatted = weo_importer._format_data(mock_weo_data)
+
+    assert formatted[Fields.entity_code].tolist()[:3] == [111, 111, 1]
+    # imf_code is still available and matches entity_code in this mode
+    assert formatted[Fields.imf_code].tolist() == formatted[Fields.entity_code].tolist()
+
+
+def test_legacy_entity_codes_true_is_null_for_entities_with_no_legacy_code(
+    mock_weo_data,
+):
+    """legacy_entity_codes=True should leave entity_code null for entities with no
+    legacy numeric code, and warn naming them, rather than raising or dropping rows"""
+
+    weo_importer = WEO(legacy_entity_codes=True)
+    with mock.patch("bblocks.importers.imf.weo.logger.warning") as log:
+        formatted = weo_importer._format_data(mock_weo_data)
+
+    liechtenstein_rows = formatted[
+        formatted[Fields.entity_name] == "Liechtenstein, Principality of"
+    ]
+    assert liechtenstein_rows[Fields.entity_code].isna().all()
+
+    # the other rows are unaffected
+    assert not formatted[Fields.entity_code].iloc[:3].isna().any()
+
+    log.assert_called_once()
+    assert "Liechtenstein, Principality of" in log.call_args[0][0]
+
+
+def test_legacy_entity_codes_true_without_legacy_column_fails_loudly(mock_weo_data):
+    """legacy_entity_codes=True should raise clearly if imf-reader stops returning the legacy column"""
+
+    data_without_legacy_code = mock_weo_data.drop(columns=["REF_AREA_IMF_CODE"])
+    weo_importer = WEO(legacy_entity_codes=True)
+
+    with pytest.raises(ValueError, match="legacy_entity_codes=True requires"):
+        weo_importer._format_data(data_without_legacy_code)
+
+
+def test_legacy_entity_codes_is_keyword_only():
+    """legacy_entity_codes must be passed as a keyword argument"""
+
+    with pytest.raises(TypeError):
+        WEO(True)  # noqa
 
 
 def test_get_data_with_cached_specific_version(mock_weo_data):

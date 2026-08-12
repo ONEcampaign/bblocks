@@ -83,7 +83,7 @@ requires-dist = [
     { name = "country-converter", specifier = ">=1.3.1,<2" },
     { name = "diskcache", specifier = ">=5.6.3,<6" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
-    { name = "imf-reader", specifier = ">=1.3.0,<2" },
+    { name = "imf-reader", specifier = ">=2.0,<3" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "openpyxl", specifier = ">=3.1.5,<4" },
     { name = "pandas", specifier = ">=2.2.3,<3" },
@@ -157,15 +157,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz", hash = "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55", size = 138112, upload-time = "2026-07-22T03:35:12.644Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775", size = 136983, upload-time = "2026-07-22T03:35:11.276Z" },
-]
-
-[[package]]
-name = "chardet"
-version = "5.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/0d/f7b6ab21ec75897ed80c17d79b15951a719226b9fababf1e40ea74d69079/chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7", size = 2069618, upload-time = "2023-08-01T19:23:02.662Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/6f/f5fbc992a329ee4e0f288c1fe0e2ad9485ed064cac731ed2fe47dcc38cbf/chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970", size = 199385, upload-time = "2023-08-01T19:23:00.661Z" },
 ]
 
 [[package]]
@@ -448,21 +439,18 @@ wheels = [
 
 [[package]]
 name = "imf-reader"
-version = "1.5.0"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
-    { name = "chardet" },
-    { name = "filelock" },
     { name = "pandas" },
-    { name = "platformdirs" },
     { name = "pyarrow" },
+    { name = "readerkit" },
     { name = "requests" },
-    { name = "requests-cache" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/3e/e92e43879fdef1807e1ca267abac4ff203c64e83e4798241214e65325c30/imf_reader-1.5.0.tar.gz", hash = "sha256:131c8c68f96c37844fa8c38853e5dce98549d29eeda541379a2a0c5c3cb568ca", size = 25546, upload-time = "2026-04-30T02:38:43.153Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/2b/bc1a4ffba78ef5f83ed61f4de3dc5e75416736af580ec4e698e87f316934/imf_reader-2.0.0.tar.gz", hash = "sha256:14699af827e6343779040516a95c302e396a547f2b60e109fd6478b3566110df", size = 32285, upload-time = "2026-08-12T12:58:37.004Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/33/eab89f17c4ea12656d0f7cdf1d335f9e728bdcd888d50836c68115c9ebdb/imf_reader-1.5.0-py3-none-any.whl", hash = "sha256:11956314416c2175e40ba2ad930c8451b84a734cd9cb209778518a4f8bb8e15e", size = 34409, upload-time = "2026-04-30T02:38:41.93Z" },
+    { url = "https://files.pythonhosted.org/packages/16/e1/4b7028e759dc893363eaab3a2477465973587c81820f84cd3b2bda6f9b64/imf_reader-2.0.0-py3-none-any.whl", hash = "sha256:8818ff9b71e5231c8221e7246d758152404c3e0a9ae5ec2bc82b505d6aa758f0", size = 41284, upload-time = "2026-08-12T12:58:35.993Z" },
 ]
 
 [[package]]
@@ -1031,6 +1019,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyrate-limiter"
+version = "4.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/19/27/e564f33ea085c63d5540f707b31aeb50a4992eac2da655dc02435a760a07/pyrate_limiter-4.4.0.tar.gz", hash = "sha256:2c0c720c4fa16c5d8199e4821bf34507fb49c007a25b786cec6fb94ffd0844aa", size = 90955, upload-time = "2026-06-14T10:52:03.021Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2b/77/2b5ea2e5e343fd7f74ba9c50a282d7cb66d1be3d12bd647510338d78fcf1/pyrate_limiter-4.4.0-py3-none-any.whl", hash = "sha256:f738dfa3c7ac1222a5ea3d31e00cfd31b5592b13ade4077afe9e8ac6293381f5", size = 43102, upload-time = "2026-06-14T10:52:01.334Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1139,6 +1136,23 @@ wheels = [
 ]
 
 [[package]]
+name = "readerkit"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "filelock" },
+    { name = "platformdirs" },
+    { name = "requests" },
+    { name = "requests-cache" },
+    { name = "requests-ratelimiter" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2d/55/dc54f3cc9556bbb733c2546c0c1f00ba4f0577131877560a3ba47e5ceeab/readerkit-0.1.0.tar.gz", hash = "sha256:fc0611ce5e0436d95d5600bb07fb413fc13452392fc04d1fc3692dde6b21a37f", size = 38504, upload-time = "2026-08-11T20:12:46.134Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/48/1b396d6dac931b49725d9f914f7f4cf402168526779924dc580a360ec136/readerkit-0.1.0-py3-none-any.whl", hash = "sha256:d8ed1405946ba8dd557b48bafd3a1dbaeb1e04b6105e507d6beabd1249dba4f4", size = 43924, upload-time = "2026-08-11T20:12:45.115Z" },
+]
+
+[[package]]
 name = "requests"
 version = "2.34.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1168,6 +1182,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/32/ab/a340c7f529646f16e5656a8ba1424ed0de406203e4554868491786628730/requests_cache-1.3.3.tar.gz", hash = "sha256:79b72d5ac5143992d1836ad78f4d8e65666061dd44e220548caab3723089826b", size = 101179, upload-time = "2026-07-03T19:48:57.963Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a5/bf/c1775e49b350225bd851576ba75263bc728d8f05c0e31439a45f3429cc7b/requests_cache-1.3.3-py3-none-any.whl", hash = "sha256:c8df20ff874ebfc026959e3874e6c12bd6724934cdb10925915908453d4b17e4", size = 70788, upload-time = "2026-07-03T19:48:56.693Z" },
+]
+
+[[package]]
+name = "requests-ratelimiter"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyrate-limiter" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/71/aecc6307695ddad2d11f474cd79d79b111ee90dd123d697b76eaa1cd73a1/requests_ratelimiter-0.10.0.tar.gz", hash = "sha256:9c1a78d7646caa5ccf211a6c341abd16d329be2c8c35044a418aa9da7c0e7a33", size = 17190, upload-time = "2026-04-22T18:11:15.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f1/87/c94855590fde39c87cf671d242e555984d93e76d2029a6a3ad3a67a072ad/requests_ratelimiter-0.10.0-py3-none-any.whl", hash = "sha256:79a3e44c13de8d72705512696b44b94265bd96d997580c73e480373814af228e", size = 11408, upload-time = "2026-04-22T18:11:14.398Z" },
 ]
 
 [[package]]

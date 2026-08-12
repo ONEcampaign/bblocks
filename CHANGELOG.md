@@ -9,6 +9,9 @@ v3.0.0 (2026-08-12)
 - Drops the `places` and `datacommons-tools` extras, which installed separate distributions. `all` and `data-importers` stay as empty extras so existing install commands keep working
 - Declares beautifulsoup4, numpy, requests, platformdirs and urllib3, which the importers import directly and previously got only transitively
 - Leaves the 2.x line installable and resolvable exactly as before
+- Upgrades to `imf-reader` 2.0, fixing a live outage where the IMF's WEO download page returned 403 for every version released before April 2025
+- Changes `WEO`'s `entity_code` from numeric IMF codes to ISO3 codes for the 196 countries and `G`-prefixed synthetic codes for the 13 aggregates (e.g. `G001` for World, `G163` for the euro area). `imf_code` carries the legacy numeric code alongside it, and `legacy_entity_codes=True` restores the old numeric `entity_code` for pipelines that still key on it, though it is null for entities with no legacy code, such as Liechtenstein
+- Drops WEO rows with no observation value, removing about a third of rows in historical bulk versions and a small share in current ones
 
 v2.2.0 (2026-08-11)
 ---------------------
