@@ -1,18 +1,14 @@
-# Getting started with `bblocks-data-importers`
+# Getting started with `bblocks`
 
-This section walks you through the basic steps to install the `bblocks-data-importers` package, load your first dataset, 
+This section walks you through the basic steps to install the `bblocks` package, load your first dataset, 
 and understand how importers work.
 
 ## Installation
 
-You can install the data importers package as part of the broader bblocks distribution, or as a standalone package:
+The importers ship with `bblocks` itself:
 
-```bash title="Option 1: install via bblocks with extras"
-pip install bblocks[data-importers]
-```
-
-```bash title="Option 2: standalone installation"
-pip install bblocks-data-importers
+```bash
+pip install bblocks
 ```
 
 ## Import Your First Dataset
@@ -35,11 +31,11 @@ page for guidance on each importer.
 
 ### Step 2: Import package
 
-Each dataset importer in `bblocks-data-importers` has its own dedicated class. To work with World Economic Outlook data,
+Each dataset importer in `bblocks` has its own dedicated class. To work with World Economic Outlook data,
 you’ll need to import the corresponding WEO importer:
 
 ```python
-from bblocks.data_importers import WEO
+from bblocks import WEO
 ```
 
 ### Step 3: Instantiate the importer

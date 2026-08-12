@@ -47,26 +47,25 @@ open source, and contributions are welcome!
 
 Ready to contribute? Here are the steps to get set up for local development
 
-1. Navigate to the package's GitHub repository. `bblocks` is a namespace package where each
-package lives in its own repository. For example, the `bblocks-places` package lives in the `bblocks-places` repository
-here: https://github.com/ONEcampaign/bblocks-places
+1. Navigate to the right repository. The importers and analysis tools live in `bblocks` itself.
+Related packages have their own repositories: for example `bblocks-places` lives at
+https://github.com/ONEcampaign/bblocks-places
 
 2. Open an issue in the repository to discuss your proposed changes or enhancements. 
    This is a good way to get feedback and ensure your work aligns with the project's goals.
 
 3. Fork the repository and clone your fork to your local machine.
 
-4. Dependencies are managed using poetry. Install poetry in your virtual environment and 
-install the package:
+4. Dependencies are managed with uv. Install the package and its development dependencies:
 
     ```console
-    $ poetry install
+    $ uv sync
     ```
 
 5. Develop your changes and enhancements. Ensure tests are written for any new functionality
 and that existing tests pass. Code coverage is important but not critical. We aim for at least
 90% coverage, but we prioritize meaningful tests that cover all major functionality. Code should be formatted 
-using `black` and adhere to the project's coding standards.
+using `ruff format` and adhere to the project's coding standards.
 
 6. When you are done developing, open a pull request against the main repository, with a clear description of 
 your changes and any relevant issue numbers. One of the maintainers will review your changes and provide feedback.

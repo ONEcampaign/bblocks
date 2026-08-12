@@ -17,7 +17,7 @@ To start using the importer, instantiate the importer and use the `get_data` met
 to fetch all trade data. 
 
 ```py
-from bblocks.data_importers import BACI
+from bblocks import BACI
 
 # create an instance of the BACI importer
 baci = BACI()

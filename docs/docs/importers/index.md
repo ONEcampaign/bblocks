@@ -1,6 +1,6 @@
 # Available Data importers
 
-The bblocks-data-importers package provides structured access to a growing set of 
+The `bblocks` package provides structured access to a growing set of 
 international development data sources. Each importer is designed to offer a consistent 
 interface while adapting to the quirks of each source.
 
@@ -14,15 +14,9 @@ interface while adapting to the quirks of each source.
 | __World Bank - [International Debt Statistics](./ids)__ | Comprehensive external debt data from the World Bank                          |
 | __WHO - [Global Health Expenditure Database](./ghed)__  | Comprehensive country health expenditure data                                 |
 | __[UNAIDS](./unaids)__                                  | Extensive data on the HIV epidemic                                            |
-| __UNDP - [Human Development Report](./hdi)__            | Insights on key dimensions of human development                               |
-| __[WFP - Inflation and food security](./wfp)__          | Key inflation and food security data from WFP VAM and the HungerMap platform] |   
-
-
-## Upcoming Importers
-
-| Source             | Description                                                                                    |
-|--------------------|------------------------------------------------------------------------------------------------|
-| CEPII - BACI trade | Harmonized trade data                                                                          |
+| __UNDP - [Human Development Report](./hdr)__            | Insights on key dimensions of human development                               |
+| __[WFP - Inflation and food security](./wfp)__          | Key inflation and food security data from WFP VAM and the HungerMap platform  |
+| __CEPII - [BACI](./baci)__                              | Harmonized international trade data                                           |
 
 
 ## See Also
@@ -45,7 +39,7 @@ Don’t See a Dataset You Need?
 We're continuously expanding support for new sources. If you work with a dataset that isn’t yet covered—or if you’d 
 like to help build support for it—we’d love to hear from you!
 
-👉 __Open an [issue on GitHub](https://github.com/ONEcampaign/bblocks_data_importers/issues), and we can work 
+👉 __Open an [issue on GitHub](https://github.com/ONEcampaign/bblocks/issues), and we can work 
 together to develop the tooling you need.__
 
 Your contributions and feedback help make bblocks better for everyone in the development data community.

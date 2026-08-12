@@ -1,7 +1,8 @@
 # Changelog
 
-## v1.0.0 (in development)
-- Stable release of the `bblocks-data-importers` package
+Releases of the data importers from before they became part of `bblocks`.
+Releases of `bblocks` itself are recorded in the
+[bblocks changelog](https://github.com/ONEcampaign/bblocks/blob/main/CHANGELOG.md).
 
 ## v0.5.0 (2026-01-30)
 - Refactor of World Bank importers

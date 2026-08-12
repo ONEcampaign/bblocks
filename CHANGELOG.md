@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v3.0.0 (2026-08-12)
+---------------------
+- Folds the `bblocks-data-importers` code into this package as `bblocks.importers`. `bblocks` is a single distribution again
+- Adds a top-level surface, so `from bblocks import WEO` works for every public importer name. Resolution is lazy, so `import bblocks` stays cheap
+- Moves `bblocks.data_importers` out of this distribution. The retiring `bblocks-data-importers` release owns that import path and warns once, pointing at the replacement
+- Drops the `places` and `datacommons-tools` extras, which installed separate distributions. `all` and `data-importers` stay as empty extras so existing install commands keep working
+- Declares beautifulsoup4, numpy, requests, platformdirs and urllib3, which the importers import directly and previously got only transitively
+- Leaves the 2.x line installable and resolvable exactly as before
+
 v2.2.0 (2026-08-11)
 ---------------------
 - Drops the upper version caps on the `places` and `data-importers` extras and raises their floors to the current releases, so `pip install bblocks[all]` picks up current `bblocks-places` and `bblocks-data-importers` releases

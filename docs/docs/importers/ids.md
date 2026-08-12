@@ -17,7 +17,7 @@ Visit the IDS [here](https://www.worldbank.org/en/programs/debt-statistics/ids).
 To start using the IDS importer, instantiate an instance of the importer
 
 ```python
-from bblocks.data_importers import InternationalDebtStatistics
+from bblocks import InternationalDebtStatistics
 
 ids = InternationalDebtStatistics()
 ```

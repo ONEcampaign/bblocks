@@ -22,7 +22,7 @@ To start using the importer, instantiate the importer and use the `get_data` met
 the latest data from the Human Development Report.
 
 ```python
-from bblocks.data_importers import HumanDevelopmentIndex
+from bblocks import HumanDevelopmentIndex
 
 # Create an importer instance
 hdi = HumanDevelopmentIndex()

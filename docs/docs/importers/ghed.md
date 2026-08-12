@@ -20,7 +20,7 @@ To start using the importer, instantiate the importer and use the get_data metho
 the database
 
 ```py
-from bblocks.data_importers import GHED
+from bblocks import GHED
 
 # create an instance of the GHED importer
 ghed = GHED()

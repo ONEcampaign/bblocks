@@ -17,7 +17,7 @@ The source document can be accessed on the IMF website: [Latest LIC DSA list](ht
 Call `get_dsa()` to receive the cleaned pandas data frame. No additional parameters are required.
 
 ```python
-from bblocks.data_importers import get_dsa
+from bblocks import get_dsa
 
 df = get_dsa()
 ```
@@ -33,7 +33,7 @@ df = get_dsa()
 - `latest_dsa_discussed` - Date of the latest DSA discussed by the Executive Board but not yet published 
 
 
-If you encounter format changes in the source PDF, please [open an issue](https://github.com/ONEcampaign/bblocks_data_importers/issues)
+If you encounter format changes in the source PDF, please [open an issue](https://github.com/ONEcampaign/bblocks/issues)
 so we can update the parser accordingly.
 
 

@@ -31,7 +31,7 @@ Visit the WEO database [here](https://www.imf.org/en/Publications/WEO/weo-databa
 To start using the importer, instantiate the importer and use the `get_data` method to get the latest WEO data.
 
 ```python
-from bblocks.data_importers import WEO
+from bblocks import WEO
 
 # Create an importer instance
 weo = WEO()
