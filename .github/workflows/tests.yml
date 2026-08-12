@@ -1,0 +1,85 @@
+# this workflow runs unit tests and checks code style
+# for different versions of python on different operating systems
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  # No base-branch filter. A pull_request filter on [main] only matches PRs
+  # targeting main, so in a stack every PR except the bottom one runs no
+  # tests and shows a reviewer no checks at all.
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.py }})
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { os: ubuntu-latest, py: "3.13" }
+          - { os: ubuntu-latest, py: "3.12" }
+          - { os: windows-latest, py: "3.11" }
+          - { os: macOS-latest, py: "3.11" }
+          - { os: ubuntu-latest, py: "3.11" }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.0.0
+        with:
+          python-version: ${{ matrix.config.py }}
+
+      - name: Install package
+        run: uv sync
+
+      - name: Test with pytest
+        run: uv run pytest tests/ --cov=./ --cov-report=xml
+
+      - name: Code coverage
+        uses: codecov/codecov-action@v7
+        with:
+          fail_ci_if_error: false # this repo has no CODECOV_TOKEN secret configured
+          name: codecov-umbrella # optional
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true # optional (default = false)
+
+      - name: Check code style
+        run: |
+          uv run ruff format --check
+          uv run ruff check
+
+  packaging:
+    runs-on: ubuntu-latest
+    name: build wheel and verify contents
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel and sdist
+        run: uv build
+
+      - name: Verify wheel contents
+        run: |
+          python -m zipfile -l dist/*.whl > wheel_contents.txt
+          cat wheel_contents.txt
+
+          if ! grep -q "bblocks/__init__.py" wheel_contents.txt; then
+            echo "::error::wheel is missing bblocks/__init__.py"
+            exit 1
+          fi
+
+          if grep -q "bblocks/data_importers/" wheel_contents.txt; then
+            echo "::error::wheel must not contain any path under bblocks/data_importers/ (that distribution still owns those paths)"
+            exit 1
+          fi
+
+          echo "wheel contents OK"
