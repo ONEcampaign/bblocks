@@ -38,7 +38,7 @@ jobs:
         run: uv sync
 
       - name: Test with pytest
-        run: uv run pytest tests/ --cov=./ --cov-report=xml
+        run: uv run pytest tests/ -m "not network" --cov=./ --cov-report=xml
 
       - name: Code coverage
         uses: codecov/codecov-action@v7
