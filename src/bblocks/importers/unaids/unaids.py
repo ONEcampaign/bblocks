@@ -4,11 +4,13 @@ This module provides a class to import data from the UNAIDS website.
 Data is fetched from the UNAIDS website: https://aidsinfo.unaids.org/
 Bulk download urls are available in the Fact Sheets section of the website.
 
-NOTE: the AidsInfo website does not have a valid SSL certificate, so we disable the SSL verification by default.
+NOTE: the AidsInfo website does not have a valid SSL certificate, so SSL
+verification is disabled by default for this source (see `get_response`).
 """
 
 import requests
 import io
+import warnings
 from zipfile import ZipFile
 import pandas as pd
 from typing import Literal
@@ -17,9 +19,6 @@ import urllib3
 from bblocks.importers.config import logger, DataExtractionError, Fields
 from bblocks.importers.utilities import convert_dtypes
 from bblocks.importers.data_validators import DataFrameValidator
-
-# Disable warnings - UNAIDS does not have a valid SSL certificate
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 YEAR = 2024  # The year of the last data update - used in the URLs.
 
@@ -36,7 +35,10 @@ def get_response(url: str, verify: bool = False) -> requests.Response:
 
     Args:
         url: The URL to get the response from.
-        verify: Whether to verify the SSL certificate. Default is False (UNAIDS does not have a valid SSL certificate).
+        verify: Whether to verify the SSL certificate. Default is False, since
+            the AidsInfo host (aidsinfo.unaids.org) does not have a valid SSL
+            certificate and verification would otherwise always fail for this
+            source.
 
     Returns:
         A requests.Response object.
@@ -47,7 +49,18 @@ def get_response(url: str, verify: bool = False) -> requests.Response:
 
     logger.debug(f"Request URL: {url}")
 
-    response = requests.get(url, verify=verify)
+    if verify:
+        response = requests.get(url, verify=verify)
+    else:
+        # Suppress the InsecureRequestWarning that urllib3 raises for this
+        # unverified request only. Scoped to this call (rather than a
+        # module-level urllib3.disable_warnings()) so importing this module
+        # does not silently mute InsecureRequestWarning process-wide for
+        # unrelated code.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", urllib3.exceptions.InsecureRequestWarning)
+            response = requests.get(url, verify=verify)
+
     response.raise_for_status()
 
     return response
@@ -149,9 +162,9 @@ class UNAIDS:
     cache, call the clear_cache() method:
     >>> unaids.clear_cache()
 
-    Currently the AidsInfo website does not have a valid SSL certificate, so we disable the SSL verification
-    by default. A user can enable veriication by passing the verify=True when instantiating the class.
-    >>> unaids = UNAIDS(verify=True)
+    The AidsInfo website serves an invalid SSL certificate, so certificate
+    verification is off by default. Pass verify_ssl=True to turn it on.
+    >>> unaids = UNAIDS(verify_ssl=True)
 
     Please verify your security preferences before requesting data.
 

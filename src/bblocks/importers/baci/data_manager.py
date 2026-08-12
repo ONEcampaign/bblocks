@@ -112,7 +112,7 @@ class BaciDataManager:
             with self._zip_file.open(name) as f:
                 tables.append(pv.read_csv(f))
 
-        table = pa.concat_tables(tables, unicode_promote_options="default")
+        table = pa.concat_tables(tables, promote_options="default")
 
         self.data = table.rename_columns(
             [BACI_DATA_COLUMNS.get(c, c) for c in table.schema.names]
