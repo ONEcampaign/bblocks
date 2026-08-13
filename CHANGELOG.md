@@ -6,7 +6,7 @@ v3.0.0 (2026-08-12)
 - Folds the `bblocks-data-importers` code into this package as `bblocks.importers`. `bblocks` is a single distribution again
 - Adds a top-level surface, so `from bblocks import WEO` works for every public importer name. Resolution is lazy, so `import bblocks` stays cheap
 - Moves `bblocks.data_importers` out of this distribution. The retiring `bblocks-data-importers` release owns that import path and warns once, pointing at the replacement
-- Drops the `places` and `datacommons-tools` extras, which installed separate distributions. `all` and `data-importers` stay as empty extras so existing install commands keep working
+- Drops the `places` and `datacommons-tools` extras, which installed separate distributions. `all` and `data-importers` stay as empty extras, so `pip install bblocks[all]` still succeeds without a pip warning, though it now installs only the core package
 - Declares beautifulsoup4, numpy, requests, platformdirs and urllib3, which the importers import directly and previously got only transitively
 - Leaves the 2.x line installable and resolvable exactly as before
 - Upgrades to `imf-reader` 2.0, fixing a live outage where the IMF's WEO download page returned 403 for every version released before April 2025

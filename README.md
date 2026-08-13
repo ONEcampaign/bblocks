@@ -16,16 +16,19 @@ and the motivation for its creation.
 
 ## If you're coming from `bblocks-data-importers` or `bblocks` 2.x
 
-The data importers have moved into `bblocks` itself. `bblocks-data-importers` is retiring;
-installing it now only pulls in a shim that warns and points you here. `bblocks` 2.x, which
-depended on `bblocks-data-importers` and `bblocks-places` as separate packages, remains
-installable and resolvable, but new work should move to `bblocks` 3.x.
+The data importers have moved into `bblocks` itself. Starting with `bblocks` 3.0.0,
+`bblocks-data-importers` is retired, and its final release is a shim that warns and points you here.
+`bblocks` 2.x, which depended on `bblocks-data-importers` and `bblocks-places` as separate packages,
+remains installable and resolvable, but new work should move to `bblocks` 3.x.
 
-To update: `pip install -U bblocks`, and change any `from bblocks.data_importers import X` to
-`from bblocks import X`.
+To update, uninstall `bblocks-data-importers` and change any `from bblocks.data_importers import X`
+to `from bblocks import X`. `bblocks` 3.x no longer depends on `bblocks-data-importers`, so a plain
+`pip install -U bblocks` leaves the old package in place at `bblocks/data_importers/`, which shadows
+the importer classes and warns on every fresh import.
 
 [`bblocks-places`](https://github.com/ONEcampaign/bblocks-places), for resolving and standardising
-place names, is a separate package and is unaffected by this change.
+place names, is a separate package. `pip install bblocks[all]` no longer pulls it in, so install it
+explicitly if you need it.
 
 ## Installation
 
