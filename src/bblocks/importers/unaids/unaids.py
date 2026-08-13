@@ -53,10 +53,11 @@ def get_response(url: str, verify: bool = False) -> requests.Response:
         response = requests.get(url, verify=verify)
     else:
         # Suppress the InsecureRequestWarning that urllib3 raises for this
-        # unverified request only. Scoped to this call (rather than a
-        # module-level urllib3.disable_warnings()) so importing this module
-        # does not silently mute InsecureRequestWarning process-wide for
-        # unrelated code.
+        # unverified request. catch_warnings() mutates the process-global
+        # warnings.filters for the duration of the call and restores them on
+        # exit, so importing this module leaves a caller's filters alone.
+        # While the call is in flight, a concurrent unverified request on
+        # another thread has its warning suppressed too.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", urllib3.exceptions.InsecureRequestWarning)
             response = requests.get(url, verify=verify)

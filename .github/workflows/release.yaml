@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      # explicit grant recommended by actions/checkout, cheap to keep even
+      # though this repo is public today
+      contents: read
     # Scopes the OIDC claim and gives the publish a place to hang protection
     # rules. The environment name has to match the one on the PyPI publisher.
     environment:

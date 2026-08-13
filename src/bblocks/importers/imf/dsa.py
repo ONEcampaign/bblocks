@@ -115,7 +115,7 @@ def __normalise_debt_distress(df: pd.DataFrame) -> pd.DataFrame:
 
     df["risk_of_debt_distress"] = (
         df["risk_of_debt_distress"]
-        .pipe(__strip_footnote_trailer)
+        .apply(__strip_footnote_trailer)
         .str.strip()
         .str.capitalize()
     )

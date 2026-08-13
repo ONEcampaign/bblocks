@@ -26,7 +26,7 @@ def sample_raw_table():
             0: ["#", "1", "2"],
             1: ["Country", "Country One 1/ ", "Country Two"],
             2: ["Latest publication", "2024-01-15", "2024-04-01"],
-            3: ["Risk of debt distress", " in debt distress ", "low"],
+            3: ["Risk of debt distress", " in debt distress 5/ ", "low"],
             4: ["ignored", "ignored", "ignored"],
             5: ["Debt sustainability", "SUSTAINABLE", "unsustainable 2/"],
             6: ["Joint", "Yes", "No"],

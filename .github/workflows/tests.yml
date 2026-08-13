@@ -91,6 +91,7 @@ jobs:
   v2-resolvability:
     runs-on: ubuntu-latest
     name: bblocks 2.x still resolves to the same install set
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Set up Python
         uses: actions/setup-python@v7
