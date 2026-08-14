@@ -42,15 +42,7 @@ jobs:
         run: uv sync
 
       - name: Test with pytest
-        run: uv run pytest tests/ -m "not network" --cov=./ --cov-report=xml
-
-      - name: Code coverage
-        uses: codecov/codecov-action@v7
-        with:
-          fail_ci_if_error: false # this repo has no CODECOV_TOKEN secret configured
-          name: codecov-umbrella # optional
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true # optional (default = false)
+        run: uv run pytest tests/ -m "not network"
 
       - name: Check code style
         run: |
