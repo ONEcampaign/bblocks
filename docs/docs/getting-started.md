@@ -1,6 +1,6 @@
 # Getting started with `bblocks`
 
-This section walks you through the basic steps to install the `bblocks` package, load your first dataset, 
+This section walks you through the basic steps to install the `bblocks` package, load your first dataset,
 and understand how importers work.
 
 ## Installation
@@ -11,9 +11,15 @@ The importers ship with `bblocks` itself:
 pip install bblocks
 ```
 
+The DSA importer (`get_dsa`) parses PDF tables and needs the `pdf` extra:
+
+```bash
+pip install "bblocks[pdf]"
+```
+
 ## Import Your First Dataset
 
-Once installed, using a data importer is straightforward. Each supported data source—such as the World Bank, IMF, or 
+Once installed, using a data importer is straightforward. Each supported data source—such as the World Bank, IMF, or
 WHO—has its own dedicated importer class with a consistent interface.
 
 Let’s walk through a basic example using the [World Economic Outlook (WEO)](https://www.imf.org/en/Publications/WEO) importer.
@@ -21,12 +27,12 @@ Let’s walk through a basic example using the [World Economic Outlook (WEO)](ht
 ### Step 1: Know the data you need
 
 Before using an importer, it’s helpful to know what the dataset contains and where it comes from.
-In this case, the World Economic Outlook (WEO) is a flagship publication from the International Monetary Fund (IMF), 
-released twice a year. It provides macroeconomic data and forecasts for countries and regions across the globe, making 
+In this case, the World Economic Outlook (WEO) is a flagship publication from the International Monetary Fund (IMF),
+released twice a year. It provides macroeconomic data and forecasts for countries and regions across the globe, making
 it an essential resource for economists, researchers, and policy analysts.
 
-Each bblocks importer includes documentation on the data source, the settings available for the importer 
-(such as filters), and how to use the importer effectively. You can refer to the docstrings or the docs in the next 
+Each bblocks importer includes documentation on the data source, the settings available for the importer
+(such as filters), and how to use the importer effectively. You can refer to the docstrings or the docs in the next
 page for guidance on each importer.
 
 ### Step 2: Import package
@@ -46,9 +52,9 @@ Now create an instance of the importer:
 weo = WEO()
 ```
 
-At this stage, no data is downloaded yet. Importers are designed to load data lazily, meaning the dataset is only 
+At this stage, no data is downloaded yet. Importers are designed to load data lazily, meaning the dataset is only
 fetched when you explicitly request it—typically using `.get_data()`.
-This avoids unnecessary memory usage and ensures your code runs efficiently, especially when working 
+This avoids unnecessary memory usage and ensures your code runs efficiently, especially when working
 with large or multiple datasets.
 
 ### Step 4: Fetch the data
@@ -72,16 +78,18 @@ df.head()
 ```
 
 ### Step 5: Clear the cache (optional)
+
 Importers use caching during a session to avoid unnecessary downloads. To clear the cache manually:
 
 ```python
 weo.clear_cache()
 ```
+
 The cache is automatically cleared when the session ends.
 
 <br>
 <br>
 
-You're now ready to explore global datasets using a clean, consistent interface—no scraping or manual downloads 
+You're now ready to explore global datasets using a clean, consistent interface—no scraping or manual downloads
 required. Next, see more details about the [data importers available](./importers/index.md) in the package or read about our
 [design philosophy](design-philosophy.md).

@@ -108,6 +108,7 @@ ENV/
 .claude/
 CLAUDE.md
 AGENTS.md
+.codegraph/
 
 # downloaded files
 /bblocks/.raw_data/*.csv

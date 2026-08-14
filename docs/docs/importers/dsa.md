@@ -12,6 +12,14 @@ the work was carried out jointly with the World Bank.
 
 The source document can be accessed on the IMF website: [Latest LIC DSA list](https://www.imf.org/external/Pubs/ft/dsa/DSAlist.pdf)
 
+## Installation
+
+`get_dsa` parses PDF tables and requires the `pdf` extra:
+
+```bash
+pip install "bblocks[pdf]"
+```
+
 ## Basic usage
 
 Call `get_dsa()` to receive the cleaned pandas data frame. No additional parameters are required.
@@ -22,7 +30,6 @@ from bblocks import get_dsa
 df = get_dsa()
 ```
 
-
 **Column reference**:
 
 - `country_name` – Country name with IMF footnote markers removed.
@@ -30,12 +37,10 @@ df = get_dsa()
 - `risk_of_debt_distress` – The risk of debt distress ('High', 'Moderate', 'Low', 'In debt distress').
 - `debt_sustainability_assessment` – The debt sustainability assessment category ('Sustainable', 'Unsustainable')
 - `joint_with_world_bank` – Boolean flag indicating whether the assessment was prepared jointly with the World Bank.
-- `latest_dsa_discussed` - Date of the latest DSA discussed by the Executive Board but not yet published 
-
+- `latest_dsa_discussed` - Date of the latest DSA discussed by the Executive Board but not yet published
 
 If you encounter format changes in the source PDF, please [open an issue](https://github.com/ONEcampaign/bblocks/issues)
 so we can update the parser accordingly.
-
 
 ## Caching
 
