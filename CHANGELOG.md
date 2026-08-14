@@ -3,6 +3,7 @@ Changelog
 
 v3.0.0 (2026-08-12)
 ---------------------
+
 - Folds the `bblocks-data-importers` code into this package as `bblocks.importers`. `bblocks` is a single distribution again
 - Adds a top-level surface, so `from bblocks import WEO` works for every public importer name. Resolution is lazy, so `import bblocks` stays cheap
 - Moves `bblocks.data_importers` out of this distribution. The retiring `bblocks-data-importers` release owns that import path and warns once, pointing at the replacement
@@ -12,89 +13,107 @@ v3.0.0 (2026-08-12)
 - Upgrades to `imf-reader` 2.0, fixing a live outage where the IMF's WEO download page returned 403 for every version released before April 2025
 - Changes `WEO`'s `entity_code` from numeric IMF codes to ISO3 codes for the 196 countries and `G`-prefixed synthetic codes for the 13 aggregates (e.g. `G001` for World, `G163` for the euro area). `imf_code` carries the legacy numeric code alongside it, and `legacy_entity_codes=True` restores the old numeric `entity_code` for pipelines that still key on it, though it is null for entities with no legacy code, such as Liechtenstein
 - Drops WEO rows with no observation value, removing about a third of rows in historical bulk versions and a small share in current ones
+- Moves `camelot-py` and the PDF stack it carries (opencv, pypdfium2, pillow, playa-pdf) into a `pdf` extra. A bare `pip install bblocks` no longer installs it; `get_dsa()` needs `pip install "bblocks[pdf]"` and says so if it is missing
 
 v2.2.0 (2026-08-11)
 ---------------------
+
 - Drops the upper version caps on the `places` and `data-importers` extras and raises their floors to the current releases, so `pip install bblocks[all]` picks up current `bblocks-places` and `bblocks-data-importers` releases
 
 v2.1.0 (2025-07-15)
 ---------------------
+
 - Adds `bblocks-datacommons-tools` to the namespace
 
 v2.1.0-beta.2 (2025-06-26)
 ---------------------
+
 - Beta release 2 for testing
 - Adds `bblocks-data-importers` to the namespace
 - Addresses bugs in `bblocks-places`
 
 v2.1.0-beta.1 (2025-06-19)
 ---------------------
+
 - Beta release for testing of upcoming v2.1.0 changes including access to sub-package `bblocks-places`
 
 v2.0.0 (2025-06-19)
 ---------------------
-- Major refactor of the `bblocks` package structure. 
-The package is now split into multiple sub-packages, each with its own functionality.
+
+- Major refactor of the `bblocks` package structure.
+  The package is now split into multiple sub-packages, each with its own functionality.
 - the `bblocks` package now only exists to provide a unified interface to the sub-packages.
 
 v1.4.3 (2025-03-21)
 ---------------------
+
 - Fixes a bug where the WEO importer used the deprecated np.NaN instead of np.nan
 
 v1.4.2 (2025-03-21)
 ---------------------
+
 - Updates dependencies, especially camelot-py.
 
 v1.4.1 (2025-02-10)
 ---------------------
+
 - Changes how income levels are fetched.
 
 v1.4.0 (2024-05-06)
 ---------------------
+
 - Fixed issues with the WorldEconomicOutlook importer. Switches to using imf-reader,
-a new package we have developed to read the WEO data using the SDMX standard, rather than
-the excel files.
+  a new package we have developed to read the WEO data using the SDMX standard, rather than
+  the excel files.
 
 v1.3.2 (2024-05-06)
 ---------------------
+
 - Updated pyarrow dependency (more flexible)
 
 v1.3.1 (2024-04-18)
 ---------------------
+
 - Switched the backend of the WorldEconomicOutlook importer to remove the
-weo-reader dependency.
+  weo-reader dependency.
 
 v1.3.0 (2024-04-9)
 ---------------------
+
 - Fixed a bug with DSA data extraction from the IMF.
 - Updated dependencies.
 
 v1.2.2 (2024-02-29)
 ---------------------
+
 - Updated dependencies.
 
 v1.2.1 (2023-12-11)
 ---------------------
+
 - Updated pypdf2 dependency to pypdf.
 
 v1.2.0 (2023-12-11)
 ---------------------
+
 - A custom function 'convert_to_datetime' that replaces the usage of native `pd.to_datetime`. This function handles various date formats, especially when the date presents only a year. This is to handle pandas >2.0 which deprecated `infer_datetime_format`.
 - Upgraded the versions of various dependencies in `poetry.lock`, including 'anyio', 'astroid', 'asttokens', 'bumpversion', 'pandas' etc.
 - Minor code changes to improve structure and readability. This includes reducing explicit regex flag usage in `str.replace` and reordering some assignments.
 
-
 v1.1.1 (2023-06-27)
 --------------------
+
 - Added a new feature: `imf_weo` module in `import_tools` with an object
   to extract data from the World Economic Outlook (WEO).
 
 v1.1.1 (2023-07-06)
 --------------------
+
 - Updated requirements
 
 v1.1.0 (2023-03-09)
 --------------------
+
 - Added a new feature: `ilo` module in `import_tools` with an object
   to extract data from the ILO.
 - Added a new feature: `DebtIDS` module in `import_tools` with an object
@@ -103,14 +122,17 @@ v1.1.0 (2023-03-09)
 
 v1.0.1 (2023-02-07)
 --------------------
+
 Improved documentation
 
 v1.0.1 (2023-02-07)
 --------------------
+
 Fix a bug with parsing food security dates
 
 v1.0.0 (2023-02-07)
 --------------------
+
 - First major release of bblocks. This introduces changes to the importer classes
   API in order to make things more coherent. As a result, backwards compatibility is not
   guaranteed.
@@ -120,155 +142,177 @@ v1.0.0 (2023-02-07)
 
 v0.5.1 (2023-01-12)
 --------------------
+
 - Updated requirements
 
 v0.5.0 (2023-01-12)
 --------------------
+
 - Fixed bugs in `unaids` module preventing instantiation of the parent class `ImportData`
   and handling json responses for regional data.
 - Updated the requirements
 
 v0.4.3 (2022-12-08)
 --------------------
+
 - Fixed the `GHED` importer given changes in the underlying data structure
 
 v0.4.2 (2022-12-06)
 --------------------
+
 - Added a new feature: `who` module in `import_tools` with an object
   to extract data from GHED dataset.
 
 v0.4.1 (2022-11-22)
 --------------------
+
 - Improved the pink_sheets and sdr scripts.
 
 v0.4.0 (2022-11-07)
 --------------------
+
 - Added a new feature: can now import data from UNAIDS.
   The module is called `unaids` and is located in `import_tools`.
 
 v0.3.0 (2022-10-28)
 --------------------
+
 - Added a new feature: can now import data from the World Bank IDS
   database. The new module is called `ids` and it is part of
   `import_tools.debt`.
 
 v0.2.10 (2022-10-08)
 --------------------
+
 - Fix bug in how years added variables are named in DataFrame add
 
 v0.2.9 (2022-10-08)
 --------------------
+
 - Fix bug in how years are matched under DataFrame add
 
 v0.2.8 (2022-10-07)
 --------------------
+
 - Change how dates are handled when adding to a dataframe
 
 v0.2.7 (2022-10-04)
 --------------------
+
 - Update WFP data handling to append new data instead of replacing.
 
 v0.2.6 (2022-10-03)
 --------------------
+
 - WEO update file path bug fix.
 
 v0.2.5 (2022-10-03)
 --------------------
+
 - Minor bug with file management resolved.
 
 v0.2.4 (2022-10-03)
 --------------------
+
 - Added an optional parameter to importers in order to specify where the data should be stored.
 
 v0.2.3 (2022-10-01)
 --------------------
-- Fixed how the ``WorldEconomicOutlook`` object handles moving to the latest data
-- Added new optional parameters to ``WorldEconomicOutlook`` to allow for
+
+- Fixed how the `WorldEconomicOutlook` object handles moving to the latest data
+- Added new optional parameters to `WorldEconomicOutlook` to allow for
   specifying the data version.
-- ``WorldEconomicOutlook`` now has an instance attribute ``version`` that
+- `WorldEconomicOutlook` now has an instance attribute `version` that
   stores the version of the data used to create the object.
 
 v0.2.2 (2022-09-09)
 --------------------
-- Added a new feature: ``date_to_str()``, which formats a date as an english string.
-- Added a new feature: ``format_number``, which formats a numeric series as a formatted string (e.g. 1,234,567.89
+
+- Added a new feature: `date_to_str()`, which formats a date as an english string.
+- Added a new feature: `format_number`, which formats a numeric series as a formatted string (e.g. 1,234,567.89
   instead of 1234567.89). Optionally can specify to format as percentage, millions, or billions.
-- Added a new feature: ``latest_sdr_exchange``, which extracts the latest SDR exchange rate information in a dictionary
-- Fixed bug on SDR object - when ``update_data = True`` indicators are loaded in the object when
-  ``load_indicator`` is called.
+- Added a new feature: `latest_sdr_exchange`, which extracts the latest SDR exchange rate information in a dictionary
+- Fixed bug on SDR object - when `update_data = True` indicators are loaded in the object when
+  `load_indicator` is called.
 
 v0.2.1 (2022-08-16)
 --------------------
+
 - Fixed a bug adding WEO columns to dataframes
 
 v0.2.0 (2022-08-10)
 --------------------
-- Added a new feature: ``period_avg()``, which calculates the average of a
+
+- Added a new feature: `period_avg()`, which calculates the average of a
   time series/DataFrame for a given period.
-- Added a new module: ``imf``, which contains functions and objects to extract IMF
+- Added a new module: `imf`, which contains functions and objects to extract IMF
   data (SDR holdings and allocations).
-- Added a new feature: ``get_dsa()``, which extracts DSA data from the IMF.
-- Added a new feature: ``change_from_date()``, which calculates the nominal
+- Added a new feature: `get_dsa()`, which extracts DSA data from the IMF.
+- Added a new feature: `change_from_date()`, which calculates the nominal
   or percentage change for a column (by a grouper) from/to a given date.
-- Added a new feature: ``append_new_data()``, to read a previously-saved
+- Added a new feature: `append_new_data()`, to read a previously-saved
   DataFrame and append new data to it (removing duplicates by date).
-- Added a new feature: ``WFPData``, class, which is used to download
-  *headline* and *food* inflation data, plus *people with insufficient
-  food consumption* data, from WFP.
-- Added a new feature: ``get_fao_index()``, which downloads the FAO food
+- Added a new feature: `WFPData`, class, which is used to download
+  _headline_ and _food_ inflation data, plus _people with insufficient
+  food consumption_ data, from WFP.
+- Added a new feature: `get_fao_index()`, which downloads the FAO food
   index data.
-- Added a new feature: ``convert_id()``, which converts a Pandas Series containing
+- Added a new feature: `convert_id()`, which converts a Pandas Series containing
   country IDs (like names or ISO3 codes) to another format (like ISO3 codes).
-- Added a new feature: ``dac_codes``, which is a dictionary with DAC codes for DAC donor countries.
+- Added a new feature: `dac_codes`, which is a dictionary with DAC codes for DAC donor countries.
   A future version will add recipient codes.
-- Added a new feature: ``get_population_id()``, which returns a Pandas DataFrame with population data
+- Added a new feature: `get_population_id()`, which returns a Pandas DataFrame with population data
   for all countries with available World Bank Data. A future version will add the option to choose a
   source for this data.
-- Added a new feature: ``add_population_column()``, which adds a new column containing population data to
+- Added a new feature: `add_population_column()`, which adds a new column containing population data to
   a DataFrame.
-- Added a new feature: ``add_short_names_column()``, which adds a new column containing short country names to
+- Added a new feature: `add_short_names_column()`, which adds a new column containing short country names to
   a DataFrame.
-- Added a new feature: ``add_iso_codes_column()``, which adds a new column containing ISO3 codes to
+- Added a new feature: `add_iso_codes_column()`, which adds a new column containing ISO3 codes to
   a DataFrame.
-- Added a new feature: ``filter_latest_by()`` which returns the latest value given a series of columns to group by.
-- Added a new feature: ``to_date_column()`` which converts a column to a date column.
-- Added a new feature: ``add_poverty_ratio_column()`` which adds a new column containing the poverty ratio to
+- Added a new feature: `filter_latest_by()` which returns the latest value given a series of columns to group by.
+- Added a new feature: `to_date_column()` which converts a column to a date column.
+- Added a new feature: `add_poverty_ratio_column()` which adds a new column containing the poverty ratio to
   a DataFrame, using World Bank data. Note that yearly population data is missing for many countries in many years.
-- Added a new feature: ``add_population_density()`` which adds a new column containing the population density to
+- Added a new feature: `add_population_density()` which adds a new column containing the population density to
   a DataFrame, using World Bank data.
-- Added a new feature: ``add_population_share_column()``, which adds a new column transforming a column with numeric
+- Added a new feature: `add_population_share_column()`, which adds a new column transforming a column with numeric
   values into a new column which shows those values as a share of population.
-- Added a new feature: ``add_median_observation()`` to add the median observation for a given group, either as a
+- Added a new feature: `add_median_observation()` to add the median observation for a given group, either as a
   new column or appended to the end of the dataframe.
-- Added a new feature: ``add_income_level_column()`` to add the World Bank income level for countries as a new column.
-- Added a new feature: ``add_gdp_column()`` and ``add_gdp_share_column()`` to add the GDP information from the
+- Added a new feature: `add_income_level_column()` to add the World Bank income level for countries as a new column.
+- Added a new feature: `add_gdp_column()` and `add_gdp_share_column()` to add the GDP information from the
   IMF World Economic Outlook to a DataFrame.
-- Added a new feature: ``add_gov_expenditure_column()`` and ``add_gov_exp_share_column()`` to add government expenditure
+- Added a new feature: `add_gov_expenditure_column()` and `add_gov_exp_share_column()` to add government expenditure
   data from IMF World Economic Outlook to a DataFrame.
-- Added a new feature: ``add_flourish_geometries()`` to map the geometries used by Flourish maps to countries, added to
+- Added a new feature: `add_flourish_geometries()` to map the geometries used by Flourish maps to countries, added to
   a DataFrame as a new column.
-- Added a new feature: ``add_value_as_share()`` to add a new column with a value as a share of another column.
-- Added new features: A ``_filter_by()`` helper function to filter a DataFrame based on membership to a specific
-  grouping. Additionally ``filter_african_countries()`` to filter a DataFrame to keep only African countries,
-  ``filter_eu_countries()`` to filter to keep ony EU members, ``filter_by_un_region()`` to filter by UN regions,
-  and ``filter_by_continent()`` to filter countries based on their continent.
+- Added a new feature: `add_value_as_share()` to add a new column with a value as a share of another column.
+- Added new features: A `_filter_by()` helper function to filter a DataFrame based on membership to a specific
+  grouping. Additionally `filter_african_countries()` to filter a DataFrame to keep only African countries,
+  `filter_eu_countries()` to filter to keep ony EU members, `filter_by_un_region()` to filter by UN regions,
+  and `filter_by_continent()` to filter countries based on their continent.
 
 v0.1.3 (2022-07-29)
 --------------------
-- Added a new feature: ``clean_number()`` which cleans a string and
+
+- Added a new feature: `clean_number()` which cleans a string and
   returns a float or int.
-- Added a new feature: ``clean_numeric_series()`` which cleans the
+- Added a new feature: `clean_numeric_series()` which cleans the
   numbers in a pd.Series (or list of series)
 - improved documentation
 
 v0.0.3 (2022-06-27)
 --------------------
+
 - First release on PyPI.
 
 v0.0.2 (2022-06-27)
 --------------------
+
 - Preparation for first release
 
 v0.0.1 (2022-06-27)
 --------------------
+
 - First release on test PyPI.

@@ -1,5 +1,6 @@
 """Tests for the IMF DSA importer."""
 
+import builtins
 from io import BytesIO
 from types import SimpleNamespace
 from unittest import mock
@@ -109,6 +110,57 @@ def test_pdf_to_df_raises_when_pdf_invalid():
     with mock.patch("camelot.read_pdf", return_value=[]):
         with pytest.raises(DataExtractionError, match="Invalid PDF format"):
             dsa._pdf_to_df(b"broken")
+
+
+def test_pdf_to_df_names_the_pdf_extra_when_camelot_is_missing(monkeypatch):
+    """A missing PDF extra must surface as a ModuleNotFoundError naming the
+    install command, not as a DataExtractionError about an unreadable PDF.
+
+    Patching builtins.__import__ rather than sys.modules keeps this test off
+    the module table entirely: camelot is installed in the dev environment and
+    other tests in this file import it, and a stale sys.modules entry is how
+    import-order bugs get in.
+    """
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "camelot" or name.startswith("camelot."):
+            raise ModuleNotFoundError(f"No module named {name!r}", name=name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(ModuleNotFoundError, match=r'pip install "bblocks\[pdf\]"'):
+        dsa._pdf_to_df(b"pdf-bytes")
+
+
+def test_pdf_to_df_explains_broken_native_dependency(monkeypatch):
+    """When camelot is installed but fails to load (e.g. a missing system
+    library such as libGL in a slim container image), this must surface as
+    an ImportError with actionable advice, not the "install the pdf extra"
+    message from the ModuleNotFoundError branch, and not a raw traceback.
+
+    Patching builtins.__import__ rather than sys.modules keeps this test off
+    the module table entirely, matching the sibling test above.
+    """
+    real_import = builtins.__import__
+    libgl_error = (
+        "libGL.so.1: cannot open shared object file: No such file or directory"
+    )
+
+    def fake_import(name, *args, **kwargs):
+        if name == "camelot" or name.startswith("camelot."):
+            raise ImportError(libgl_error)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(ImportError) as exc_info:
+        dsa._pdf_to_df(b"pdf-bytes")
+
+    assert not isinstance(exc_info.value, ModuleNotFoundError)
+    assert libgl_error in str(exc_info.value)
+    assert "pip install" not in str(exc_info.value)
 
 
 def test_clean_headers_selects_expected_columns(raw_table_without_header):

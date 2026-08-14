@@ -88,6 +88,71 @@ jobs:
 
           echo "wheel contents OK"
 
+      - name: Verify camelot ships only in the pdf extra
+        run: |
+          python - <<'EOF'
+          import glob
+          import sys
+          import zipfile
+
+          wheel = glob.glob("dist/*.whl")[0]
+          with zipfile.ZipFile(wheel) as z:
+              name = next(n for n in z.namelist() if n.endswith(".dist-info/METADATA"))
+              metadata = z.read(name).decode()
+
+          requires = [
+              line.split(":", 1)[1].strip()
+              for line in metadata.splitlines()
+              if line.startswith("Requires-Dist:")
+          ]
+          camelot = [r for r in requires if r.startswith("camelot")]
+
+          if "Provides-Extra: pdf" not in metadata:
+              print("::error::wheel declares no 'pdf' extra")
+              sys.exit(1)
+
+          if not camelot:
+              print("::error::the 'pdf' extra declares no camelot requirement")
+              sys.exit(1)
+
+          unconditional = [r for r in camelot if "extra ==" not in r]
+          if unconditional:
+              print(
+                  f"::error::camelot is a base requirement of the wheel ({unconditional}). "
+                  "It must ship only under extra == 'pdf', so that a bare "
+                  "'pip install bblocks' carries no PDF stack."
+              )
+              sys.exit(1)
+
+          print("OK: camelot ships only under the pdf extra")
+          EOF
+
+      - name: Bare install carries no PDF stack
+        run: |
+          uv venv bare
+          uv pip install --python bare/bin/python dist/*.whl
+          bare/bin/python - <<'EOF'
+          import importlib.util
+
+          import bblocks
+
+          assert importlib.util.find_spec("camelot") is None, (
+              "a bare wheel install pulled in camelot"
+          )
+          assert callable(bblocks.get_dsa), "get_dsa is unreachable on a bare install"
+
+          from bblocks.importers.imf import dsa
+
+          try:
+              dsa._pdf_to_df(b"not a pdf")
+          except ModuleNotFoundError as e:
+              assert 'pip install "bblocks[pdf]"' in str(e), str(e)
+          else:
+              raise AssertionError("the PDF path did not raise without the extra")
+
+          print("OK: bare install has no PDF stack and says how to get one")
+          EOF
+
   v2-resolvability:
     runs-on: ubuntu-latest
     name: bblocks 2.x still resolves to the same install set

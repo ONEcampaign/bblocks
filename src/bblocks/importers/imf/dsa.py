@@ -10,7 +10,6 @@ from io import BytesIO
 from typing import Final
 from functools import lru_cache
 
-import camelot
 import httpx
 import pandas as pd
 
@@ -82,6 +81,24 @@ def _download_pdf(url: str) -> bytes:
 
 def _pdf_to_df(src: bytes) -> pd.DataFrame:
     """Extract the single table from the one-page PDF"""
+
+    # Imported here rather than at module scope so `from bblocks import
+    # get_dsa` works on a bare install: camelot ships only in the `pdf`
+    # extra, and this is the one place that needs it.
+    try:
+        import camelot
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            "get_dsa() reads the IMF DSA list from a PDF, which needs the "
+            'optional PDF stack. Install it with: pip install "bblocks[pdf]"',
+            name="camelot",
+        ) from e
+    except ImportError as e:
+        raise ImportError(
+            "The PDF stack is installed but failed to load. This usually means "
+            "a missing system library (opencv needs libGL on many Linux images). "
+            f"Underlying error: {e}"
+        ) from e
 
     file = BytesIO(src)
 
