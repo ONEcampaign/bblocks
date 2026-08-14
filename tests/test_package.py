@@ -143,6 +143,32 @@ def test_weo_survives_unwritable_importer_cache_dir_subprocess():
     assert result.stdout.strip() == "OK"
 
 
+def test_touching_get_dsa_does_not_import_camelot_subprocess():
+    """Resolving bblocks.get_dsa must not import camelot.
+
+    camelot ships only in the `pdf` extra, so a bare install has to be able to
+    reach the name; only calling into the PDF path may need the extra. Run
+    out-of-process for the same reason as the tests above: pytest collection
+    has already imported camelot in-process via the DSA tests.
+    """
+    script = (
+        "import sys\n"
+        "import bblocks\n"
+        "bblocks.get_dsa\n"
+        "assert 'camelot' not in sys.modules, "
+        "'resolving bblocks.get_dsa imported camelot'\n"
+        "print('OK')\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip() == "OK"
+
+
 def test_stale_data_importers_sibling_warns(monkeypatch, tmp_path):
     (tmp_path / "data_importers" / "who").mkdir(parents=True)
     monkeypatch.setattr(bblocks, "__file__", str(tmp_path / "__init__.py"))
