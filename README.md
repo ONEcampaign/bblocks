@@ -16,24 +16,31 @@ and the motivation for its creation.
 
 ## If you're coming from `bblocks-data-importers` or `bblocks` 2.x
 
-The data importers have moved into `bblocks` itself. Starting with `bblocks` 3.0.0,
-`bblocks-data-importers` is retired, and its final release is a shim that warns and points you here.
-`bblocks` 2.x, which depended on `bblocks-data-importers` and `bblocks-places` as separate packages,
-remains installable and resolvable, but new work should move to `bblocks` 3.x.
+The data importers are moving into `bblocks` itself. In `bblocks` 3.0.0, `bblocks-data-importers`
+will be retired, and its final release will be a shim that warns and points you here. `bblocks` 2.x,
+which depends on `bblocks-data-importers` and `bblocks-places` as separate packages, is the currently
+installable release; PyPI has not yet published `bblocks` 3.x.
 
-To update, run `pip install -U "bblocks>=3"` and `pip uninstall bblocks-data-importers`, then change
-any `from bblocks.data_importers import X` to `from bblocks import X`. `bblocks` 3.x no longer depends
-on `bblocks-data-importers`, so upgrading alone leaves the old package in place at
-`bblocks/data_importers/`, where it shadows the importer classes and warns on every fresh import.
+Once `bblocks` 3.0.0 is published, update with `pip install -U "bblocks>=3"` and
+`pip uninstall bblocks-data-importers`, then change any `from bblocks.data_importers import X` to
+`from bblocks import X`. `bblocks` 3.x will no longer depend on `bblocks-data-importers`, so upgrading
+alone will leave the old package in place at `bblocks/data_importers/`, where it shadows the importer
+classes and warns on every fresh import.
 
-[`bblocks-places`](https://github.com/ONEcampaign/bblocks-places), for resolving and standardising
-place names, is a separate package. `pip install bblocks[all]` no longer pulls it in, so install it
-explicitly if you need it.
+For resolving and standardising place names, use [`resolvekit`](https://github.com/jm-rivera/resolvekit),
+a separate package that `bblocks` does not depend on. `bblocks-places` is deprecated; its final release
+is 0.0.6.
 
 ## Installation
 
 ```bash
 pip install bblocks
+```
+
+The DSA importer (`get_dsa`) parses PDF tables and needs the `pdf` extra:
+
+```bash
+pip install "bblocks[pdf]"
 ```
 
 ## Basic Usage
@@ -52,17 +59,17 @@ df = wb.get_data(indicator_code="SI.POV.DDAY", include_labels=True)
 print(df.head())
 ```
 
-To resolve entity names to a standardised form, use [`bblocks-places`](https://github.com/ONEcampaign/bblocks-places),
-a separate package:
+To resolve entity names to a standardised form, use [`resolvekit`](https://github.com/jm-rivera/resolvekit),
+a separate package not used internally by `bblocks`. `bulk()` needs its `pandas` extra:
 
 ```bash
-pip install bblocks-places
+pip install "resolvekit[pandas]"
 ```
 
 ```python
-from bblocks import places
+import resolvekit as rk
 
-df["country"] = places.resolve_places(df["entity_name"], to_type="name_short", not_found="ignore")
+df["iso3"] = rk.bulk(values=df["entity_name"], to="iso3")
 ```
 
 ## Contributing
